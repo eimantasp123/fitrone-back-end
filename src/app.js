@@ -64,8 +64,8 @@ app.use(xss());
 // Prevent parameter pollution
 app.use(
   hpp({
-    // Allow duration parameter for sorting
-    whitelist: ["duration"],
+    // Allow listed parameters for sorting
+    whitelist: [""],
   }),
 );
 

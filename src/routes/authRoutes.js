@@ -12,18 +12,18 @@ router.post(
   "/resend-email-verify-code",
   authController.resendVerificationEmailCode,
 );
-
+//
 router.post("/facebook", authController.facebookAuth);
 router.post("/google", authController.googleAuth);
 router.post("/login", authController.login);
 router.post("/logout", authController.logout);
-
+//
 router.post("/verify-login", authController.verifyLogin);
 router.post("/resend-code", authController.resendCode);
-
+//
 router.post("/forgot-password", authController.forgotPassword);
 router.post("/reset-password/:token", authController.resetPassword);
-
+//
 router.get("/refresh-token", authController.refreshToken);
 
 // Apply authentication middleware to all routes below this line

@@ -6,8 +6,6 @@ const {
 const multer = require("multer");
 const { v4: uuidv4 } = require("uuid");
 const User = require("../models/User");
-const bcrypt = require("bcryptjs");
-const { sendVerificationCode, verifyCode } = require("../utils/twilioClient");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const verificationHelper = require("../helper/verificationHelper");

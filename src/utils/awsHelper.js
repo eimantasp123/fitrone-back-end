@@ -2,6 +2,7 @@ const AWS = require("aws-sdk");
 const sns = new AWS.SNS({ region: "eu-north-1" });
 const sqs = new AWS.SQS({ region: "eu-north-1" });
 
+// Helper function to send SMS using AWS SNS service
 const sendSMS = async (phone, message) => {
   const params = {
     Message: message,
@@ -19,6 +20,7 @@ const sendSMS = async (phone, message) => {
   };
 
   try {
+    // Send SMS to user phone number
     await sns.publish(params).promise();
     console.log("SMS sent to publish:", phone);
   } catch (error) {

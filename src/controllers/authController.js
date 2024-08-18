@@ -5,34 +5,45 @@ const catchAsync = require("../utils/catchAsync");
 const User = require("../models/User");
 const verificationHelper = require("./../helper/verificationHelper");
 
-// Register new user and send verification email to user
+// Registers a new user by email and sends a verification email.
 exports.registerEmail = catchAsync(async (req, res, next) => {
   const { email } = req.body;
-  // Check if email is provided
   let user = await User.findOne({ email }).select(
     "+isVerified +registrationCompleted",
   );
-  // Check if user already exists
+  // Check if user already exists and is verified and registration completed
   if (user && user.isVerified && user.registrationCompleted) {
     return next(new AppError("This email is already registered", 400));
   }
-  // Check if user exists but not verified and registration not completed
+
   if (user && !user.isVerified && !user.registrationCompleted) {
-    return verificationHelper.handleVerificationEmailSending(user, res, next);
+    return await verificationHelper.handleVerificationEmailSending(
+      user,
+      res,
+      next,
+    );
   }
-  // Check if user exists but not verified and registration not completed
+
   if (user && user.isVerified && !user.registrationCompleted) {
     user.isVerified = false;
     await user.save({ validateBeforeSave: false });
-    return verificationHelper.handleVerificationEmailSending(user, res, next);
+    return await verificationHelper.handleVerificationEmailSending(
+      user,
+      res,
+      next,
+    );
   }
-  // Create new user if user does not exist
+
   user = new User({ email });
   await user.save({ validateBeforeSave: false });
-  return verificationHelper.handleVerificationEmailSending(user, res, next);
+  return await verificationHelper.handleVerificationEmailSending(
+    user,
+    res,
+    next,
+  );
 });
 
-// Verify user's email and set user as verified
+// Verifies a user's email using a verification code
 exports.verifyEmail = catchAsync(async (req, res, next) => {
   const { email, code } = req.body;
   const user = await User.findOne({
@@ -49,14 +60,12 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
   user.emailVerificationCode = undefined;
   user.emailVerificationExpires = undefined;
   await user.save({ validateBeforeSave: false });
-
-  res.status(200).json({
+  return res.status(200).json({
     status: "success",
     message: "Email verified successfully",
   });
 });
 
-// Resend verification email to user
 exports.resendVerificationEmailCode = catchAsync(async (req, res, next) => {
   const user = await User.findOne({
     email: req.body.email,
@@ -65,7 +74,11 @@ exports.resendVerificationEmailCode = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new AppError("User not found or already verified", 404));
   }
-  return verificationHelper.handleVerificationEmailSending(user, res, next);
+  return await verificationHelper.handleVerificationEmailSending(
+    user,
+    res,
+    next,
+  );
 });
 
 // Complete user registration with email, password, first name and last name
@@ -88,7 +101,7 @@ exports.completeRegistration = catchAsync(async (req, res, next) => {
   user.registrationCompleted = true;
   await user.save();
 
-  await verificationHelper.sendTokensAndCookies(
+  return verificationHelper.sendTokensAndCookies(
     user,
     res,
     "Register in successfully",
@@ -123,7 +136,7 @@ exports.login = catchAsync(async (req, res, next) => {
   }
   if (user.is2FAEnabled) {
     // Send verification code
-    await verificationHelper.send2FACode(user);
+    await verificationHelper.send2FACode(user, next);
     return res.status(200).json({
       status: "success",
       message: "Verification code sent successfully",
@@ -131,15 +144,19 @@ exports.login = catchAsync(async (req, res, next) => {
       userId: user._id,
     });
   }
-  verificationHelper.sendTokensAndCookies(user, res, "Logged in successfully");
+  return verificationHelper.sendTokensAndCookies(
+    user,
+    res,
+    "Logged in successfully",
+  );
 });
 
 // Resend verification code to user
-exports.resendCode = catchAsync(async (req, res) => {
+exports.resendCode = catchAsync(async (req, res, next) => {
   const { userId } = req.body;
   const user = await User.findById(userId);
   if (!user) return res.status(400).json({ message: "Invalid user" });
-  await verificationHelper.send2FACode(user);
+  await verificationHelper.send2FACode(user, next);
   return res.status(200).json({
     status: "success",
     message: "Verification code resend successfully",
@@ -159,7 +176,11 @@ exports.verifyLogin = catchAsync(async (req, res, next) => {
   user.twoFactorCode = undefined;
   user.twoFactorExpires = undefined;
   await user.save({ validateBeforeSave: false });
-  verificationHelper.sendTokensAndCookies(user, res, "Logged in successfully");
+  return verificationHelper.sendTokensAndCookies(
+    user,
+    res,
+    "Logged in successfully",
+  );
 });
 
 // Logout user and remove access token and refresh token from cookies
@@ -170,7 +191,7 @@ exports.logout = catchAsync(async (req, res, next) => {
   }
   res.clearCookie("accessToken");
   res.clearCookie("refreshToken");
-  res
+  return res
     .status(200)
     .json({ status: "success", message: "Logged out successfully" });
 });
@@ -202,11 +223,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     );
   }
   // Create reset password token and send reset password email
-  await verificationHelper.sendPasswordResetEmail(user, req, next);
-  res.status(200).json({
-    status: "success",
-    message: "Reset password email sent successfully",
-  });
+  return await verificationHelper.handleSendPasswordResetEmail(user, res, next);
 });
 
 // Reset password functionality to reset user's password
@@ -218,7 +235,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   if (!user) return next(new AppError("Invalid or expired token", 400));
 
   await user.resetPassword(password, passwordConfirm);
-  verificationHelper.sendTokensAndCookies(
+  return verificationHelper.sendTokensAndCookies(
     user,
     res,
     "Password reset successfully",
@@ -236,10 +253,24 @@ exports.facebookAuth = catchAsync(async (req, res, next) => {
     `https://graph.facebook.com/me?fields=id,email,first_name,last_name,picture&access_token=${token}`,
   );
   const { id, email, picture, first_name, last_name } = response.data;
+
   let user = await User.findOne({ email }).select(
     "+isVerified +registrationCompleted",
   );
-  if (!user) {
+
+  if (user) {
+    if (!user.registrationCompleted) {
+      user.facebookId = id;
+      user.firstName = first_name;
+      user.lastName = last_name;
+      user.profileImage = picture.data.url;
+      user.isVerified = true;
+      user.registrationCompleted = true;
+      await user.save({ validateBeforeSave: false });
+    } else if (user.facebookId !== id) {
+      return next(new AppError("This email is already registered", 400));
+    }
+  } else {
     user = new User({
       facebookId: id,
       email,
@@ -250,14 +281,10 @@ exports.facebookAuth = catchAsync(async (req, res, next) => {
       profileImage: picture.data.url,
     });
     await user.save({ validateBeforeSave: false });
-  } else if (user.facebookId !== id) {
-    return next(new AppError("This email is already registered", 400));
   }
 
   if (user.is2FAEnabled) {
-    // Send verification code
-    await verificationHelper.send2FACode(user);
-    // Send response to client
+    await verificationHelper.send2FACode(user, next);
     return res.status(200).json({
       status: "success",
       message: "Verification code sent successfully",
@@ -265,7 +292,11 @@ exports.facebookAuth = catchAsync(async (req, res, next) => {
       userId: user._id,
     });
   }
-  verificationHelper.sendTokensAndCookies(user, res, "Logged in successfully");
+  return verificationHelper.sendTokensAndCookies(
+    user,
+    res,
+    "Logged in successfully",
+  );
 });
 
 // Login user with Google and send access token and refresh token to cookies
@@ -288,22 +319,38 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
   );
   const { sub, email, picture, given_name, family_name } = response.data;
   const highResPicture = picture ? picture.replace("s96-c", "s400-c") : "";
-  let user = await User.findOne({ email: email });
-  if (!user) {
+
+  let user = await User.findOne({ email }).select(
+    "+isVerified +registrationCompleted",
+  );
+
+  if (user) {
+    if (!user.registrationCompleted) {
+      user.googleId = sub;
+      user.firstName = given_name;
+      user.lastName = family_name;
+      user.profileImage = highResPicture;
+      user.isVerified = true;
+      user.registrationCompleted = true;
+      await user.save({ validateBeforeSave: false });
+    } else if (user.googleId !== sub) {
+      return next(new AppError("This email is already registered", 400));
+    }
+  } else {
     user = new User({
       googleId: sub,
       email,
       firstName: given_name,
       lastName: family_name,
       isVerified: true,
+      registrationCompleted: true,
       profileImage: highResPicture,
     });
     await user.save({ validateBeforeSave: false });
-  } else if (user.googleId !== sub) {
-    return next(new AppError("This email is already registered", 400));
   }
+
   if (user.is2FAEnabled) {
-    await verificationHelper.send2FACode(user);
+    await verificationHelper.send2FACode(user, next);
     return res.status(200).json({
       status: "success",
       message: "Verification code sent successfully",
@@ -311,7 +358,7 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
       userId: user._id,
     });
   } else {
-    verificationHelper.sendTokensAndCookies(
+    return verificationHelper.sendTokensAndCookies(
       user,
       res,
       "Logged in successfully",
@@ -332,7 +379,7 @@ exports.refreshToken = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new AppError("User not found", 404));
   }
-  verificationHelper.sendTokensAndCookies(
+  return verificationHelper.sendTokensAndCookies(
     user,
     res,
     "Token refreshed successfully",
@@ -345,7 +392,7 @@ exports.getCurrentUser = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new AppError("User not found", 404));
   }
-  res.status(200).json({
+  return res.status(200).json({
     status: "success",
     user,
   });
