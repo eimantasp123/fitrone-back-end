@@ -1,26 +1,36 @@
+const { promisify } = require("util");
 const jwt = require("jsonwebtoken");
-const Session = require("../models/SessionSchema");
 const User = require("../models/User");
+const catchAsync = require("../utils/catchAsync");
+const AppError = require("../utils/appError");
 
-const authMiddleware = async (req, res, next) => {
-  const token = req.cookies["accessToken"];
-  const refreshToken = req.cookies["refreshToken"];
-  if (!token && !refreshToken) return res.status(200).json({ message: "No tokens found", code: "NO_TOKENS" });
-  if (!token && refreshToken) return res.status(200).json({ message: "Refresh token found", code: "REFRESH_TOKENS" });
-  if (!token) return;
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const session = await Session.findOne({ userId: decoded.id, token });
-    if (!session) return res.sendStatus(401);
+const authMiddleware = catchAsync(async (req, res, next) => {
+  // 1) Getting token and check if it's there
+  const token = req.cookies.accessToken;
+  if (!token) return next(new AppError("Please log in to get access", 401));
 
-    req.user = await User.findById(decoded.id);
-    session.lastAccessed = new Date();
-    await session.save();
+  // 2) Verification token
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
-    next();
-  } catch (err) {
-    return res.status(401).json({ message: "Invalid or expired token" });
-  }
-};
+  // 3) Check if user still exists
+  const currentUser = await User.findById(decoded.id);
+  if (!currentUser)
+    return next(
+      new AppError(
+        "The user belonging to this token does no longer exist.",
+        401,
+      ),
+    );
+
+  // 4) Check if user changed password after the token was issued
+  if (currentUser.changedPasswordAfter(decoded.iat))
+    return next(
+      new AppError("User recently changed password! Please log in again.", 401),
+    );
+
+  // GRANT ACCESS TO PROTECTED ROUTE
+  req.user = currentUser;
+  next();
+});
 
 module.exports = authMiddleware;

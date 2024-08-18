@@ -1,0 +1,9 @@
+{
+  "prettier/prettier": [
+    "error",
+    {
+      "doubleQuote": true,
+      "endOfLine": "lf"
+    }
+  ]
+}

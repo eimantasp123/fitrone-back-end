@@ -3,10 +3,7 @@ const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 
 const createMockUser = async () => {
-  await mongoose.connect("mongodb://localhost:27017/testdb", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
+  await mongoose.connect("mongodb://127.0.0.1:27017/testdb");
 
   const hashedPassword = await bcrypt.hash("password123", 10);
 
@@ -14,8 +11,11 @@ const createMockUser = async () => {
     email: "test@example.com",
     password: hashedPassword,
     phone: "+4591929387",
-    role: "admin",
-    is2FAEnabled: true,
+    role: "trainer",
+    firstName: "John",
+    isVerified: true,
+    lastName: "Doe",
+    is2FAEnabled: false,
   });
 
   await user.save();
