@@ -14,6 +14,7 @@ const hpp = require("hpp");
 const connectDB = require("./config/dbConfig");
 const authRoutes = require("./routes/authRoutes");
 const profileRoutes = require("./routes/profileRoutes");
+const feedbackRoutes = require("./routes/feedbackRoutes");
 const User = require("./models/User");
 const AppError = require("./utils/appError");
 const globalErrorHandler = require("./controllers/errorController");
@@ -75,6 +76,7 @@ app.use(cookieParser());
 // Routes
 app.use("/auth", authRoutes);
 app.use("/profile", profileRoutes);
+app.use("/feedback", feedbackRoutes);
 
 // Error handling for invalid routes
 app.all("*", (req, res, next) => {

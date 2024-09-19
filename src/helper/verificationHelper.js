@@ -114,6 +114,7 @@ exports.sendEmailVerifyCodeToEmail = async (user) => {
       subject: "Email verification code",
       message,
     });
+    console.log("Email verification code sent successfully", code);
   } catch (error) {
     user.emailVerificationCode = undefined;
     user.emailVerificationExpires = undefined;

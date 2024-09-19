@@ -16,7 +16,6 @@ router.post(
 router.post("/facebook", authController.facebookAuth);
 router.post("/google", authController.googleAuth);
 router.post("/login", authController.login);
-router.post("/logout", authController.logout);
 //
 router.post("/verify-login", authController.verifyLogin);
 router.post("/resend-code", authController.resendCode);
@@ -28,6 +27,8 @@ router.get("/refresh-token", authController.refreshToken);
 
 // Apply authentication middleware to all routes below this line
 router.use(authMiddleware);
+//
+router.post("/logout", authController.logout);
 
 // Protected routes
 router.get(

@@ -4,6 +4,7 @@ const sqs = new AWS.SQS({ region: "eu-north-1" });
 
 // Helper function to send SMS using AWS SNS service
 const sendSMS = async (phone, message) => {
+  console.log("Message:", message);
   const params = {
     Message: message,
     PhoneNumber: phone,
