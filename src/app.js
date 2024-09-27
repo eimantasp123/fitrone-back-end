@@ -18,6 +18,9 @@ const feedbackRoutes = require("./routes/feedbackRoutes");
 const User = require("./models/User");
 const AppError = require("./utils/appError");
 const globalErrorHandler = require("./controllers/errorController");
+const supportRoutes = require("./routes/supportRoutes");
+const mealPlanRoutes = require("./routes/mealPlanRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 
 // Initialize express app
 const app = express();
@@ -32,7 +35,7 @@ if (process.env.NODE_ENV === "development") {
 
 // Rate limiting
 const limiter = rateLimit({
-  max: 100,
+  max: 600,
   windowMs: 60 * 60 * 1000,
   message: "Too many requests from this IP, please try again in an hour!",
 });
@@ -74,9 +77,12 @@ app.use(
 app.use(cookieParser());
 
 // Routes
-app.use("/auth", authRoutes);
-app.use("/profile", profileRoutes);
-app.use("/feedback", feedbackRoutes);
+app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/profile", profileRoutes);
+app.use("/api/v1/feedback", feedbackRoutes);
+app.use("/api/v1/support", supportRoutes);
+app.use("/api/v1/meal-plan", mealPlanRoutes);
+app.use("/api/v1/payment", paymentRoutes);
 
 // Error handling for invalid routes
 app.all("*", (req, res, next) => {
@@ -104,6 +110,16 @@ cron.schedule("0 * * * *", async () => {
         $unset: {
           resetPasswordToken: undefined,
           resetPasswordExpires: undefined,
+        },
+      },
+    );
+    // Remove email verification codes and expires for users with expired codes
+    await User.updateMany(
+      { emailVerificationExpires: { $lt: new Date() } },
+      {
+        $unset: {
+          emailVerificationCode: undefined,
+          emailVerificationExpires: undefined,
         },
       },
     );

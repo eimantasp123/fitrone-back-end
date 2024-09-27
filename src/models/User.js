@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema({
       message: "Passwords do not match",
     },
   },
-  phone: { type: String },
+  phone: { type: String, select: true, default: "" },
   firstName: {
     type: String,
     minlength: [2, "First name must be at least 2 characters long"],
@@ -57,15 +57,21 @@ const userSchema = new mongoose.Schema({
   facebookId: { type: String, unique: true, sparse: true },
   isVerified: { type: Boolean, default: false, select: false },
   registrationCompleted: { type: Boolean, default: false, select: false },
+  stripeCustomerId: { type: String, select: false },
   is2FAEnabled: { type: Boolean, default: false },
   emailVerificationCode: { type: String },
   emailVerificationExpires: { type: Date },
   twoFactorCode: { type: String },
+  twoFactorExpires: { type: Date },
   resetPasswordToken: { type: String },
   resetPasswordExpires: { type: Date },
-  twoFactorExpires: { type: Date },
   createdAt: { type: Date, default: Date.now },
   passwordChangedAt: { type: Date },
+  plan: {
+    type: String,
+    enum: ["base", "basic", "pro", "premium"],
+    default: "base",
+  },
 });
 
 // Document middleware to hash the password before saving

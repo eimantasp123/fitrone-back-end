@@ -38,14 +38,48 @@ const sendErrorDev = (err, res) => {
   });
 };
 
+// Handle Stripe errors
+const handleStripeError = (err) => {
+  let message;
+  switch (err.type) {
+    case "StripeCardError":
+      // A declined card error
+      message = err.message || "Your card was declined.";
+      break;
+    case "StripeInvalidRequestError":
+      // Invalid parameters were supplied to Stripe's API
+      message = "Invalid payment method or request parameters.";
+      break;
+    case "StripeAPIError":
+      // An error occurred internally with Stripe's API
+      message =
+        "There was an error processing your payment. Please try again later.";
+      break;
+    case "StripeConnectionError":
+      // Some kind of connection error occurred
+      message = "There was a network error. Please try again later.";
+      break;
+    case "StripeAuthenticationError":
+      // You probably used an incorrect API key
+      message =
+        "Authentication with the payment provider failed. Please try again later.";
+      break;
+    default:
+      message = "An error occurred while processing your payment.";
+  }
+  return new AppError(message, 400);
+};
+
 // Send error in production mode
 const sendErrorProd = (err, res) => {
   if (err.isOperational) {
+    // Operational error: trusted error we send to the client
     res.status(err.statusCode).json({
       status: err.status,
       message: err.message,
     });
   } else {
+    // Programming or other unknown error: don't leak details to the client
     console.error("ERROR 💥", err);
     res.status(500).json({
       status: "error",
@@ -66,15 +100,23 @@ module.exports = (err, req, res, next) => {
     // Send error in production
   } else if (process.env.NODE_ENV === "production") {
     let error = err;
+
+    // Handle Stripe errors
+    if (err.type && err.type.includes("Stripe")) error = handleStripeError(err);
+
     // Handle invalid CastErrorDB error
     if (error.code === 11000) error = handleDuplicateFieldsDB(error);
+
     // Handle validation error
     if (error.name === "ValidationError")
       error = handleValidationErrorDB(error);
+
     // Handle CastErrorDB error
     if (error.name === "CastError") error = handleCastErrorDB(error);
+
     // Handle invalid JWT error
     if (error.name === "JsonWebTokenError") error = handleJWTError(error);
+
     // Handle expired JWT error
     if (error.name === "TokenExpiredError")
       error = handleJWTExpiredError(error);
