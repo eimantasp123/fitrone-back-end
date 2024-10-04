@@ -6,13 +6,9 @@ const dietPlanSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-  status: {
-    type: String,
-    enum: ["pending", "approved", "rejected"],
-    default: "pending",
-  },
-  plan: {
-    type: Object,
+  planBalance: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "DietPlanBalance",
     required: true,
   },
   createdAt: {
@@ -22,11 +18,6 @@ const dietPlanSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now,
-  },
-  trainer: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
   },
 });
 

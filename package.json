@@ -3,7 +3,7 @@
     "@aws-sdk/client-s3": "^3.624.0",
     "@aws-sdk/s3-request-presigner": "^3.624.0",
     "aws-sdk": "^2.1668.0",
-    "axios": "^1.7.3",
+    "axios": "^1.7.7",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.3",
     "connect-mongo": "^5.1.0",

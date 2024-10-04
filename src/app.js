@@ -21,6 +21,8 @@ const globalErrorHandler = require("./controllers/errorController");
 const supportRoutes = require("./routes/supportRoutes");
 const mealPlanRoutes = require("./routes/mealPlanRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
+const subscriptionRoutes = require("./routes/subscriptionRoutes");
+const webhookRoutes = require("./utils/webhookRoutes");
 
 // Initialize express app
 const app = express();
@@ -35,7 +37,7 @@ if (process.env.NODE_ENV === "development") {
 
 // Rate limiting
 const limiter = rateLimit({
-  max: 600,
+  max: 500,
   windowMs: 60 * 60 * 1000,
   message: "Too many requests from this IP, please try again in an hour!",
 });
@@ -55,6 +57,9 @@ app.use(limiter);
 
 // Enable CORS for frontend access
 app.use(cors(corsOptions));
+
+// Stripe webhook
+app.use("/api/v1/webhook", webhookRoutes);
 
 // Body parser, reading data from body into req.body
 app.use(express.json());
@@ -83,6 +88,7 @@ app.use("/api/v1/feedback", feedbackRoutes);
 app.use("/api/v1/support", supportRoutes);
 app.use("/api/v1/meal-plan", mealPlanRoutes);
 app.use("/api/v1/payment", paymentRoutes);
+app.use("/api/v1/subscription", subscriptionRoutes);
 
 // Error handling for invalid routes
 app.all("*", (req, res, next) => {

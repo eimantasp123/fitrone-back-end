@@ -2,6 +2,7 @@ const User = require("../models/User");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const { createStripeCustomerIfNotExists } = require("../utils/stripeHelper");
 
 // Create a payment method
 exports.createPaymentMethod = catchAsync(async (req, res, next) => {
@@ -42,7 +43,7 @@ exports.getPaymentMethods = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.user.id).select("+stripeCustomerId");
 
   if (!user.stripeCustomerId) {
-    return next(new AppError("No payment methods found", 404));
+    return next(new AppError("User does not have a payment methods", 404));
   }
 
   // Get all payment methods for the customer
@@ -127,19 +128,6 @@ exports.setDefaultPaymentMethod = catchAsync(async (req, res, next) => {
     data: formattedPaymentMethods,
   });
 });
-
-// Create a Stripe customer if it doesn't exist
-const createStripeCustomerIfNotExists = async (user) => {
-  if (!user.stripeCustomerId) {
-    console.log("Creating a Stripe customer");
-    const customer = await stripe.customers.create({
-      email: user.email,
-    });
-    user.stripeCustomerId = customer.id;
-    await user.save();
-  }
-  return user.stripeCustomerId;
-};
 
 // Attach the payment method to the customer
 const attachPaymentMethodToCustomer = catchAsync(
