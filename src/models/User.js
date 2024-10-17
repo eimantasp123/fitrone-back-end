@@ -50,7 +50,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ["client", "trainer", "admin"],
+    enum: ["client", "supplier", "admin"],
     default: "client",
   },
   googleId: { type: String, unique: true, sparse: true },
@@ -66,31 +66,6 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpires: { type: Date },
   createdAt: { type: Date, default: Date.now },
   passwordChangedAt: { type: Date },
-  // Subscription fields
-  stripeCustomerId: { type: String, select: false },
-  stripeSubscriptionId: { type: String, select: false },
-  plan: {
-    type: String,
-    enum: ["base", "basic", "pro", "premium"],
-    default: "base",
-  },
-  subscriptionStatus: {
-    type: String,
-    enum: [
-      "active",
-      "trialing",
-      "canceled",
-      "past_due",
-      "incomplete",
-      "incomplete_expired",
-      "base",
-    ],
-    default: "base",
-  },
-  trialEnd: { type: Date, default: null },
-  subscriptionCancelAtPeriodEnd: { type: Boolean, default: false },
-  subscriptionCancelAt: { type: Date, default: null },
-  hasUsedFreeTrial: { type: Boolean, default: false },
 });
 
 // Document middleware to hash the password before saving

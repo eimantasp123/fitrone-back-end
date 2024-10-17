@@ -33,7 +33,7 @@ router.post("/logout", authController.logout);
 // Protected routes
 router.get(
   "/user",
-  authController.restrictTo("admin", "trainer", "client"),
+  authController.restrictTo("admin", "supplier", "client"),
   authController.getCurrentUser,
 );
 

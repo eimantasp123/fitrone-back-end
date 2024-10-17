@@ -5,7 +5,7 @@ const profileController = require("../controllers/profileController");
 
 const router = express.Router();
 router.use(authMiddleware);
-router.use(authController.restrictTo("admin", "trainer", "client"));
+router.use(authController.restrictTo("admin", "supplier", "client"));
 
 router.patch(
   "/image",

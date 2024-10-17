@@ -12,7 +12,7 @@ const router = express.Router();
 // Apply authentication middleware to all routes below this line
 router.use(authMiddleware);
 //
-router.use(authController.restrictTo("admin", "trainer", "client"));
+router.use(authController.restrictTo("admin", "supplier", "client"));
 //
 router.post("/add-payment-method", createPaymentMethod);
 router.get("/get-payment-methods", getPaymentMethods);
