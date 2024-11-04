@@ -53,5 +53,6 @@
     "start:prod": "NODE_ENV=production nodemon src/app.js",
     "debug": "ndb node src/app.js",
     "sqs": "node src/utils/sqsWorker.js"
-  }
+  },
+  "proxy": "http://192.168.8.11:5000"
 }

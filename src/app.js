@@ -44,6 +44,7 @@ const limiter = rateLimit({
 
 // CORS options
 const corsOptions = {
+  // origin: process.env.FRONTEND_URL,
   origin: process.env.FRONTEND_URL,
   methods: "GET, POST, PUT, DELETE, PATCH",
   credentials: true,
@@ -99,7 +100,11 @@ app.all("*", (req, res, next) => {
 app.use(globalErrorHandler);
 
 // Start server
-app.listen(process.env.PORT);
+const PORT = process.env.PORT || 5000;
+// app.listen(process.env.PORT);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server is running on http://0.0.0.0:${PORT}`);
+});
 
 // Cleanup expired two-factor codes and reset password tokens every hour
 cron.schedule("0 * * * *", async () => {

@@ -102,15 +102,12 @@ exports.updateProfileDetails = catchAsync(async (req, res, next) => {
       user[field] = req.body[field];
     }
   });
-  if (Object.keys(updates).length === 0) {
-    res.status(200).json({ message: "No changes made." });
-  } else {
-    await user.save({ validateBeforeSave: false });
-    res.status(200).json({
-      message: "Profile updated successfully",
-      updatedFields: updates,
-    });
-  }
+
+  await user.save({ validateBeforeSave: false });
+  res.status(200).json({
+    message: "Profile updated successfully",
+    updatedFields: updates,
+  });
 });
 
 // Update user password in the database
