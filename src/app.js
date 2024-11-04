@@ -10,6 +10,11 @@ const helmet = require("helmet");
 const mongoSanitize = require("express-mongo-sanitize");
 const xss = require("xss-clean");
 const hpp = require("hpp");
+const i18next = require("i18next");
+const Backend = require("i18next-fs-backend");
+const middleware = require("i18next-http-middleware");
+const path = require("path");
+
 //
 const connectDB = require("./config/dbConfig");
 const authRoutes = require("./routes/authRoutes");
@@ -24,8 +29,29 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const subscriptionRoutes = require("./routes/subscriptionRoutes");
 const webhookRoutes = require("./utils/webhookRoutes");
 
+// Initialize i18next
+i18next
+  .use(Backend)
+  .use(middleware.LanguageDetector)
+  .init({
+    fallbackLng: "en",
+    preload: ["en", "lt"], // Add all supported languages here
+    defaultNS: "common",
+    ns: ["common", "auth", "profile", "dashboard"],
+    backend: {
+      loadPath: path.join(__dirname, "/locales/{{lng}}/{{ns}}.json"),
+    },
+    detection: {
+      order: ["header", "querystring", "cookie"],
+      caches: ["cookie"],
+    },
+  });
+
 // Initialize express app
 const app = express();
+
+// Use the i18next middleware to attach `req.t` function to requests
+app.use(middleware.handle(i18next));
 
 // Connect to database
 connectDB();

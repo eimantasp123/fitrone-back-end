@@ -9,6 +9,8 @@ const User = require("../models/User");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const verificationHelper = require("../helper/verificationHelper");
+const path = require("path");
+const i18n = require("i18n");
 
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
@@ -105,7 +107,7 @@ exports.updateProfileDetails = catchAsync(async (req, res, next) => {
 
   await user.save({ validateBeforeSave: false });
   res.status(200).json({
-    message: "Profile updated successfully",
+    message: req.t("infoUpdate"),
     updatedFields: updates,
   });
 });
