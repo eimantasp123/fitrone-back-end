@@ -1,3 +1,18 @@
 {
-  "successUpdateDetails": "Profile details updated successfully"
+  "successUpdateDetails": "Profile details updated successfully",
+  "imageUpdatedSuccessfully": "Profile image updated successfully",
+  "imageDeleteSuccessfully": "Profile image deleted successfully",
+  "passwordChangedSuccessfully": "Password changed successfully",
+  "verifyCodeSendSuccessfully": "Verification code sent successfully",
+  "accountDeletedSuccessfully": "Account deleted successfully",
+  "twoFactorAuth": {
+    "status": "Two-Factor Authentication {{status}} successfully.",
+    "enabled": "enabled",
+    "disabled": "disabled"
+  },
+  "error": {
+    "changePassworWithSocialLogin": "You can not change password, because you use different login method.",
+    "oldPasswordNotMatch": "Old password is incorrect",
+    "invalidOrExpiredCode": "Invalid or expired code"
+  }
 }

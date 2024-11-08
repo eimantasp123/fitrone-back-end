@@ -1,3 +1,15 @@
 {
-  "infoUpdate": "Information updated successfully"
+  "informationUpdated": "Information updated successfully",
+  "supportMessageSent": "Your  request has been sent to the support team. You will be contacted soon.",
+  "feedbackMessageSent": "Thank you for your feedback!",
+  "error": {
+    "missingMessageOrSubject": "Please provide message and subject",
+    "missingCommentAndRating": "Please provide a comment and rating",
+    "tokenNotExists": "The user belonging to this token does no longer exist.",
+    "changePasswordLoginAgain": "User recently changed password! Please log in again.",
+    "unexpectedError": "An unexpected error occurred"
+  },
+  "userNotFound": "User not found",
+  "noFileUploaded": "No file uploaded",
+  "pleaseLoginAgain": "Please log in to get access"
 }

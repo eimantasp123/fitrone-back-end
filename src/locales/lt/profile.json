@@ -1,3 +1,18 @@
 {
-  "successUpdateDetails": "Sėkmingai atnaujinti profilio duomenys"
+  "successUpdateDetails": "Sėkmingai atnaujinti profilio duomenys",
+  "imageUpdatedSuccessfully": "Profilio nuotrauka sėkmingai atnaujinta",
+  "imageDeleteSuccessfully": "Profilio nuotrauka ištrinta sėkmingai",
+  "passwordChangedSuccessfully": "Slaptažodis pakeistas sėkmingai",
+  "verifyCodeSendSuccessfully": "Patvirtinimo kodas išsiųstas sėkmingai",
+  "accountDeletedSuccessfully": "Paskyra ištrinta sėkmingai",
+  "twoFactorAuth": {
+    "status": " Dviejų veiksnių autentifikacija {{status}} sėkmingai.",
+    "enabled": "įjungta",
+    "disabled": "išjungta"
+  },
+  "error": {
+    "changePassworWithSocialLogin": "Jūs negalite pakeisti slaptažodžio, nes naudojate skirtingą prisijungimo būdą.",
+    "oldPasswordNotMatch": "Senas slaptažodis neteisingas",
+    "invalidOrExpiredCode": "Neteisingas arba pasibaigęs kodas"
+  }
 }

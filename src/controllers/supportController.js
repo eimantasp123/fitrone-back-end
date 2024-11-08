@@ -6,7 +6,7 @@ exports.support = catchAsync(async (req, res, next) => {
   console.log(req.body);
   const { message, subject, email, name } = req.body;
   if (!message || !subject) {
-    return next(new AppError("Please provide message and subject", 400));
+    return next(new AppError(req.t("error.missingMessageOrSubject"), 400));
   }
   // Create message
   const support = await Support.create({
@@ -20,6 +20,6 @@ exports.support = catchAsync(async (req, res, next) => {
   support.save();
   return res.status(200).json({
     status: "success",
-    message: "Message submitted successfully!",
+    message: req.t("supportMessageSent"),
   });
 });

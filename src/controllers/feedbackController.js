@@ -6,7 +6,7 @@ exports.feedback = catchAsync(async (req, res, next) => {
   const { comment, rating } = req.body;
   // Check if comment and rating are provided
   if (!comment || !rating) {
-    return next(new AppError("Please provide a comment and rating", 400));
+    return next(new AppError(req.t("error.missingCommentAndRating"), 400));
   }
   // Create feedback
   const feedback = await Feedback.create({
@@ -18,6 +18,6 @@ exports.feedback = catchAsync(async (req, res, next) => {
   feedback.save();
   return res.status(200).json({
     status: "success",
-    message: "Feedback submitted successfully!",
+    message: req.t("feedbackMessageSent"),
   });
 });

@@ -50,8 +50,8 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ["client", "supplier", "admin"],
-    default: "client",
+    enum: ["supplier", "admin"],
+    default: "supplier",
   },
   googleId: { type: String, unique: true, sparse: true },
   facebookId: { type: String, unique: true, sparse: true },

@@ -14,7 +14,6 @@ const i18next = require("i18next");
 const Backend = require("i18next-fs-backend");
 const middleware = require("i18next-http-middleware");
 const path = require("path");
-
 //
 const connectDB = require("./config/dbConfig");
 const authRoutes = require("./routes/authRoutes");
@@ -25,7 +24,6 @@ const AppError = require("./utils/appError");
 const globalErrorHandler = require("./controllers/errorController");
 const supportRoutes = require("./routes/supportRoutes");
 const mealPlanRoutes = require("./routes/mealPlanRoutes");
-const paymentRoutes = require("./routes/paymentRoutes");
 const subscriptionRoutes = require("./routes/subscriptionRoutes");
 const webhookRoutes = require("./utils/webhookRoutes");
 
@@ -114,7 +112,6 @@ app.use("/api/v1/profile", profileRoutes);
 app.use("/api/v1/feedback", feedbackRoutes);
 app.use("/api/v1/support", supportRoutes);
 app.use("/api/v1/meal-plan", mealPlanRoutes);
-app.use("/api/v1/payment", paymentRoutes);
 app.use("/api/v1/subscription", subscriptionRoutes);
 
 // Error handling for invalid routes

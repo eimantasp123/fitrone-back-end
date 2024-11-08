@@ -1,3 +1,15 @@
 {
-  "infoUpdate": "Informacija atnaujinta sėkmingai"
+  "informationUpdated": "Informacija atnaujinta sėkmingai",
+  "supportMessageSent": "Jūsų užklausa išsiųsta palaikymo komandai. Su jumis bus susisiekta netrukus.",
+  "feedbackMessageSent": "Dėkojame už jūsų atsiliepimą!",
+  "error": {
+    "missingMessageOrSubject": "Prašome pateikti žinutę ir temą",
+    "missingCommentAndRating": "Prašome įvertinti ir palikti komentarą",
+    "tokenNotExists": "Šiam žetonui priklausantis vartotojas daugiau neegzistuoja.",
+    "changePasswordLoginAgain": "Vartotojas neseniai pakeitė slaptažodį! Prašome prisijungti iš naujo.",
+    "unexpectedError": "Įvyko netikėta klaida"
+  },
+  "userNotFound": "Vartotojas nerastas",
+  "noFileUploaded": "Nepasirinktas joks failas",
+  "pleaseLoginAgain": "Prašome prisijungti, kad gautumėte prieigą"
 }
