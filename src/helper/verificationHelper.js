@@ -5,7 +5,7 @@ const AppError = require("../utils/appError");
 const { sendMessageToQueue } = require("../utils/awsHelper");
 
 // Handle sending password reset email
-exports.handleSendPasswordResetEmail = async (user, res, next) => {
+exports.handleSendPasswordResetEmail = async (user, res, req, next) => {
   try {
     await sendMessageToQueue(
       { userId: user._id },
@@ -13,16 +13,15 @@ exports.handleSendPasswordResetEmail = async (user, res, next) => {
     );
     res.status(200).json({
       status: "success",
-      message: "Reset password email sent successfully",
+      message: req.t("auth:resetPasswordTokenSend", { email: user.email }),
+      description: req.t("auth:resetPasswordTokenSendDescription", {
+        email: user.email,
+      }),
+      email: user.email,
     });
   } catch (error) {
     console.error("Error sending password reset email:", error);
-    return next(
-      new AppError(
-        "There was an error sending the password reset email. Try again later",
-        500,
-      ),
-    );
+    return next(new AppError(req.t("auth:error.sendingEmail"), 500));
   }
 };
 
@@ -68,34 +67,23 @@ exports.send2FACode = async (user, next) => {
     return await user.save({ validateBeforeSave: false });
   } catch (error) {
     console.error("Error sending 2FA code:", error);
-    return next(
-      new AppError(
-        "There was an error sending the 2FA code. Try again later",
-        500,
-      ),
-    );
+    return next(new AppError(req.t("auth:error.sending2FA"), 500));
   }
 };
 
 // Handle sending email verification code
-exports.handleVerificationEmailSending = async (user, res, next) => {
+exports.handleVerificationEmailSending = async (user, res, req, next) => {
   try {
     await sendMessageToQueue({ userId: user._id }, process.env.EMAIL_SQS_URL);
     //
     res.status(200).json({
       status: "success",
-      message:
-        "Enter the verification code from the email in your inbox or spam folder sent to",
+      message: req.t("auth:verifyEmailSendSuccessfuly", { email: user.email }),
       email: user.email,
     });
   } catch (error) {
     console.error("Error sending verification email:", error);
-    return next(
-      new AppError(
-        "There was an error sending the email. Try again later",
-        500,
-      ),
-    );
+    return next(new AppError(req.t("auth:error.sendingEmail"), 500));
   }
 };
 
@@ -129,6 +117,6 @@ exports.sendTokensAndCookies = (user, res, message) => {
   setAuthCookies(res, accessToken, refreshToken);
   res.status(200).json({
     status: "success",
-    message,
+    message: message,
   });
 };

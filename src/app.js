@@ -35,7 +35,7 @@ i18next
     fallbackLng: "en",
     preload: ["en", "lt"], // Add all supported languages here
     defaultNS: "common",
-    ns: ["common", "auth", "profile", "dashboard"],
+    ns: ["common", "auth", "profile"],
     backend: {
       loadPath: path.join(__dirname, "/locales/{{lng}}/{{ns}}.json"),
     },
