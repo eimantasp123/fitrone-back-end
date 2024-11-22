@@ -1,10 +1,7 @@
 const express = require("express");
 const authMiddleware = require("../middlewares/authMiddleware");
 const authController = require("../controllers/authController");
-const {
-  getIngredientInfo,
-  getIngredientInfoById,
-} = require("../controllers/mealsController");
+const { getIngredientInfo } = require("../controllers/mealsController");
 
 const router = express.Router();
 
@@ -14,6 +11,5 @@ router.use(authMiddleware);
 router.use(authController.restrictTo("admin", "supplier"));
 
 router.post("/ingredient", getIngredientInfo);
-router.get("/ingredient/:id", getIngredientInfoById);
 
 module.exports = router;
