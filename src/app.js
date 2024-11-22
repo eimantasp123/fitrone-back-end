@@ -19,6 +19,7 @@ const connectDB = require("./config/dbConfig");
 const authRoutes = require("./routes/authRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 const feedbackRoutes = require("./routes/feedbackRoutes");
+const mealsRoutes = require("./routes/mealsRoutes");
 const User = require("./models/User");
 const AppError = require("./utils/appError");
 const globalErrorHandler = require("./controllers/errorController");
@@ -113,6 +114,7 @@ app.use("/api/v1/feedback", feedbackRoutes);
 app.use("/api/v1/support", supportRoutes);
 app.use("/api/v1/meal-plan", mealPlanRoutes);
 app.use("/api/v1/subscription", subscriptionRoutes);
+app.use("/api/v1/meals", mealsRoutes);
 
 // Error handling for invalid routes
 app.all("*", (req, res, next) => {
