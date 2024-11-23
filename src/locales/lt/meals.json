@@ -1,0 +1,17 @@
+{
+  "ingredientAddedSuccesfuly": "Ingredientas pridėtas sėkmingai",
+  "mealAddedSuccessfully": "Patiekalas pridėtas sėkmingai",
+  "mealDeletedSuccessfully": "Patiekalas ištrintas sėkmingai",
+  "mealUpdatedSuccessfully": "Patiekalas atnaujintas sėkmingai",
+
+  "error": {
+    "queryRequired": "Užklausos parametras yra privalomas",
+    "ingredientExists": "Ingredientas jau egzistuoja",
+    "noIngredientsFound": "Ingredientų nerasta",
+    "noIngredientsInDatabase": "Duomenų bazėje nėra ingredientų",
+    "missingRequiredFields": "Trūksta privalomų laukų",
+    "titleMustBeUnique": "Pavadinimas jau egzistuoja",
+    "idRequired": "ID yra privalomas",
+    "mealNotFound": "Patiekalas nerastas"
+  }
+}

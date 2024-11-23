@@ -1,0 +1,17 @@
+{
+  "ingredientAddedSuccesfuly": "Ingredient added successfully",
+  "mealAddedSuccessfully": "Meal added successfully",
+  "mealDeletedSuccessfully": "Meal deleted successfully",
+  "mealUpdatedSuccessfully": "Meal updated successfully",
+
+  "error": {
+    "queryRequired": "Query parameter is required",
+    "ingredientExists": "Ingredient already exists",
+    "noIngredientsFound": "No ingredients found",
+    "noIngredientsInDatabase": "No ingredients in database",
+    "missingRequiredFields": "Missing required fields",
+    "titleMustBeUnique": "Title exists already",
+    "idRequired": "ID is required",
+    "mealNotFound": "Meal not found"
+  }
+}
