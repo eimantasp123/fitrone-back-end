@@ -80,6 +80,10 @@ const mealSchema = new mongoose.Schema(
       type: [String], // Array of dietary restrictions
       default: [],
     },
+    category: {
+      type: String,
+      required: true,
+    },
     createdAt: {
       type: Date,
       default: Date.now,

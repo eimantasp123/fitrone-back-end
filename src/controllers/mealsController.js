@@ -213,6 +213,7 @@ exports.addMeal = catchAsync(async (req, res, next) => {
     title: data.title,
     description: data.description || "",
     ingredients: data.ingredients,
+    category: data.category || "",
     nutrition: {
       calories: data.nutrition.calories,
       protein: data.nutrition.protein,
@@ -244,8 +245,34 @@ exports.addMeal = catchAsync(async (req, res, next) => {
 // Get all meals for the user
 //
 exports.getMeals = catchAsync(async (req, res, next) => {
+  const { page = 1, limit = 10, category, preference, restriction } = req.query;
+
+  // Pagination options
+  const skip = (page - 1) * limit;
+
   // Query the database for all meals for the user
-  const meals = await Meal.find({ user: req.user._id }).sort({ createdAt: -1 });
+  const query = { user: req.user._id };
+
+  if (category) {
+    query.category = category;
+  }
+
+  if (preference) {
+    query.preferences = preference;
+  }
+
+  if (restriction) {
+    query.restrictions = restriction;
+  }
+
+  // Get the total number of results
+  const totalResults = await Meal.countDocuments(query);
+
+  // Fetch filtered meals with pagination
+  const meals = await Meal.find(query)
+    .skip(skip)
+    .limit(parseInt(limit))
+    .sort({ createdAt: -1 }); // Newest first
 
   // Format response object
   const formattedMeals = meals.map((meal) => {
@@ -260,6 +287,9 @@ exports.getMeals = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     results: meals.length,
+    totalResults,
+    totalPages: Math.ceil(totalResults / limit),
+    currentPage: parseInt(page),
     data: formattedMeals,
   });
 });
@@ -350,6 +380,7 @@ exports.updateMeal = catchAsync(async (req, res, next) => {
   delete formattedMeal.__v;
   delete formattedMeal.updatedAt;
 
+  console.log("formattedMeal", formattedMeal);
   // Send the response
   res.status(200).json({
     status: "success",
