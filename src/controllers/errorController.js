@@ -8,16 +8,22 @@ const handleCastErrorDB = (err) => {
 
 // Handle duplicate fields error
 const handleDuplicateFieldsDB = (err) => {
-  const value = err.errmsg.match(/(["'])(\\?.)*?\1/)[0];
-  const message = `${value} already exists. Please use another value!`;
+  const field = Object.keys(err.keyValue)[0]; // Extract the field causing the duplication
+  const value = err.keyValue[field]; // Extract the duplicated value
+  const message = `${field} with value "${value}" already exists. Please use another value!`;
   return new AppError(message, 400);
 };
 
 // Handle validation error
 const handleValidationErrorDB = (err) => {
-  const errors = Object.values(err.errors).map((el) => el.message);
-  const message = `Invalid input data. ${errors.join(". ")}`;
-  return new AppError(message, 400);
+  const errors = Object.values(err.errors).map((el) => ({
+    field: el.path,
+    message: el.message,
+    kind: el.kind,
+    value: el.value,
+  }));
+  const message = "Validation failed. Please check the input data.";
+  return new AppError(message, 400, errors);
 };
 
 // Handle invalid JWT error

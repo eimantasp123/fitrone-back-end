@@ -380,7 +380,6 @@ exports.updateMeal = catchAsync(async (req, res, next) => {
   delete formattedMeal.__v;
   delete formattedMeal.updatedAt;
 
-  console.log("formattedMeal", formattedMeal);
   // Send the response
   res.status(200).json({
     status: "success",

@@ -60,9 +60,11 @@ const mealSchema = new mongoose.Schema(
     title: {
       type: String,
       required: true, // The title of the meal
+      maxLength: 70, // Maximum length of 70 characters
     },
     description: {
       type: String,
+      maxLength: 500, // Maximum length of 200 characters
     },
     ingredients: {
       type: [ingredientSchema], // Array of ingredients

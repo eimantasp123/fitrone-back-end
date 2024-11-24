@@ -27,6 +27,7 @@ const supportRoutes = require("./routes/supportRoutes");
 const mealPlanRoutes = require("./routes/mealPlanRoutes");
 const subscriptionRoutes = require("./routes/subscriptionRoutes");
 const webhookRoutes = require("./utils/webhookRoutes");
+const { nullable } = require("zod");
 
 // Initialize i18next
 i18next
@@ -132,20 +133,20 @@ app.listen(PORT, "0.0.0.0", () => {
 });
 
 // Cleanup expired two-factor codes and reset password tokens every hour
-cron.schedule("0 * * * *", async () => {
+cron.schedule("0 0 * * * *", async () => {
   try {
     // Remove two-factor codes and expires for users with expired codes
     await User.updateMany(
       { twoFactorExpires: { $lt: new Date() } },
-      { $unset: { twoFactorCode: undefined, twoFactorExpires: undefined } },
+      { $unset: { twoFactorCode: null, twoFactorExpires: null } },
     );
     // Remove reset password tokens and expires for users with expired tokens
     await User.updateMany(
       { resetPasswordExpires: { $lt: new Date() } },
       {
         $unset: {
-          resetPasswordToken: undefined,
-          resetPasswordExpires: undefined,
+          resetPasswordToken: null,
+          resetPasswordExpires: null,
         },
       },
     );
@@ -154,8 +155,8 @@ cron.schedule("0 * * * *", async () => {
       { emailVerificationExpires: { $lt: new Date() } },
       {
         $unset: {
-          emailVerificationCode: undefined,
-          emailVerificationExpires: undefined,
+          emailVerificationCode: null,
+          emailVerificationExpires: null,
         },
       },
     );
