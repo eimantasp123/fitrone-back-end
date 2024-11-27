@@ -12,6 +12,11 @@
     "missingRequiredFields": "Missing required fields",
     "titleMustBeUnique": "Title exists already",
     "idRequired": "ID is required",
-    "mealNotFound": "Meal not found"
+    "mealNotFound": "Meal not found",
+    "invalidImageFile": "Invalid image file",
+    "uploadingImage": "Error uploading image",
+    "invalidRequest": "Invalid JSON in request body",
+    "invalidFormatForIngredients": "Invalid format for ingredients",
+    "imageDeleteFailed": "Failed to delete image"
   }
 }

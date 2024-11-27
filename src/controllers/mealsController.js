@@ -6,10 +6,17 @@ const { zodResponseFormat } = require("openai/helpers/zod");
 const UserIngredient = require("../models/UserIngredient");
 const Meal = require("../models/Meal");
 const { default: mongoose } = require("mongoose");
+const sharp = require("sharp");
+const { v4: uuidv4 } = require("uuid");
+const multer = require("multer");
+const {
+  validateFile,
+  uploadToS3,
+  deleteFromS3,
+} = require("../utils/s3Helpers");
 
 // auth for openai
 const openAi = new openai(process.env.OPENAI_API_KEY);
-
 // Schema for the nutrition information
 const nutritionSchema = z.object({
   title: z.object({
@@ -186,42 +193,93 @@ exports.getIngredientSearch = catchAsync(async (req, res, next) => {
 });
 
 //
+// AWS S3 file upload
 //
+//
+
+const storage = multer.memoryStorage();
+exports.upload = multer({ storage });
+
+//
+const DEFAULT_IMAGE_URL =
+  "https://fitronelt.s3.eu-north-1.amazonaws.com/cb169cd415.jpg";
+const maxFileSize = 5 * 1024 * 1024; // 5MB
+const allowedFileTypes = ["image/jpeg", "image/png", "image/jpg"]; // Allowed image types
+
 // Add meal to the user meal document
 //
 exports.addMeal = catchAsync(async (req, res, next) => {
-  const data = req.body;
+  const { title, description, category, calories, protein, fat, carbs } =
+    req.body;
 
-  // Ensure all necessary fields are provided
-  if (!data.title || !data.ingredients || !data.nutrition) {
+  // Ensure required fields are present
+  if (!title || !category || !req.body.ingredients) {
     return next(new AppError(req.t("meals:error.missingRequiredFields"), 400));
   }
+
+  // Parse JSON fields
+  const ingredients = JSON.parse(req.body.ingredients);
+  const preferences = req.body.preferences
+    ? JSON.parse(req.body.preferences)
+    : [];
+  const restrictions = req.body.restrictions
+    ? JSON.parse(req.body.restrictions)
+    : [];
 
   // Check if a meal with the same title already exists for this user
   const existingMeal = await Meal.findOne({
     user: req.user._id,
-    title: data.title,
+    title: title,
   });
 
   if (existingMeal) {
     return next(new AppError(req.t("meals:error.titleMustBeUnique"), 400));
   }
 
+  let mealImageUrl = DEFAULT_IMAGE_URL;
+
+  if (req.file) {
+    // Validate file type and size
+    if (!validateFile(req.file, allowedFileTypes, maxFileSize)) {
+      return next(new AppError(req.t("meals:error.invalidImageFile"), 400));
+    }
+
+    // Compress and upload image
+    try {
+      const userId = req.user._id.toString();
+      const fileName = `users/${userId}/meals/${uuidv4()}-${req.file.originalname}`;
+
+      const compressedImageBuffer = await sharp(req.file.buffer)
+        .resize({ width: 800 })
+        .jpeg({ quality: 80 })
+        .toBuffer();
+
+      mealImageUrl = await uploadToS3(
+        fileName,
+        compressedImageBuffer,
+        req.file.mimetype,
+      );
+    } catch (error) {
+      return next(new AppError(req.t("meals:error.uploadingImage"), 500));
+    }
+  }
+
   // Build the meal object based on the request data
   const newMeal = {
     user: req.user._id,
-    title: data.title,
-    description: data.description || "",
-    ingredients: data.ingredients,
-    category: data.category || "",
+    title,
+    description: description || "",
+    image: mealImageUrl,
+    ingredients,
     nutrition: {
-      calories: data.nutrition.calories,
-      protein: data.nutrition.protein,
-      fat: data.nutrition.fat,
-      carbs: data.nutrition.carbs,
+      calories,
+      protein,
+      fat,
+      carbs,
     },
-    preferences: data.preferences || [],
-    restrictions: data.restrictions || [],
+    preferences,
+    restrictions,
+    category,
   };
 
   // Create and save the new meal document
@@ -237,6 +295,201 @@ exports.addMeal = catchAsync(async (req, res, next) => {
     status: "success",
     message: req.t("meals:mealAddedSuccessfully"),
     data: formattedMeal,
+  });
+});
+
+//
+//
+// Update meal for the user
+//
+exports.updateMeal = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const updatedData = req.body;
+
+  // Check if the id parameter is provided
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    return next(new AppError(req.t("meals:error.idRequired"), 400));
+  }
+
+  // Query the database for the meal to update
+  const meal = await Meal.findOne({
+    user: req.user._id,
+    _id: id,
+  });
+
+  // Check if the meal exists
+  if (!meal) {
+    return next(new AppError(req.t("meals:error.mealNotFound"), 404));
+  }
+
+  // Ensure all necessary fields are provided
+  if (!updatedData.title || !updatedData.ingredients) {
+    return next(new AppError(req.t("meals:error.missingRequiredFields"), 400));
+  }
+
+  // Parse fields that might be sent as JSON strings
+  try {
+    if (typeof req.body.ingredients === "string") {
+      req.body.ingredients = JSON.parse(req.body.ingredients);
+    }
+    if (typeof req.body.preferences === "string") {
+      req.body.preferences = JSON.parse(req.body.preferences);
+    }
+    if (typeof req.body.restrictions === "string") {
+      req.body.restrictions = JSON.parse(req.body.restrictions);
+    }
+  } catch (error) {
+    return next(new AppError(req.t("meals:error.invalidRequest"), 400));
+  }
+
+  // Validate that `ingredients` is an array of objects
+  if (
+    !Array.isArray(req.body.ingredients) ||
+    req.body.ingredients.some((item) => typeof item !== "object")
+  ) {
+    return next(
+      new AppError(req.t("meals:error.invalidFormatForIngredients"), 400),
+    );
+  }
+
+  // Check if a meal with the same title already exists for this user
+  const existingMeal = await Meal.findOne({
+    user: req.user._id,
+    title: updatedData.title,
+    _id: { $ne: id },
+  });
+
+  // If the meal already exists, send an error response
+  if (existingMeal) {
+    return next(new AppError(req.t("meals:error.titleMustBeUnique"), 400));
+  }
+
+  // Update the meal
+  meal.title = req.body.title || meal.title;
+  meal.description = req.body.description || meal.description;
+  meal.category = req.body.category || meal.category;
+  meal.nutrition = {
+    calories: req.body.calories,
+    protein: req.body.protein,
+    carbs: req.body.carbs,
+    fat: req.body.fat,
+  };
+  meal.ingredients = req.body.ingredients;
+  meal.preferences = req.body.preferences || [];
+  meal.restrictions = req.body.restrictions || [];
+
+  // Handle image upload/update
+  if (req.file) {
+    // Validate file type and size
+    if (!validateFile(req.file, allowedFileTypes, maxFileSize)) {
+      return next(new AppError(req.t("meals:error.invalidImageFile"), 400));
+    }
+
+    // Delete the old image if it's not the default image
+    if (meal.image && !meal.image.includes(DEFAULT_IMAGE_URL)) {
+      const s3Key = meal.image.replace(
+        `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`,
+        "",
+      );
+      try {
+        await deleteFromS3(s3Key);
+      } catch (error) {
+        return next(new AppError(req.t("meals:error.imageDeleteFailed"), 500));
+      }
+    }
+
+    // Compress and upload the new image
+    try {
+      const newImageKey = `users/${req.user._id}/meals/${uuidv4()}-${req.file.originalname}`;
+      const compressedImageBuffer = await sharp(req.file.buffer)
+        .resize({ width: 800 })
+        .jpeg({ quality: 80 })
+        .toBuffer();
+      meal.image = await uploadToS3(
+        newImageKey,
+        compressedImageBuffer,
+        req.file.mimetype,
+      );
+    } catch (error) {
+      return next(new AppError(req.t("meals:error.uploadingImage"), 500));
+    }
+  } else if (updatedData.image === "delete") {
+    // If image deletion is requested, delete the old image and set to default
+    if (meal.image && !meal.image.includes(DEFAULT_IMAGE_URL)) {
+      const s3Key = meal.image.replace(
+        `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`,
+        "",
+      );
+      try {
+        await deleteFromS3(s3Key);
+      } catch (error) {
+        return next(new AppError(req.t("meals:error.imageDeleteFailed"), 500));
+      }
+    }
+    meal.image = DEFAULT_IMAGE_URL;
+  }
+
+  // Update the meal fields
+  const updatedMeal = await meal.save();
+
+  // Format response object
+  const formattedMeal = updatedMeal.toObject();
+  delete formattedMeal.user;
+  delete formattedMeal.__v;
+  delete formattedMeal.updatedAt;
+
+  // Send the response
+  res.status(200).json({
+    status: "success",
+    message: req.t("meals:mealUpdatedSuccessfully"),
+    data: formattedMeal,
+  });
+});
+
+//
+//
+// Delete meal for the user
+//
+exports.deleteMeal = catchAsync(async (req, res, next) => {
+  const { mealId: id } = req.query;
+
+  // Check if the id parameter is provided
+  if (!id) {
+    return next(new AppError(req.t("meals:error.idRequired"), 400));
+  }
+
+  // Query the database for the meal to delete
+  const mealToDelete = await Meal.findOne({
+    user: req.user._id,
+    _id: id,
+  }).select("-user");
+
+  // Check if the meal exists
+  if (!mealToDelete) {
+    return next(new AppError(req.t("meals:error.mealNotFound"), 404));
+  }
+
+  // Delete image from S3 if it exists and is not the default image
+  if (mealToDelete.image && !mealToDelete.image.includes(DEFAULT_IMAGE_URL)) {
+    const s3Key = mealToDelete.image.replace(
+      `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`,
+      "",
+    );
+    try {
+      await deleteFromS3(s3Key);
+    } catch (error) {
+      return next(new AppError(req.t("meals:error.imageDeleteFailed"), 500));
+    }
+  }
+
+  // Delete the meal
+  await mealToDelete.deleteOne();
+
+  // Send the response
+  res.status(200).json({
+    status: "success",
+    message: req.t("meals:mealDeletedSuccessfully"),
+    data: mealToDelete,
   });
 });
 
@@ -291,99 +544,5 @@ exports.getMeals = catchAsync(async (req, res, next) => {
     totalPages: Math.ceil(totalResults / limit),
     currentPage: parseInt(page),
     data: formattedMeals,
-  });
-});
-
-//
-//
-// Delete meal for the user
-//
-exports.deleteMeal = catchAsync(async (req, res, next) => {
-  const { mealId: id } = req.query;
-
-  // Check if the id parameter is provided
-  if (!id) {
-    return next(new AppError(req.t("meals:error.idRequired"), 400));
-  }
-
-  // Query the database for the meal to delete
-  const deletedMeal = await Meal.findOneAndDelete({
-    user: req.user._id,
-    _id: id,
-  }).select("-user");
-
-  // Check if the meal exists
-  if (!deletedMeal) {
-    return next(new AppError(req.t("meals:error.mealNotFound"), 404));
-  }
-
-  // Send the response
-  res.status(200).json({
-    status: "success",
-    message: req.t("meals:mealDeletedSuccessfully"),
-    data: deletedMeal,
-  });
-});
-
-//
-//
-// Update meal for the user
-//
-exports.updateMeal = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-  const updatedData = req.body;
-
-  // Check if the id parameter is provided
-  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-    return next(new AppError(req.t("meals:error.idRequired"), 400));
-  }
-
-  // Ensure all necessary fields are provided
-  if (
-    !updatedData.title ||
-    !updatedData.ingredients ||
-    !updatedData.nutrition
-  ) {
-    return next(new AppError(req.t("meals:error.missingRequiredFields"), 400));
-  }
-
-  // Check if a meal with the same title already exists for this user
-  const existingMeal = await Meal.findOne({
-    user: req.user._id,
-    title: updatedData.title,
-    _id: { $ne: id },
-  });
-
-  // If the meal already exists, send an error response
-  if (existingMeal) {
-    return next(new AppError(req.t("meals:error.titleMustBeUnique"), 400));
-  }
-
-  // Query the database for the meal to update
-  const meal = await Meal.findOne({
-    user: req.user._id,
-    _id: id,
-  });
-
-  // Check if the meal exists
-  if (!meal) {
-    return next(new AppError(req.t("meals:error.mealNotFound"), 404));
-  }
-
-  // Update the meal fields
-  Object.assign(meal, updatedData);
-  const updatedMeal = await meal.save();
-
-  // Format response object
-  const formattedMeal = updatedMeal.toObject();
-  delete formattedMeal.user;
-  delete formattedMeal.__v;
-  delete formattedMeal.updatedAt;
-
-  // Send the response
-  res.status(200).json({
-    status: "success",
-    message: req.t("meals:mealUpdatedSuccessfully"),
-    data: formattedMeal,
   });
 });

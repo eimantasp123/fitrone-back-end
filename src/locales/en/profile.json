@@ -13,6 +13,8 @@
   "error": {
     "changePassworWithSocialLogin": "You can not change password, because you use different login method.",
     "oldPasswordNotMatch": "Old password is incorrect",
-    "invalidOrExpiredCode": "Invalid or expired code"
+    "invalidOrExpiredCode": "Invalid or expired code",
+    "deletingProfileImage": "Error deleting existing profile image",
+    "uploadingProfileImage": "Error uploading profile image"
   }
 }

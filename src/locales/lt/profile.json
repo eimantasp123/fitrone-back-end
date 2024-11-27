@@ -13,6 +13,8 @@
   "error": {
     "changePassworWithSocialLogin": "Jūs negalite pakeisti slaptažodžio, nes naudojate skirtingą prisijungimo būdą.",
     "oldPasswordNotMatch": "Senas slaptažodis neteisingas",
-    "invalidOrExpiredCode": "Neteisingas arba pasibaigęs kodas"
+    "invalidOrExpiredCode": "Neteisingas arba pasibaigęs kodas",
+    "deletingProfileImage": "Klaida ištrinant esamą profilio nuotrauką",
+    "uploadingProfileImage": "Klaida įkeliant profilio nuotrauką"
   }
 }

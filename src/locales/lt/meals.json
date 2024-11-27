@@ -12,6 +12,11 @@
     "missingRequiredFields": "Trūksta privalomų laukų",
     "titleMustBeUnique": "Pavadinimas jau egzistuoja",
     "idRequired": "ID yra privalomas",
-    "mealNotFound": "Patiekalas nerastas"
+    "mealNotFound": "Patiekalas nerastas",
+    "invalidImageFile": "Netinkamas nuotraukos failas",
+    "uploadingImage": "Klaida įkeliant nuotrauką",
+    "invalidRequest": "Netinkamas JSON užklausa",
+    "invalidFormatForIngredients": "Netinkamas formatas ingredientams",
+    "imageDeleteFailed": "Nepavyko ištrinti nuotraukos"
   }
 }

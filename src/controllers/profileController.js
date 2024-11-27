@@ -1,64 +1,77 @@
-const {
-  S3Client,
-  PutObjectCommand,
-  DeleteObjectCommand,
-} = require("@aws-sdk/client-s3");
 const multer = require("multer");
 const { v4: uuidv4 } = require("uuid");
 const User = require("../models/User");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const verificationHelper = require("../helper/verificationHelper");
-const path = require("path");
-const i18n = require("i18n");
-
-const s3 = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
+const sharp = require("sharp");
+const {
+  validateFile,
+  uploadToS3,
+  deleteFromS3,
+} = require("../utils/s3Helpers");
+const maxFileSize = 5 * 1024 * 1024; // 5MB
+const allowedFileTypes = ["image/jpeg", "image/png", "image/jpg"]; // Allowed image types
 
 const storage = multer.memoryStorage();
 exports.upload = multer({ storage });
+const DEFAULT_PROFILE_IMAGE =
+  "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
 
 // Upload profile image to AWS S3 bucket and update user profile image
 exports.uploadImage = catchAsync(async (req, res, next) => {
   if (!req.file) {
     return next(new AppError(req.t("noFileUploaded"), 400));
   }
-  const fileContent = req.file.buffer;
-  const fileName = `${uuidv4()}-${req.file.originalname}`;
-  // Find user by id
+  // Validate file type and size
+  if (!validateFile(req.file, allowedFileTypes, maxFileSize)) {
+    return next(new AppError("Invalid file type or size exceeds limit", 400));
+  }
+
+  // Find user by ID
   const user = await User.findById(req.user.id);
   if (!user) {
     return next(new AppError(req.t("userNotFound"), 404));
   }
+
   // Delete existing profile image from AWS S3 bucket
-  if (user.profileImage && !user.profileImage.includes("gravatar.com")) {
-    const existingImageName = user.profileImage.split("/").pop();
-    const deleteParams = {
-      Bucket: process.env.AWS_BUCKET_NAME,
-      Key: existingImageName,
-    };
-    const deleteCommand = new DeleteObjectCommand(deleteParams);
-    await s3.send(deleteCommand);
+  if (user.profileImage && !user.profileImage.includes(DEFAULT_PROFILE_IMAGE)) {
+    const existingImageKey = user.profileImage.replace(
+      `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`,
+      "",
+    );
+
+    try {
+      await deleteFromS3(existingImageKey);
+    } catch (err) {
+      return next(
+        new AppError(req.t("profile:error.deletingProfileImage"), 500),
+      );
+    }
   }
 
-  const uploadParams = {
-    Bucket: process.env.AWS_BUCKET_NAME,
-    Key: fileName,
-    Body: fileContent,
-    ContentType: req.file.mimetype,
-  };
-  // Upload new profile image to AWS S3 bucket
-  const uploadCommand = new PutObjectCommand(uploadParams);
-  await s3.send(uploadCommand);
-  const profileImageUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
-  // Update user profile image
-  user.profileImage = profileImageUrl;
-  await user.save({ validateBeforeSave: false });
+  const compressedImageBuffer = await sharp(req.file.buffer)
+    .resize({ width: 800 })
+    .jpeg({ quality: 80 })
+    .toBuffer();
+
+  // Upload new profile image
+  const fileName = `users/${user._id}/profile/${uuidv4()}-${req.file.originalname}`;
+
+  try {
+    const profileImageUrl = await uploadToS3(
+      fileName,
+      compressedImageBuffer,
+      req.file.mimetype,
+    );
+
+    // Update user profile image
+    user.profileImage = profileImageUrl;
+    await user.save({ validateBeforeSave: false });
+  } catch (error) {
+    throw new AppError(req.t("profile:error.uploadingProfileImage"), 500);
+  }
+
   res.json({
     message: req.t("profile:imageUpdatedSuccessfully"),
     profileImage: user.profileImage,
@@ -71,19 +84,25 @@ exports.deleteImage = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new AppError(req.t("userNotFound"), 404));
   }
-  // Delete profile image from AWS S3 bucket
-  const imageUrl = user.profileImage;
-  const imageName = imageUrl.split("/").pop();
-  const params = {
-    Bucket: process.env.AWS_BUCKET_NAME,
-    Key: imageName,
-  };
-  const command = new DeleteObjectCommand(params);
-  await s3.send(command);
+
+  // Delete profile image from AWS S3 bucket (if not default)
+  if (user.profileImage && !user.profileImage.includes(DEFAULT_PROFILE_IMAGE)) {
+    const existingImageKey = user.profileImage.replace(
+      `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`,
+      "",
+    );
+
+    try {
+      await deleteFromS3(existingImageKey);
+    } catch (err) {
+      console.error(req.t("profile:error.deletingProfileImage"), err.message);
+    }
+  }
+
   // Set profile image to default
-  user.profileImage =
-    "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
+  user.profileImage = DEFAULT_PROFILE_IMAGE;
   await user.save({ validateBeforeSave: false });
+
   res.json({
     message: req.t("profile:imageDeleteSuccessfully"),
     profileImage: user.profileImage,

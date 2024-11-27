@@ -1,6 +1,7 @@
 const express = require("express");
 const authMiddleware = require("../middlewares/authMiddleware");
 const authController = require("../controllers/authController");
+const { upload } = require("../controllers/mealsController");
 const {
   getIngredientInfo,
   addIngredient,
@@ -23,9 +24,9 @@ router.use(authController.restrictTo("admin", "supplier"));
 router.post("/ingredient", getIngredientInfo);
 router.post("/add-ingredient", addIngredient);
 router.get("/ingredient-search", getIngredientSearch);
-router.post("/add-meal", addMeal);
+router.post("/", upload.single("image"), addMeal);
 router.get("/", getMeals);
 router.delete("/", deleteMeal);
-router.put("/:id", updateMeal);
+router.put("/:id", upload.single("image"), updateMeal);
 
 module.exports = router;

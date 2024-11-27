@@ -66,6 +66,10 @@ const mealSchema = new mongoose.Schema(
       type: String,
       maxLength: 500, // Maximum length of 200 characters
     },
+    image: {
+      type: String,
+      default: "https://fitronelt.s3.eu-north-1.amazonaws.com/cb169cd415.jpg",
+    },
     ingredients: {
       type: [ingredientSchema], // Array of ingredients
       required: true,
