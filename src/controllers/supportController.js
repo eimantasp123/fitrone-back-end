@@ -2,6 +2,7 @@ const Support = require("../models/Support");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 
+// Send support message
 exports.support = catchAsync(async (req, res, next) => {
   console.log(req.body);
   const { message, subject, email, name } = req.body;
@@ -18,6 +19,8 @@ exports.support = catchAsync(async (req, res, next) => {
   });
 
   support.save();
+
+  // Send response
   return res.status(200).json({
     status: "success",
     message: req.t("supportMessageSent"),

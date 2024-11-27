@@ -15,9 +15,32 @@ const {
   deleteFromS3,
 } = require("../utils/s3Helpers");
 
-// auth for openai
+//
+//
+// AWS S3 file upload
+//
+const storage = multer.memoryStorage();
+exports.upload = multer({ storage });
+
+//
+//
+// Constants
+//
+const DEFAULT_IMAGE_URL =
+  "https://fitronelt.s3.eu-north-1.amazonaws.com/cb169cd415.jpg";
+const maxFileSize = 5 * 1024 * 1024; // 5MB
+const allowedFileTypes = ["image/jpeg", "image/png", "image/jpg"]; // Allowed image types
+
+//
+//
+// Auth for openAi
+//
 const openAi = new openai(process.env.OPENAI_API_KEY);
+
+//
+//
 // Schema for the nutrition information
+//
 const nutritionSchema = z.object({
   title: z.object({
     lt: z.string(),
@@ -69,7 +92,9 @@ exports.getIngredientInfo = catchAsync(async (req, res, next) => {
     response_format: zodResponseFormat(nutritionSchema, "nutrition"),
   });
 
+  // Refactor the response object to get the nutrition information
   const response = completion.choices[0].message.parsed;
+
   // Send the response
   res.status(200).json({
     status: "success",
@@ -193,19 +218,7 @@ exports.getIngredientSearch = catchAsync(async (req, res, next) => {
 });
 
 //
-// AWS S3 file upload
 //
-//
-
-const storage = multer.memoryStorage();
-exports.upload = multer({ storage });
-
-//
-const DEFAULT_IMAGE_URL =
-  "https://fitronelt.s3.eu-north-1.amazonaws.com/cb169cd415.jpg";
-const maxFileSize = 5 * 1024 * 1024; // 5MB
-const allowedFileTypes = ["image/jpeg", "image/png", "image/jpg"]; // Allowed image types
-
 // Add meal to the user meal document
 //
 exports.addMeal = catchAsync(async (req, res, next) => {
@@ -238,6 +251,7 @@ exports.addMeal = catchAsync(async (req, res, next) => {
 
   let mealImageUrl = DEFAULT_IMAGE_URL;
 
+  // Handle image upload if provided
   if (req.file) {
     // Validate file type and size
     if (!validateFile(req.file, allowedFileTypes, maxFileSize)) {
@@ -291,6 +305,7 @@ exports.addMeal = catchAsync(async (req, res, next) => {
   delete formattedMeal.__v;
   delete formattedMeal.updatedAt;
 
+  // Send the response
   res.status(201).json({
     status: "success",
     message: req.t("meals:mealAddedSuccessfully"),
