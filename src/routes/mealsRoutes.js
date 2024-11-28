@@ -10,6 +10,7 @@ const {
   getMeals,
   deleteMeal,
   updateMeal,
+  getIngredientNutrition,
 } = require("../controllers/mealsController");
 
 const router = express.Router();
@@ -20,10 +21,12 @@ router.use(authMiddleware);
 // Restrict access to admin and supplier roles
 router.use(authController.restrictTo("admin", "supplier"));
 
-// Route to get ingredient information
+// Routes for ingredients
 router.post("/ingredient", getIngredientInfo);
 router.post("/add-ingredient", addIngredient);
 router.get("/ingredient-search", getIngredientSearch);
+router.get("/ingredient/:ingredientId", getIngredientNutrition);
+//  Route to add a meal
 router.post("/", upload.single("image"), addMeal);
 router.get("/", getMeals);
 router.delete("/", deleteMeal);

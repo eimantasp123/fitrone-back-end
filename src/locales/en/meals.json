@@ -17,6 +17,7 @@
     "uploadingImage": "Error uploading image",
     "invalidRequest": "Invalid JSON in request body",
     "invalidFormatForIngredients": "Invalid format for ingredients",
-    "imageDeleteFailed": "Failed to delete image"
+    "imageDeleteFailed": "Failed to delete image",
+    "ingredientIdAndCurrentAmountIsRequired": "Ingredient ID and current amount is required"
   }
 }

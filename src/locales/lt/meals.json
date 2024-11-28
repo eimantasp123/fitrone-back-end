@@ -17,6 +17,7 @@
     "uploadingImage": "Klaida įkeliant nuotrauką",
     "invalidRequest": "Netinkamas JSON užklausa",
     "invalidFormatForIngredients": "Netinkamas formatas ingredientams",
-    "imageDeleteFailed": "Nepavyko ištrinti nuotraukos"
+    "imageDeleteFailed": "Nepavyko ištrinti nuotraukos",
+    "ingredientIdAndCurrentAmountIsRequired": "Ingredientas ir reikalingas kiekis yra privaloma"
   }
 }
