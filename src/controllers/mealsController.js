@@ -181,7 +181,7 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
   if (withCurrentAmount && currentAmount) {
     const scalingFactor = currentAmount / amount;
     nutritionInfo = {
-      id: newIngredient._id,
+      ingredientId: newIngredient._id,
       title: newIngredient.title[lang],
       currentAmount: Number(currentAmount),
       unit: newIngredient.unit,
@@ -192,7 +192,7 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
     };
   } else {
     nutritionInfo = {
-      id: newIngredient._id,
+      ingredientId: newIngredient._id,
       title: newIngredient.title[lang],
       unit: newIngredient.unit,
       amount: newIngredient.amount,
@@ -240,7 +240,7 @@ exports.getIngredientSearch = catchAsync(async (req, res, next) => {
     doc.ingredients
       .filter((ingredient) => regex.test(ingredient.title[lang]))
       .map((ingredient) => ({
-        id: ingredient._id,
+        ingredientId: ingredient._id,
         title: ingredient.title[lang],
         unit: ingredient.unit,
         amount: ingredient.amount,
@@ -307,7 +307,7 @@ exports.getIngredientNutrition = catchAsync(async (req, res, next) => {
   // Calculate the nutrition info based on the current amount
   const scalingFactor = currentAmount / ingredient.amount;
   const nutritionInfo = {
-    id: ingredient._id,
+    ingredientId: ingredient._id,
     title: ingredient.title[lang],
     currentAmount: Number(currentAmount),
     unit: ingredient.unit,
@@ -365,7 +365,7 @@ exports.addMeal = catchAsync(async (req, res, next) => {
       return {
         ingredientId: ingredient.id,
         title: currentIngredient.title[lng],
-        currentAmount: ingredient.currentAmount,
+        currentAmount: Number(ingredient.currentAmount),
         unit: currentIngredient.unit,
         calories: Number(
           (currentIngredient.calories * scalingFactor).toFixed(1),
@@ -380,10 +380,10 @@ exports.addMeal = catchAsync(async (req, res, next) => {
   // Calculate the total nutrition info for the meal
   const totalNutrition = ingredientDetails.reduce(
     (acc, curr) => {
-      acc.calories += curr.calories;
-      acc.protein += curr.protein;
-      acc.fat += curr.fat;
-      acc.carbs += curr.carbs;
+      acc.calories = Number((acc.calories + curr.calories).toFixed(1));
+      acc.protein = Number((acc.protein + curr.protein).toFixed(1));
+      acc.fat = Number((acc.fat + curr.fat).toFixed(1));
+      acc.carbs = Number((acc.carbs + curr.carbs).toFixed(1));
       return acc;
     },
     { calories: 0, protein: 0, fat: 0, carbs: 0 },
@@ -464,7 +464,8 @@ exports.addMeal = catchAsync(async (req, res, next) => {
 //
 exports.updateMeal = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-  const updatedData = req.body;
+  const { title, description, category } = req.body;
+  const { lng } = req;
 
   // Check if the id parameter is provided
   if (!id || !mongoose.Types.ObjectId.isValid(id)) {
@@ -483,39 +484,14 @@ exports.updateMeal = catchAsync(async (req, res, next) => {
   }
 
   // Ensure all necessary fields are provided
-  if (!updatedData.title || !updatedData.ingredients) {
+  if (!title || !category || !req.body.ingredients) {
     return next(new AppError(req.t("meals:error.missingRequiredFields"), 400));
-  }
-
-  // Parse fields that might be sent as JSON strings
-  try {
-    if (typeof req.body.ingredients === "string") {
-      req.body.ingredients = JSON.parse(req.body.ingredients);
-    }
-    if (typeof req.body.preferences === "string") {
-      req.body.preferences = JSON.parse(req.body.preferences);
-    }
-    if (typeof req.body.restrictions === "string") {
-      req.body.restrictions = JSON.parse(req.body.restrictions);
-    }
-  } catch (error) {
-    return next(new AppError(req.t("meals:error.invalidRequest"), 400));
-  }
-
-  // Validate that `ingredients` is an array of objects
-  if (
-    !Array.isArray(req.body.ingredients) ||
-    req.body.ingredients.some((item) => typeof item !== "object")
-  ) {
-    return next(
-      new AppError(req.t("meals:error.invalidFormatForIngredients"), 400),
-    );
   }
 
   // Check if a meal with the same title already exists for this user
   const existingMeal = await Meal.findOne({
     user: req.user._id,
-    title: updatedData.title,
+    title: title,
     _id: { $ne: id },
   });
 
@@ -524,19 +500,57 @@ exports.updateMeal = catchAsync(async (req, res, next) => {
     return next(new AppError(req.t("meals:error.titleMustBeUnique"), 400));
   }
 
-  // Update the meal
-  meal.title = req.body.title || meal.title;
-  meal.description = req.body.description || meal.description;
-  meal.category = req.body.category || meal.category;
-  meal.nutrition = {
-    calories: req.body.calories,
-    protein: req.body.protein,
-    carbs: req.body.carbs,
-    fat: req.body.fat,
-  };
-  meal.ingredients = req.body.ingredients;
-  meal.preferences = req.body.preferences || [];
-  meal.restrictions = req.body.restrictions || [];
+  // Parse JSON fields
+  const ingredients = JSON.parse(req.body.ingredients);
+  const preferences = req.body.preferences
+    ? JSON.parse(req.body.preferences)
+    : [];
+  const restrictions = req.body.restrictions
+    ? JSON.parse(req.body.restrictions)
+    : [];
+
+  // Validate that `ingredients` is an array of objects
+  const ingredientDetails = await Promise.all(
+    ingredients.map(async (ingredient) => {
+      const ingredientDoc = await UserIngredient.findOne({
+        user: req.user._id,
+        "ingredients._id": ingredient.id,
+      });
+
+      if (!ingredientDoc) {
+        return next(new AppError(req.t("meals:error.noIngredientsFound"), 404));
+      }
+
+      const currentIngredient = ingredientDoc.ingredients.id(ingredient.id);
+
+      // Calculate the nutrition info based on the current amount
+      const scalingFactor = ingredient.currentAmount / currentIngredient.amount;
+      return {
+        ingredientId: ingredient.id,
+        title: currentIngredient.title[lng],
+        currentAmount: Number(ingredient.currentAmount),
+        unit: currentIngredient.unit,
+        calories: Number(
+          (currentIngredient.calories * scalingFactor).toFixed(1),
+        ),
+        protein: Number((currentIngredient.protein * scalingFactor).toFixed(1)),
+        fat: Number((currentIngredient.fat * scalingFactor).toFixed(1)),
+        carbs: Number((currentIngredient.carbs * scalingFactor).toFixed(1)),
+      };
+    }),
+  );
+
+  // Calculate the total nutrition info for the meal
+  const totalNutrition = ingredientDetails.reduce(
+    (acc, curr) => {
+      acc.calories = Number((acc.calories + curr.calories).toFixed(1));
+      acc.protein = Number((acc.protein + curr.protein).toFixed(1));
+      acc.fat = Number((acc.fat + curr.fat).toFixed(1));
+      acc.carbs = Number((acc.carbs + curr.carbs).toFixed(1));
+      return acc;
+    },
+    { calories: 0, protein: 0, fat: 0, carbs: 0 },
+  );
 
   // Handle image upload/update
   if (req.file) {
@@ -573,7 +587,7 @@ exports.updateMeal = catchAsync(async (req, res, next) => {
     } catch (error) {
       return next(new AppError(req.t("meals:error.uploadingImage"), 500));
     }
-  } else if (updatedData.image === "delete") {
+  } else if (req.body.image === "delete") {
     // If image deletion is requested, delete the old image and set to default
     if (meal.image && !meal.image.includes(DEFAULT_IMAGE_URL)) {
       const s3Key = meal.image.replace(
@@ -588,6 +602,15 @@ exports.updateMeal = catchAsync(async (req, res, next) => {
     }
     meal.image = DEFAULT_IMAGE_URL;
   }
+
+  // Update the meal
+  meal.title = title;
+  meal.description = description || meal.description;
+  meal.category = category || meal.category;
+  meal.ingredients = ingredientDetails;
+  meal.nutrition = totalNutrition;
+  meal.preferences = preferences;
+  meal.restrictions = restrictions;
 
   // Update the meal fields
   const updatedMeal = await meal.save();
