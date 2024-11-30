@@ -11,6 +11,7 @@ const {
   deleteMeal,
   updateMeal,
   getIngredientNutrition,
+  getIngredients,
 } = require("../controllers/mealsController");
 
 const router = express.Router();
@@ -24,6 +25,7 @@ router.use(authController.restrictTo("admin", "supplier"));
 // Routes for ingredients
 router.post("/ingredient", getIngredientInfo);
 router.post("/add-ingredient", addIngredient);
+router.get("/ingredients", getIngredients);
 router.get("/ingredient-search", getIngredientSearch);
 router.get("/ingredient/:ingredientId", getIngredientNutrition);
 //  Route to add a meal

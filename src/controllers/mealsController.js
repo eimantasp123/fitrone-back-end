@@ -213,6 +213,53 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
 
 //
 //
+// Get all ingredients for the user
+//
+exports.getIngredients = catchAsync(async (req, res, next) => {
+  const { page = 1, limit = 10 } = req.query;
+
+  // Pagination options
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+
+  // Query the database for the user ingredient document
+  const userIngredients = await UserIngredient.findOne({ user: req.user._id });
+
+  if (!userIngredients) {
+    return next(new AppError(req.t("meals:error.noIngredientsFound"), 404));
+  }
+
+  // Get the language from the request object
+  const lang = req.lng || "en";
+
+  const totalIngredients = userIngredients.ingredients.length;
+
+  // Paginate the ingredients
+  const paginatedIngredients = userIngredients.ingredients
+    .slice(skip, skip + parseInt(limit))
+    .map((ingredient) => ({
+      ingredientId: ingredient._id,
+      title: ingredient.title[lang],
+      unit: ingredient.unit,
+      amount: ingredient.amount,
+      calories: ingredient.calories,
+      protein: ingredient.protein,
+      fat: ingredient.fat,
+      carbs: ingredient.carbs,
+    }));
+
+  // Send the response
+  res.status(200).json({
+    status: "success",
+    results: paginatedIngredients.length,
+    currentPage: parseInt(page),
+    totalIngredients,
+    totalPages: Math.ceil(totalIngredients / limit),
+    data: paginatedIngredients,
+  });
+});
+
+//
+//
 // Search for ingredients in the user ingredient document
 //
 exports.getIngredientSearch = catchAsync(async (req, res, next) => {
