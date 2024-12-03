@@ -53,6 +53,11 @@ const userSchema = new mongoose.Schema({
     enum: ["supplier", "admin"],
     default: "supplier",
   },
+  plan: {
+    type: String,
+    enum: ["free", "basic", "premium"],
+    default: "free",
+  },
   googleId: { type: String, unique: true, sparse: true },
   facebookId: { type: String, unique: true, sparse: true },
   isVerified: { type: Boolean, default: false, select: false },

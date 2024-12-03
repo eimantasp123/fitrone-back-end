@@ -1,8 +1,10 @@
 {
-  "ingredientAddedSuccesfuly": "Ingredient added successfully",
   "mealAddedSuccessfully": "Meal added successfully",
   "mealDeletedSuccessfully": "Meal deleted successfully",
   "mealUpdatedSuccessfully": "Meal updated successfully",
+  "ingredientAddedSuccesfuly": "Ingredient added successfully",
+  "ingredientDeletedSuccessfully": "Ingredient deleted successfully",
+  "ingredientUpdatedSuccessfully": "Ingredient updated successfully",
 
   "error": {
     "queryRequired": "Query parameter is required",
@@ -18,6 +20,8 @@
     "invalidRequest": "Invalid JSON in request body",
     "invalidFormatForIngredients": "Invalid format for ingredients",
     "imageDeleteFailed": "Failed to delete image",
-    "ingredientIdAndCurrentAmountIsRequired": "Ingredient ID and current amount is required"
+    "ingredientIdAndCurrentAmountIsRequired": "Ingredient ID and current amount is required",
+    "ingredientIdRequired": "Ingredient ID is required",
+    "ingredientNotFound": "Ingredient not found"
   }
 }

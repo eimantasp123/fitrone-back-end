@@ -10,6 +10,7 @@ const mealSchema = new mongoose.Schema(
     title: {
       type: String,
       required: true,
+      lowercase: true,
       maxLength: 70,
     },
     description: {
@@ -27,7 +28,7 @@ const mealSchema = new mongoose.Schema(
           ref: "UserIngredient",
           required: true,
         },
-        title: { type: String, required: true },
+        title: { type: String, required: true, lowercase: true },
         currentAmount: { type: Number, required: true },
         unit: { type: String, required: true },
         calories: { type: Number, required: true },

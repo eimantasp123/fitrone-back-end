@@ -1,8 +1,10 @@
 {
-  "ingredientAddedSuccesfuly": "Ingredientas pridėtas sėkmingai",
   "mealAddedSuccessfully": "Patiekalas pridėtas sėkmingai",
   "mealDeletedSuccessfully": "Patiekalas ištrintas sėkmingai",
   "mealUpdatedSuccessfully": "Patiekalas atnaujintas sėkmingai",
+  "ingredientAddedSuccesfuly": "Ingredientas pridėtas sėkmingai",
+  "ingredientDeletedSuccessfully": "Ingredientas ištrintas sėkmingai",
+  "ingredientUpdatedSuccessfully": "Ingredientas atnaujintas sėkmingai",
 
   "error": {
     "queryRequired": "Užklausos parametras yra privalomas",
@@ -18,6 +20,8 @@
     "invalidRequest": "Netinkamas JSON užklausa",
     "invalidFormatForIngredients": "Netinkamas formatas ingredientams",
     "imageDeleteFailed": "Nepavyko ištrinti nuotraukos",
-    "ingredientIdAndCurrentAmountIsRequired": "Ingredientas ir reikalingas kiekis yra privaloma"
+    "ingredientIdAndCurrentAmountIsRequired": "Ingredientas ir reikalingas kiekis yra privaloma",
+    "ingredientIdRequired": "Ingrediento ID yra privalomas",
+    "ingredientNotFound": "Ingredientas nerastas"
   }
 }

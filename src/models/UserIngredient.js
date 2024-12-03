@@ -6,10 +6,12 @@ const ingredientSchema = new mongoose.Schema(
       lt: {
         type: String,
         required: true,
+        lowercase: true,
       },
       en: {
         type: String,
         required: true,
+        lowercase: true,
       },
     },
     unit: {

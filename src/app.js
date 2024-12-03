@@ -26,8 +26,8 @@ const globalErrorHandler = require("./controllers/errorController");
 const supportRoutes = require("./routes/supportRoutes");
 const mealPlanRoutes = require("./routes/mealPlanRoutes");
 const subscriptionRoutes = require("./routes/subscriptionRoutes");
+const ingredeintsRoutes = require("./routes/ingredientsRoutes");
 const webhookRoutes = require("./utils/webhookRoutes");
-const { nullable } = require("zod");
 
 // Initialize i18next
 i18next
@@ -113,9 +113,11 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/profile", profileRoutes);
 app.use("/api/v1/feedback", feedbackRoutes);
 app.use("/api/v1/support", supportRoutes);
+app.use("/api/v1/meals", mealsRoutes);
+app.use("/api/v1/ingredients", ingredeintsRoutes);
+//
 app.use("/api/v1/meal-plan", mealPlanRoutes);
 app.use("/api/v1/subscription", subscriptionRoutes);
-app.use("/api/v1/meals", mealsRoutes);
 
 // Error handling for invalid routes
 app.all("*", (req, res, next) => {
