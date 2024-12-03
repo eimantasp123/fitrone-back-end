@@ -196,7 +196,11 @@ exports.getIngredients = catchAsync(async (req, res, next) => {
   const userIngredients = await UserIngredient.findOne({ user: req.user._id });
 
   if (!userIngredients) {
-    return next(new AppError(req.t("meals:error.noIngredientsFound"), 404));
+    return res.status(200).json({
+      status: "success",
+      results: 0,
+      data: [],
+    });
   }
 
   // Get the language from the request object
