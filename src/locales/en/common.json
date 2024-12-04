@@ -11,5 +11,10 @@
   },
   "userNotFound": "User not found",
   "noFileUploaded": "No file uploaded",
-  "pleaseLoginAgain": "Please log in to get access"
+  "pleaseLoginAgain": "Please log in to get access",
+  "errors": {
+    "feature_not_available": "The {{featureName}} feature is not available in your {{plan}} plan. Upgrade your plan to access this feature.",
+    "plan_not_found": "User plan not found.",
+    "limit_reached": "You have reached your {{featureName}} limit of {{userLimit}} for your {{userPlanName}} plan. Upgrade to add more!"
+  }
 }

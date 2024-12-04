@@ -11,5 +11,10 @@
   },
   "userNotFound": "Vartotojas nerastas",
   "noFileUploaded": "Nepasirinktas joks failas",
-  "pleaseLoginAgain": "Prašome prisijungti, kad gautumėte prieigą"
+  "pleaseLoginAgain": "Prašome prisijungti, kad gautumėte prieigą",
+  "errors": {
+    "feature_not_available": "{{featureName}} funkcija nepasiekiama jūsų {{plan}} plane. Norėdami pasiekti šią funkciją, atnaujinkite savo planą.",
+    "plan_not_found": "Vartotojo planas nerasta.",
+    "limit_reached": "Jūs pasiekėte savo {{featureName}} limitą {{userLimit}} jūsų {{userPlanName}} plane. Atnaujinkite, kad galėtumėte pridėti daugiau!"
+  }
 }
