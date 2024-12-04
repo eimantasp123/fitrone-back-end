@@ -38,51 +38,42 @@ exports.createCheckoutSession = catchAsync(async (req, res, next) => {
   const { priceId } = req.body;
   const user = await User.findById(req.user.id).select("+stripeCustomerId");
 
+  //  Create a Stripe customer if it doesn't exist
   const customerId = await createStripeCustomerIfNotExists(user);
 
-  console.log("customerId", customerId);
+  // Check if the user has used the free trial
+  const trialPeriodDays = user.hasUsedFreeTrial
+    ? 0
+    : process.env.TRIAL_PERIOD_DAYS || 14;
 
-  const trialPeriodDays = user.hasUsedFreeTrial ? 0 : 14;
-  let session;
+  // Check if the user is reactivating the subscription
+  const isReactivating = [
+    "canceled",
+    "incomplete",
+    "incomplete_expired",
+  ].includes(user.subscriptionStatus);
 
-  if (
-    user.hasUsedFreeTrial &&
-    ["canceled", "incomplete", "incomplete_expired"].includes(
-      user.subscriptionStatus,
-    )
-  ) {
-    session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      customer: customerId,
-      mode: "subscription",
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      success_url: `${process.env.FRONTEND_URL}/subscription`,
-      cancel_url: `${process.env.FRONTEND_URL}/subscription`,
-    });
-  } else {
-    session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      customer: customerId,
-      mode: "subscription",
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      subscription_data: {
-        trial_period_days: trialPeriodDays,
+  // Create a checkout session
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    customer: customerId,
+    mode: "subscription",
+    line_items: [
+      {
+        price: priceId,
+        quantity: 1,
       },
-      success_url: `${process.env.FRONTEND_URL}/subscription`,
-      cancel_url: `${process.env.FRONTEND_URL}/subscription`,
-    });
-  }
+    ],
+    subscription_data: isReactivating
+      ? {}
+      : {
+          trial_period_days: trialPeriodDays,
+        },
+    success_url: `${process.env.FRONTEND_URL}/subscription`,
+    cancel_url: `${process.env.FRONTEND_URL}/subscription`,
+  });
 
+  // Send the session URL to the client
   res.status(200).json({
     status: "success",
     url: session.url,

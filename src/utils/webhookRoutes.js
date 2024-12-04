@@ -85,10 +85,15 @@ async function handleSubscriptionUpdates(subscriptionUpdates) {
     id,
   } = subscriptionUpdates;
 
+  console.log("Subscription updates: ", subscriptionUpdates);
+
   // Find the user based on the customer ID
   const user = await User.findOne({
     stripeCustomerId: customer,
   }).select("+stripeCustomerId");
+
+  console.log("Customer ID: ", customer);
+  console.log("User found: ", user);
 
   if (!user) return; // Return if user not found
 
@@ -129,6 +134,10 @@ async function handleSubscriptionDeletion(subscription) {
   const user = await User.findOne({
     stripeCustomerId: subscription.customer,
   }).select("+stripeCustomerId");
+
+  console.log("Subscription deleted: ", subscription);
+  console.log("User found: ", user);
+
   if (!user) {
     return;
   }
@@ -143,10 +152,12 @@ async function handleSubscriptionDeletion(subscription) {
 
 async function handleChargeFailed(charge) {
   const { customer, status } = charge;
-  // Find the user based on the customer ID
   const user = await User.findOne({
     stripeCustomerId: customer,
   }).select("+stripeCustomerId");
+
+  console.log("Charge failed: ", charge);
+  console.log("User found: ", user);
 
   if (!user) return;
   if (
