@@ -4,6 +4,7 @@ const {
   createCheckoutSession,
   createCustomerPortal,
   getSubscriptionDetails,
+  markArchivedDataAsRead,
 } = require("../controllers/subscriptionController");
 const authController = require("../controllers/authController");
 const router = express.Router();
@@ -15,5 +16,15 @@ router.use(authController.restrictTo("admin", "supplier"));
 router.post("/create-portal-session", createCustomerPortal);
 router.post("/create-checkout-session", createCheckoutSession);
 router.get("/details", getSubscriptionDetails);
+
+// Restrict access to the basic, pro, and premium plans only
+router.use(
+  authController.restrictTo({
+    plans: ["basic", "pro", "premium"],
+  }),
+);
+
+//
+router.put("/archived-data/read", markArchivedDataAsRead);
 
 module.exports = router;

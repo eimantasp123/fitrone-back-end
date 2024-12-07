@@ -538,10 +538,23 @@ exports.getCurrentUser = catchAsync(async (req, res, next) => {
 
 // Restrict routes to specific roles
 exports.restrictTo =
-  (...roles) =>
+  ({ roles = [], plans = [] }) =>
   (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return next(new AppError(req.t("auth:doNotHavePermission"), 403));
+    // Check if the user's role is allower
+    if (roles.length && !roles.includes(req.user.role)) {
+      return next(new AppError(req.t("error.doNotHavePermission"), 403));
     }
+
+    // Check if the user's plan is allowed
+    if (plans.length && !plans.includes(req.user.plan)) {
+      return next(
+        new AppError(
+          req.t("error.notEligibleForFeature", { plan: req.user.plan }),
+          403,
+        ),
+      );
+    }
+
+    // If user is allowed, continue
     next();
   };

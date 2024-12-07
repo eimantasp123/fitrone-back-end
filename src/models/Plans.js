@@ -5,7 +5,7 @@ const plansSchema = new mongoose.Schema({
   plan: {
     type: String,
     required: true,
-    enum: ["basic", "pro", "premium"], // Restricts the possible values
+    enum: ["base", "basic", "pro", "premium"], // Restricts the possible values
   },
   features: {
     ingredients_limit: {

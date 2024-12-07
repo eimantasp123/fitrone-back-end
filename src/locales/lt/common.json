@@ -2,19 +2,33 @@
   "informationUpdated": "Informacija atnaujinta sėkmingai",
   "supportMessageSent": "Jūsų užklausa išsiųsta palaikymo komandai. Su jumis bus susisiekta netrukus.",
   "feedbackMessageSent": "Dėkojame už jūsų atsiliepimą!",
+
   "error": {
     "missingMessageOrSubject": "Prašome pateikti žinutę ir temą",
     "missingCommentAndRating": "Prašome įvertinti ir palikti komentarą",
     "tokenNotExists": "Šiam žetonui priklausantis vartotojas daugiau neegzistuoja.",
     "changePasswordLoginAgain": "Vartotojas neseniai pakeitė slaptažodį! Prašome prisijungti iš naujo.",
-    "unexpectedError": "Įvyko netikėta klaida"
+    "unexpectedError": "Įvyko netikėta klaida",
+    "notEligibleForFeature": "Jūsų planas '{{plan}}' neturi teisės naudotis šia funkcija",
+    "doNotHavePermission": "Jūs neturite teisės atlikti šio veiksmo"
   },
+
   "userNotFound": "Vartotojas nerastas",
   "noFileUploaded": "Nepasirinktas joks failas",
   "pleaseLoginAgain": "Prašome prisijungti, kad gautumėte prieigą",
-  "errors": {
-    "feature_not_available": "{{featureName}} funkcija nepasiekiama jūsų {{plan}} plane. Norėdami pasiekti šią funkciją, atnaujinkite savo planą.",
-    "plan_not_found": "Vartotojo planas nerasta.",
-    "limit_reached": "Jūs pasiekėte savo {{featureName}} limitą {{userLimit}} jūsų {{userPlanName}} plane. Atnaujinkite, kad galėtumėte pridėti daugiau!"
+  "plan_not_found": "Vartotojo planas nerasta.",
+
+  "featuresMessages": {
+    "ingredients_limit": "Jūs pasiekėte savo ingredientų limitą {{userLimit}} jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte pridėti daugiau ingredientų!",
+    "ingredients_limit_warning": "Jūs artėjate prie savo ingredientų limito {{userLimit}} jūsų {{userPlanName}} plane. Jums liko {{remaining}} ingredientai iki pasiekiant ribą. Atnaujinkite planą, kad galėtumėte pridėti daugiau!",
+
+    "meals_limit": "Jūs pasiekėte savo patiekalų limitą {{userLimit}} jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte pridėti daugiau patiekalų!",
+    "meal_week_types_limit": "Jūs pasiekėte savo savaitinių patiekalų tipų limitą {{userLimit}} jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte sukurti daugiau tipų!",
+    "clients_limit": "Jūs pasiekėte savo klientų limitą {{userLimit}} jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte pridėti daugiau klientų!",
+    "use_ai_search": "AI ingredientų paieška nėra prieinama jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte naudotis šia funkcija.",
+    "business_page": "Verslo puslapio funkcija nėra prieinama jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte sukurti verslo puslapį.",
+    "individual_request_form": "Individualios užklausos formos funkcija nėra prieinama jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte naudotis šia funkcija.",
+    "order_processing_simulations": "Užsakymų apdorojimo simuliacijos nėra prieinamos jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte naudotis šia funkcija.",
+    "weekly_reports": "Savaitinės ataskaitos nėra prieinamos jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte generuoti savaitines ataskaitas."
   }
 }

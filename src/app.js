@@ -1,5 +1,6 @@
-require("dotenv").config();
-//
+require("dotenv").config(); // Load environment variables
+
+// Require dependencies
 const express = require("express");
 const cors = require("cors");
 const cron = require("node-cron");
@@ -14,7 +15,8 @@ const i18next = require("i18next");
 const Backend = require("i18next-fs-backend");
 const middleware = require("i18next-http-middleware");
 const path = require("path");
-//
+
+// Require custom modules
 const connectDB = require("./config/dbConfig");
 const authRoutes = require("./routes/authRoutes");
 const profileRoutes = require("./routes/profileRoutes");
@@ -29,7 +31,7 @@ const subscriptionRoutes = require("./routes/subscriptionRoutes");
 const ingredeintsRoutes = require("./routes/ingredientsRoutes");
 const webhookRoutes = require("./utils/webhookRoutes");
 
-// Initialize i18next
+// Initialize i18next for localization
 i18next
   .use(Backend)
   .use(middleware.LanguageDetector)
@@ -115,9 +117,9 @@ app.use("/api/v1/feedback", feedbackRoutes);
 app.use("/api/v1/support", supportRoutes);
 app.use("/api/v1/meals", mealsRoutes);
 app.use("/api/v1/ingredients", ingredeintsRoutes);
+app.use("/api/v1/subscription", subscriptionRoutes);
 //
 app.use("/api/v1/meal-plan", mealPlanRoutes);
-app.use("/api/v1/subscription", subscriptionRoutes);
 
 // Error handling for invalid routes
 app.all("*", (req, res, next) => {

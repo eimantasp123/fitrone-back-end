@@ -4,6 +4,20 @@ const connectDB = require("../config/dbConfig");
 
 const plans = [
   {
+    plan: "base",
+    features: {
+      ingredients_limit: 0,
+      meals_limit: 0,
+      meal_week_types_limit: 0,
+      clients_limit: 0,
+      use_ai_search: false,
+      business_page: false,
+      individual_request_form: false,
+      order_processing_simulations: false,
+      weekly_reports: false,
+    },
+  },
+  {
     plan: "basic",
     features: {
       ingredients_limit: 100,

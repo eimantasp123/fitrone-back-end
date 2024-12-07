@@ -2,6 +2,9 @@ const express = require("express");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const bodyParser = require("body-parser");
 const User = require("../models/User");
+const { downgradePlanHandler } = require("../helper/downgradeHelpers");
+const mapPriceIdToPlan = require("./generalHelpers");
+const UserIngredient = require("../models/UserIngredient");
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 const router = express.Router();
 
@@ -85,18 +88,17 @@ async function handleSubscriptionUpdates(subscriptionUpdates) {
     id,
   } = subscriptionUpdates;
 
-  console.log("Subscription updates: ", subscriptionUpdates);
-
   // Find the user based on the customer ID
-  const user = await User.findOne({
+  let user = await User.findOne({
     stripeCustomerId: customer,
   }).select("+stripeCustomerId");
 
-  console.log("Customer ID: ", customer);
-  console.log("User found: ", user);
-
   if (!user) return; // Return if user not found
 
+  // Handle plan upgrade or downgrade
+  user = await downgradePlanHandler(user, items.data[0].price.id);
+
+  // Handle trial period
   if (status === "trialing") {
     user.trialEnd = trial_end ? new Date(trial_end * 1000) : null;
 
@@ -108,6 +110,7 @@ async function handleSubscriptionUpdates(subscriptionUpdates) {
     user.trialEnd = null;
   }
 
+  // Handle subscription cancellation
   if (cancel_at_period_end || cancel_at) {
     user.subscriptionCancelAtPeriodEnd = cancel_at_period_end;
     user.subscriptionCancelAt = cancel_at ? new Date(cancel_at * 1000) : null;
@@ -135,13 +138,18 @@ async function handleSubscriptionDeletion(subscription) {
     stripeCustomerId: subscription.customer,
   }).select("+stripeCustomerId");
 
-  console.log("Subscription deleted: ", subscription);
-  console.log("User found: ", user);
-
   if (!user) {
     return;
   }
 
+  // Archive all the user ingredients
+  await UserIngredient.updateOne(
+    { user: user._id },
+    { $set: { "ingredients.$[].archived": true } },
+  );
+
+  // Update the user subscription status
+  user.archivedData = null;
   user.plan = "base";
   user.subscriptionStatus = "canceled";
   user.trialEnd = null;
@@ -150,36 +158,22 @@ async function handleSubscriptionDeletion(subscription) {
   await user.save();
 }
 
+// Handle charge failed
 async function handleChargeFailed(charge) {
   const { customer, status } = charge;
   const user = await User.findOne({
     stripeCustomerId: customer,
   }).select("+stripeCustomerId");
 
-  console.log("Charge failed: ", charge);
-  console.log("User found: ", user);
-
   if (!user) return;
+
+  // Update the user subscription status
   if (
     (status === "failed" && user.subscriptionStatus === "active") ||
     user.subscriptionStatus === "trialing"
   ) {
     user.subscriptionStatus = "past_due";
     await user.save();
-  }
-}
-
-// Helper function to map the price ID to a plan
-function mapPriceIdToPlan(priceId) {
-  switch (priceId) {
-    case "price_1Q3SEZAVASYOGHJkuKEtFelC":
-      return "basic";
-    case "price_1Q3SF1AVASYOGHJkEpwY1xlm":
-      return "pro";
-    case "price_1Q3SFiAVASYOGHJkUPUY9y7u":
-      return "premium";
-    default:
-      return "base";
   }
 }
 

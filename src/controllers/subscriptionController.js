@@ -1,4 +1,3 @@
-const { model } = require("mongoose");
 const User = require("../models/User");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
@@ -7,10 +6,11 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 // Create a customer portal for the user
 exports.createCustomerPortal = catchAsync(async (req, res, next) => {
-  console.log("Creating customer portal");
+  // Retrieve the user and the Stripe customer ID
   const user = await User.findById(req.user.id).select("+stripeCustomerId");
   let stripeCustomerId = user.stripeCustomerId;
 
+  // Create a Stripe customer if it doesn't exist
   if (!user.stripeCustomerId) {
     const customerId = await createStripeCustomerIfNotExists(user);
     user.stripeCustomerId = customerId;
@@ -18,15 +18,18 @@ exports.createCustomerPortal = catchAsync(async (req, res, next) => {
     await user.save();
   }
 
+  // Create a customer portal session
   const session = await stripe.billingPortal.sessions.create({
     customer: stripeCustomerId,
     return_url: `${process.env.FRONTEND_URL}/subscription`,
   });
 
+  // If there is an error, return it
   if (session.error) {
     return next(new AppError(session.error.message, 400));
   }
 
+  // Send the session URL to the client
   res.status(200).json({
     status: "success",
     url: session.url,
@@ -86,6 +89,7 @@ exports.getSubscriptionDetails = catchAsync(async (req, res, next) => {
     "+stripeCustomerId +stripeSubscriptionId",
   );
 
+  // If the user doesn't have a subscription, return the base plan
   if (!user.stripeSubscriptionId || !user.stripeCustomerId) {
     return res.status(200).json({
       status: "success",
@@ -98,6 +102,7 @@ exports.getSubscriptionDetails = catchAsync(async (req, res, next) => {
     });
   }
 
+  // Retrieve the subscription details from Stripe
   res.status(200).json({
     status: "success",
     data: {
@@ -107,5 +112,20 @@ exports.getSubscriptionDetails = catchAsync(async (req, res, next) => {
       subscriptionCancelAtPeriodEnd: user.subscriptionCancelAtPeriodEnd,
       subscriptionCancelAt: user.subscriptionCancelAt,
     },
+  });
+});
+
+// Mark the user archived data as read
+exports.markArchivedDataAsRead = catchAsync(async (req, res, next) => {
+  // Retrieve the user
+  const user = await User.findById(req.user.id);
+
+  // Mark the archived data as read
+  user.archivedData.messageRead = true;
+  await user.save();
+
+  // Send the response
+  res.status(200).json({
+    status: "success",
   });
 });

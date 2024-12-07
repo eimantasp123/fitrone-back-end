@@ -38,6 +38,10 @@ const ingredientSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    archived: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true },
 );

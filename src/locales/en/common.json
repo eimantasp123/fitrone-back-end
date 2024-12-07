@@ -1,20 +1,34 @@
 {
-  "informationUpdated": "Information updated successfully",
+  "informationUpdated": "Information updated successfully.",
   "supportMessageSent": "Your  request has been sent to the support team. You will be contacted soon.",
   "feedbackMessageSent": "Thank you for your feedback!",
+
   "error": {
-    "missingMessageOrSubject": "Please provide message and subject",
-    "missingCommentAndRating": "Please provide a comment and rating",
+    "missingMessageOrSubject": "Please provide message and subject.",
+    "missingCommentAndRating": "Please provide a comment and rating.",
     "tokenNotExists": "The user belonging to this token does no longer exist.",
     "changePasswordLoginAgain": "User recently changed password! Please log in again.",
-    "unexpectedError": "An unexpected error occurred"
+    "unexpectedError": "An unexpected error occurred.",
+    "notEligibleForFeature": "Your plan '{{plan}}' is not eligible to use this feature.",
+    "doNotHavePermission": "You do not have permission to perform this action."
   },
-  "userNotFound": "User not found",
-  "noFileUploaded": "No file uploaded",
-  "pleaseLoginAgain": "Please log in to get access",
-  "errors": {
-    "feature_not_available": "The {{featureName}} feature is not available in your {{plan}} plan. Upgrade your plan to access this feature.",
-    "plan_not_found": "User plan not found.",
-    "limit_reached": "You have reached your {{featureName}} limit of {{userLimit}} for your {{userPlanName}} plan. Upgrade to add more!"
+
+  "userNotFound": "User not found.",
+  "noFileUploaded": "No file uploaded.",
+  "pleaseLoginAgain": "Please log in to get access.",
+  "plan_not_found": "User plan not found.",
+
+  "featuresMessages": {
+    "ingredients_limit": "You have reached your ingredients limit of {{userLimit}} for your {{userPlanName}} plan. Upgrade to add more!",
+    "ingredients_limit_warning": "You are near your ingredients limit of {{userLimit}} for your {{userPlanName}} plan. You have {{remaining}} ingredients left before reaching the limit. Upgrade to add more!",
+
+    "meals_limit": "You have reached your meals limit of {{userLimit}} for your {{userPlanName}} plan. Upgrade to add more meals!",
+    "meal_week_types_limit": "You have reached your meal week types limit of {{userLimit}} for your {{userPlanName}} plan. Upgrade to create more meal week types!",
+    "clients_limit": "You have reached your clients limit of {{userLimit}} for your {{userPlanName}} plan. Upgrade to add more clients!",
+    "use_ai_search": "AI ingredient search is not available in your {{userPlanName}} plan. Upgrade your plan to access this feature.",
+    "business_page": "The business page feature is not available in your {{userPlanName}} plan. Upgrade your plan to create a business page.",
+    "individual_request_form": "The individual request form feature is not available in your {{userPlanName}} plan. Upgrade your plan to access this feature.",
+    "order_processing_simulations": "Order processing simulations are not available in your {{userPlanName}} plan. Upgrade your plan to access this feature.",
+    "weekly_reports": "Weekly reports are not available in your {{userPlanName}} plan. Upgrade your plan to generate weekly reports."
   }
 }

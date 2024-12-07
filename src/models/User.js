@@ -75,7 +75,7 @@ const userSchema = new mongoose.Schema({
     default: "base",
   },
   trialEnd: { type: Date },
-  subscriptionCancelAtPeriodEnd: { type: Boolean },
+  subscriptionCancelAtPeriodEnd: { type: Boolean, default: false },
   subscriptionCancelAt: { type: Date },
   googleId: { type: String, unique: true, sparse: true },
   facebookId: { type: String, unique: true, sparse: true },
@@ -90,6 +90,13 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpires: { type: Date },
   createdAt: { type: Date, default: Date.now },
   passwordChangedAt: { type: Date },
+  archivedData: {
+    messageRead: { type: Boolean, default: false },
+    ingredients: { type: Number, default: 0 },
+    meals: { type: Number, default: 0 },
+    mealWeekTypes: { type: Number, default: 0 },
+    clients: { type: Number, default: 0 },
+  },
 });
 
 // Document middleware to hash the password before saving

@@ -18,12 +18,16 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // Restrict access to admin and supplier roles
-router.use(authController.restrictTo("admin", "supplier"));
+// and to the basic, pro, and premium plans
+router.use(
+  authController.restrictTo({
+    roles: ["admin", "supplier"],
+    plans: ["basic", "pro", "premium"],
+  }),
+);
 
 //
-//
 // Routes for ingredients and check plan features
-//
 //
 
 // Add a new ingredient

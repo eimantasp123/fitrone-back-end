@@ -2,38 +2,46 @@ const Plans = require("../models/Plans"); // Import Plan model
 const UserIngredient = require("../models/UserIngredient"); // Example model for ingredients
 const AppError = require("../utils/appError"); // Error handler
 
+// Middleware to check if the user has reached the limit for a specific feature
 const checkPlanFeatures = (resourceType, featureKey) => {
   return async (req, res, next) => {
     try {
-      const user = req.user; // Assuming user is added to `req` by a previous middleware (e.g., auth)
-      const userPlanName = user.plan; // e.g., "Basic Plan", "Pro Plan", "Premium Plan"
+      const user = req.user; // Assuming user is attached to the request object
+      const userPlanName = user.plan; // Get the user's current plan
 
+      // Fetch the user's plan details
       const userPlan = await Plans.findOne({ plan: userPlanName });
       if (!userPlan) {
-        return next(new AppError("User plan not found.", 404));
+        return next(new AppError(req.t("plan_not_found"), 404));
       }
 
       // Get the user's current usage for the resource type (e.g., ingredients)
       let currentCount = 0;
 
+      // Switch statement to handle different resource types
       switch (resourceType) {
         case "ingredients":
           const userIngredients = await UserIngredient.findOne({
             user: user._id,
           });
           if (userIngredients) {
-            currentCount = userIngredients.ingredients.length;
+            currentCount = userIngredients.ingredients.filter(
+              (i) => !i.archived,
+            ).length;
           }
           break;
 
         case "meals":
-          // Replace with your Meal model logic
           currentCount = await Meal.countDocuments({ userId: user._id });
           break;
 
         case "clients":
           // Replace with your Client model logic
           currentCount = await Client.countDocuments({ userId: user._id });
+          break;
+
+        case "meal_per_week":
+          console.log("meal_per_week");
           break;
 
         default:
@@ -45,25 +53,22 @@ const checkPlanFeatures = (resourceType, featureKey) => {
 
       // Handle "unlimited" case (-1)
       if (userLimit !== -1 && currentCount >= userLimit) {
-        const featureName = featureKey.replace(/_/g, " ");
-        return next(
-          new AppError(
-            req.t("errors.limit_reached", {
-              featureName,
-              userLimit,
-              userPlanName,
-            }),
-            403,
-          ),
-        );
+        return res.status(200).json({
+          status: "limit_reached",
+          message: req.t(`featuresMessages.${featureKey}`, {
+            userLimit,
+            userPlanName,
+          }),
+        });
       }
 
       // Optionally warn users when they're close to their limit
-      if (userLimit !== -1 && currentCount >= userLimit * 0.9) {
-        req.warning = `You are nearing your ${featureKey.replace(
-          /_/g,
-          " ",
-        )} limit (${currentCount}/${userLimit}) for your ${userPlanName}. Consider upgrading your plan.`;
+      if (userLimit !== -1 && userLimit - (currentCount + 1) === 3) {
+        req.warning = req.t(`featuresMessages.${featureKey}_warning`, {
+          userLimit,
+          userPlanName,
+          remaining: userLimit - currentCount - 1,
+        });
       }
 
       next(); // Allow request to proceed if all checks pass

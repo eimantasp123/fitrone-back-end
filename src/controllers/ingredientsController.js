@@ -152,6 +152,7 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
   const newIngredient =
     userIngredients.ingredients[userIngredients.ingredients.length - 1];
 
+  // Calculate the nutrition info based on the current amount
   let nutritionInfo = null;
 
   if (withCurrentAmount && currentAmount) {
@@ -179,12 +180,20 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
     };
   }
 
-  // Send the response
-  res.status(201).json({
+  // Response data
+  const responseData = {
     status: "success",
     message: req.t("meals:ingredientAddedSuccesfuly"),
     data: nutritionInfo,
-  });
+  };
+
+  // Add warning to the response if it exists
+  if (req.warning) {
+    responseData.warning = req.warning;
+  }
+
+  // Send the response
+  res.status(201).json(responseData);
 });
 
 //
@@ -206,9 +215,9 @@ exports.getIngredients = catchAsync(async (req, res, next) => {
   // Get the language from the request object
   const lang = req.lng || "en";
 
-  const sortIngredients = userIngredients.ingredients.sort(
-    (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-  );
+  const sortIngredients = userIngredients.ingredients
+    .filter((ingredient) => !ingredient.archived)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   // Paginate the ingredients
   const ingredients = sortIngredients.map((ingredient) => ({
