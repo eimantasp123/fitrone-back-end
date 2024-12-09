@@ -7,6 +7,13 @@ const plansSchema = new mongoose.Schema({
     required: true,
     enum: ["base", "basic", "pro", "premium"], // Restricts the possible values
   },
+  key: { type: String },
+  price: { type: Number, required: true },
+  currency: {
+    type: String,
+    required: true,
+    enum: ["usd", "eur", "gbp"],
+  },
   features: {
     ingredients_limit: {
       type: Number,
@@ -28,7 +35,7 @@ const plansSchema = new mongoose.Schema({
       required: true,
       default: -1,
     },
-    use_ai_search: {
+    ai_search: {
       type: Boolean,
       required: true,
       default: false,
@@ -38,12 +45,12 @@ const plansSchema = new mongoose.Schema({
       required: true,
       default: false,
     },
-    individual_request_form: {
+    client_request_form: {
       type: Boolean,
       required: true,
       default: false,
     },
-    order_processing_simulations: {
+    order_management: {
       type: Boolean,
       required: true,
       default: false,

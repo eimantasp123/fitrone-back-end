@@ -1,3 +1,4 @@
+const Meal = require("../models/Meal");
 const Plans = require("../models/Plans"); // Import Plan model
 const UserIngredient = require("../models/UserIngredient"); // Example model for ingredients
 const AppError = require("../utils/appError"); // Error handler
@@ -32,7 +33,10 @@ const checkPlanFeatures = (resourceType, featureKey) => {
           break;
 
         case "meals":
-          currentCount = await Meal.countDocuments({ userId: user._id });
+          const meals = await Meal.find({ user: user._id });
+          if (meals) {
+            currentCount = meals.filter((m) => !m.archived).length;
+          }
           break;
 
         case "clients":
@@ -53,6 +57,7 @@ const checkPlanFeatures = (resourceType, featureKey) => {
 
       // Handle "unlimited" case (-1)
       if (userLimit !== -1 && currentCount >= userLimit) {
+        console.log("userLimit:", userLimit, "currentCount:", currentCount);
         return res.status(200).json({
           status: "limit_reached",
           message: req.t(`featuresMessages.${featureKey}`, {
@@ -64,6 +69,9 @@ const checkPlanFeatures = (resourceType, featureKey) => {
 
       // Optionally warn users when they're close to their limit
       if (userLimit !== -1 && userLimit - (currentCount + 1) === 3) {
+        console.log("Warning message");
+        console.log("userLimit:", userLimit, "currentCount:", currentCount);
+
         req.warning = req.t(`featuresMessages.${featureKey}_warning`, {
           userLimit,
           userPlanName,

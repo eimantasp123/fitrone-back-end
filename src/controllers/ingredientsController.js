@@ -76,8 +76,8 @@ exports.getIngredientInfo = catchAsync(async (req, res, next) => {
     status: "success",
     data: {
       title: response.title[lang],
-      unit: response.unit,
       amount: response.amount,
+      unit: response.unit,
       calories: response.calories,
       protein: response.protein,
       fat: response.fat,
@@ -471,6 +471,7 @@ exports.getIngredientSearch = catchAsync(async (req, res, next) => {
   const results = userIngredients.flatMap((doc) =>
     doc.ingredients
       .filter((ingredient) => regex.test(ingredient.title[lang]))
+      .filter((ingredient) => !ingredient.archived)
       .map((ingredient) => ({
         ingredientId: ingredient._id,
         title: ingredient.title[lang],

@@ -44,7 +44,11 @@ router.get("/", getIngredients);
 router.get("/search", getIngredientSearch);
 
 // Get ingredient info from AI
-router.post("/search-ai", getIngredientInfo);
+router.post(
+  "/search-ai",
+  authController.restrictTo({ plans: ["premium"] }),
+  getIngredientInfo,
+);
 
 // Get ingredient nutrition info
 router.get("/nutrition/:ingredientId", getIngredientNutrition);

@@ -154,12 +154,18 @@ exports.addMeal = catchAsync(async (req, res, next) => {
   delete formattedMeal.__v;
   delete formattedMeal.updatedAt;
 
-  // Send the response
-  res.status(201).json({
+  const responseData = {
     status: "success",
     message: req.t("meals:mealAddedSuccessfully"),
     data: formattedMeal,
-  });
+  };
+
+  if (req.warning) {
+    responseData.warning = req.warning;
+  }
+
+  // Send the response
+  res.status(201).json(responseData);
 });
 
 //
@@ -391,7 +397,7 @@ exports.getMeals = catchAsync(async (req, res, next) => {
   const skip = (page - 1) * limit;
 
   // Query the database for all meals for the user
-  const query = { user: req.user._id };
+  const query = { user: req.user._id, archived: false };
 
   if (category) {
     query.category = category;

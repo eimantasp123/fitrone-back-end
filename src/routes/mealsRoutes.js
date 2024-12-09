@@ -1,5 +1,6 @@
 const express = require("express");
 const authMiddleware = require("../middlewares/authMiddleware");
+const checkPlanFeatures = require("../middlewares/checkPlanFeatures");
 const authController = require("../controllers/authController");
 const { upload } = require("../controllers/mealsController");
 const {
@@ -17,7 +18,12 @@ router.use(authMiddleware);
 // Restrict access to admin and supplier roles
 router.use(authController.restrictTo("admin", "supplier"));
 
-router.post("/", upload.single("image"), addMeal);
+router.post(
+  "/",
+  checkPlanFeatures("meals", "meals_limit"),
+  upload.single("image"),
+  addMeal,
+);
 router.get("/", getMeals);
 router.delete("/", deleteMeal);
 router.put("/:id", upload.single("image"), updateMeal);

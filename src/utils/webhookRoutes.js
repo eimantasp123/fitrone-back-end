@@ -2,9 +2,10 @@ const express = require("express");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const bodyParser = require("body-parser");
 const User = require("../models/User");
-const { downgradePlanHandler } = require("../helper/downgradeHelpers");
+const { downgradeOrUpgradePlanHandler } = require("../helper/downgradeHelpers");
 const mapPriceIdToPlan = require("./generalHelpers");
 const UserIngredient = require("../models/UserIngredient");
+const Meal = require("../models/Meal");
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 const router = express.Router();
 
@@ -96,7 +97,7 @@ async function handleSubscriptionUpdates(subscriptionUpdates) {
   if (!user) return; // Return if user not found
 
   // Handle plan upgrade or downgrade
-  user = await downgradePlanHandler(user, items.data[0].price.id);
+  user = await downgradeOrUpgradePlanHandler(user, items.data[0].price.id);
 
   // Handle trial period
   if (status === "trialing") {
@@ -147,6 +148,9 @@ async function handleSubscriptionDeletion(subscription) {
     { user: user._id },
     { $set: { "ingredients.$[].archived": true } },
   );
+
+  // Archive all the user meals
+  await Meal.updateMany({ user: user._id }, { $set: { archived: true } });
 
   // Update the user subscription status
   user.archivedData = null;

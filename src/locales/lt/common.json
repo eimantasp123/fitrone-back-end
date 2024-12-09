@@ -19,10 +19,12 @@
   "plan_not_found": "Vartotojo planas nerasta.",
 
   "featuresMessages": {
-    "ingredients_limit": "Jūs pasiekėte savo ingredientų limitą {{userLimit}} jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte pridėti daugiau ingredientų!",
-    "ingredients_limit_warning": "Jūs artėjate prie savo ingredientų limito {{userLimit}} jūsų {{userPlanName}} plane. Jums liko {{remaining}} ingredientai iki pasiekiant ribą. Atnaujinkite planą, kad galėtumėte pridėti daugiau!",
+    "ingredients_limit": "Jūs pasiekėte savo ingredientų limitą {{userLimit}} jūsų '{{userPlanName}}' plane. Atnaujinkite planą, kad galėtumėte pridėti daugiau ingredientų!",
+    "ingredients_limit_warning": "Jūs artėjate prie savo ingredientų limito {{userLimit}} jūsų '{{userPlanName}}' plane. Jums liko {{remaining}} ingredientai iki pasiekiant ribą. Atnaujinkite planą, kad galėtumėte pridėti daugiau!",
 
-    "meals_limit": "Jūs pasiekėte savo patiekalų limitą {{userLimit}} jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte pridėti daugiau patiekalų!",
+    "meals_limit": "Jūs pasiekėte savo patiekalų limitą {{userLimit}} jūsų '{{userPlanName}}' plane. Atnaujinkite planą, kad galėtumėte pridėti daugiau patiekalų!",
+    "meals_limit_warning": "Jūs artėjate prie savo patiekalų limito {{userLimit}} jūsų '{{userPlanName}}' plane. Jums liko {{remaining}} patiekalai iki pasiekiant ribą. Atnaujinkite planą, kad galėtumėte pridėti daugiau!",
+
     "meal_week_types_limit": "Jūs pasiekėte savo savaitinių patiekalų tipų limitą {{userLimit}} jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte sukurti daugiau tipų!",
     "clients_limit": "Jūs pasiekėte savo klientų limitą {{userLimit}} jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte pridėti daugiau klientų!",
     "use_ai_search": "AI ingredientų paieška nėra prieinama jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte naudotis šia funkcija.",

@@ -67,6 +67,10 @@ const mealSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    archived: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
