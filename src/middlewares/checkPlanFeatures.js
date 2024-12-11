@@ -1,6 +1,6 @@
+const Ingredient = require("../models/Ingredient");
 const Meal = require("../models/Meal");
 const Plans = require("../models/Plans"); // Import Plan model
-const UserIngredient = require("../models/UserIngredient"); // Example model for ingredients
 const AppError = require("../utils/appError"); // Error handler
 
 // Middleware to check if the user has reached the limit for a specific feature
@@ -22,13 +22,11 @@ const checkPlanFeatures = (resourceType, featureKey) => {
       // Switch statement to handle different resource types
       switch (resourceType) {
         case "ingredients":
-          const userIngredients = await UserIngredient.findOne({
+          const userIngredients = await Ingredient.find({
             user: user._id,
           });
-          if (userIngredients) {
-            currentCount = userIngredients.ingredients.filter(
-              (i) => !i.archived,
-            ).length;
+          if (userIngredients && userIngredients.length > 0) {
+            currentCount = userIngredients.filter((i) => !i.archived).length;
           }
           break;
 
@@ -54,6 +52,7 @@ const checkPlanFeatures = (resourceType, featureKey) => {
 
       // Fetch the limit for the specified feature
       const userLimit = userPlan.features[featureKey];
+      console.log("userLimit:", userLimit);
 
       // Handle "unlimited" case (-1)
       if (userLimit !== -1 && currentCount >= userLimit) {

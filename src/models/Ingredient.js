@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 
 const ingredientSchema = new mongoose.Schema(
   {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     title: {
       lt: {
         type: String,
@@ -46,20 +51,6 @@ const ingredientSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-const userIngredientSchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-    unique: true,
-  },
-  lang: {
-    type: String,
-    default: "en",
-  },
-  ingredients: [ingredientSchema],
-});
+const Ingredient = mongoose.model("Ingredient", ingredientSchema);
 
-const UserIngredient = mongoose.model("UserIngredient", userIngredientSchema);
-
-module.exports = UserIngredient;
+module.exports = Ingredient;

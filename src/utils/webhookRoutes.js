@@ -4,8 +4,8 @@ const bodyParser = require("body-parser");
 const User = require("../models/User");
 const { downgradeOrUpgradePlanHandler } = require("../helper/downgradeHelpers");
 const mapPriceIdToPlan = require("./generalHelpers");
-const UserIngredient = require("../models/UserIngredient");
 const Meal = require("../models/Meal");
+const Ingredient = require("../models/Ingredient");
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 const router = express.Router();
 
@@ -144,10 +144,7 @@ async function handleSubscriptionDeletion(subscription) {
   }
 
   // Archive all the user ingredients
-  await UserIngredient.updateOne(
-    { user: user._id },
-    { $set: { "ingredients.$[].archived": true } },
-  );
+  await Ingredient.updateMany({ user: user._id }, { $set: { archived: true } });
 
   // Archive all the user meals
   await Meal.updateMany({ user: user._id }, { $set: { archived: true } });

@@ -92,10 +92,10 @@ const userSchema = new mongoose.Schema({
   passwordChangedAt: { type: Date },
   archivedData: {
     messageRead: { type: Boolean, default: false },
-    ingredients: { type: Number, default: 0 },
-    meals: { type: Number, default: 0 },
-    mealWeekTypes: { type: Number, default: 0 },
-    clients: { type: Number, default: 0 },
+    ingredients: { type: Number, default: null },
+    meals: { type: Number, default: null },
+    mealWeekTypes: { type: Number, default: null },
+    clients: { type: Number, default: null },
   },
 });
 

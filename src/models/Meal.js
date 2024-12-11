@@ -25,7 +25,7 @@ const mealSchema = new mongoose.Schema(
       {
         ingredientId: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "UserIngredient",
+          ref: "Ingredient",
           required: true,
         },
         title: { type: String, required: true, lowercase: true },

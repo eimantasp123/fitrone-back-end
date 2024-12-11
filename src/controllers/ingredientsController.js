@@ -3,9 +3,9 @@ const catchAsync = require("../utils/catchAsync");
 const openai = require("openai");
 const z = require("zod");
 const { zodResponseFormat } = require("openai/helpers/zod");
-const UserIngredient = require("../models/UserIngredient");
 const Meal = require("../models/Meal");
 const { default: mongoose } = require("mongoose");
+const Ingredient = require("../models/Ingredient");
 
 //
 //
@@ -111,50 +111,34 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
     return next(new AppError(req.t("meals:error.missingRequiredFields"), 400));
   }
 
-  // Check if user has the ingredient document
-  let userIngredients = await UserIngredient.findOne({ user: req.user._id });
-
-  // If user ingredient document does not exist, create a new one
-  if (!userIngredients) {
-    userIngredients = new UserIngredient({
-      user: req.user._id,
-      lang,
-      ingredients: [],
-    });
-  }
-
   // Check if the ingredient already exists in the user ingredient document
-  const ingredientExists = userIngredients.ingredients.find(
-    (ingredient) =>
-      ingredient.title[lang].toLowerCase() === title.toLowerCase(),
+  const ingredients = await Ingredient.find({
+    user: req.user._id,
+    [`title.${lang}`]: title.toLowerCase(),
+  });
+
+  const ingredientMatches = ingredients.filter(
+    (ingredient) => ingredient.title[lang] === title.toLowerCase(),
   );
 
-  // If the ingredient already exists, send an error response
-  if (ingredientExists) {
+  if (ingredientMatches.length > 0) {
+    console.log(ingredientMatches);
     return next(new AppError(req.t("meals:error.ingredientExists"), 400));
   }
-
-  // Add the new ingredient to the existing document
-  userIngredients.ingredients.push({
-    title: { en: title, lt: title },
+  // Create a new ingredient
+  const newIngredient = await Ingredient.create({
+    user: req.user._id,
+    title: { en: title, lt: title }, // Assuming titles in both languages are the same
     unit,
+    amount,
     calories,
     protein,
     carbs,
     fat,
-    amount,
   });
-
-  // Save the user ingredient document
-  await userIngredients.save();
-
-  // Get the newly added ingredient
-  const newIngredient =
-    userIngredients.ingredients[userIngredients.ingredients.length - 1];
 
   // Calculate the nutrition info based on the current amount
   let nutritionInfo = null;
-
   if (withCurrentAmount && currentAmount) {
     const scalingFactor = currentAmount / amount;
     nutritionInfo = {
@@ -201,26 +185,16 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
 // Get all ingredients for the user
 //
 exports.getIngredients = catchAsync(async (req, res, next) => {
-  // Query the database for the user ingredient document
-  const userIngredients = await UserIngredient.findOne({ user: req.user._id });
-
-  if (!userIngredients) {
-    return res.status(200).json({
-      status: "success",
-      results: 0,
-      data: [],
-    });
-  }
-
   // Get the language from the request object
   const lang = req.lng || "en";
 
-  const sortIngredients = userIngredients.ingredients
-    .filter((ingredient) => !ingredient.archived)
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  // Query the `Ingredient` collection for the user's ingredients
+  const ingredients = await Ingredient.find({
+    user: req.user._id,
+    archived: { $ne: true },
+  }).sort({ createdAt: -1 });
 
-  // Paginate the ingredients
-  const ingredients = sortIngredients.map((ingredient) => ({
+  const response = ingredients.map((ingredient) => ({
     ingredientId: ingredient._id,
     title: ingredient.title[lang],
     unit: ingredient.unit,
@@ -234,8 +208,8 @@ exports.getIngredients = catchAsync(async (req, res, next) => {
   // Send the response
   res.status(200).json({
     status: "success",
-    results: ingredients.length,
-    data: ingredients,
+    results: response.length,
+    data: response,
   });
 });
 
@@ -251,30 +225,14 @@ exports.deleteIngredient = catchAsync(async (req, res, next) => {
     return next(new AppError(req.t("meals:error.ingredientIdRequired"), 400));
   }
 
-  // Query the database for the user ingredient document
-  const userIngredients = await UserIngredient.findOne({ user: req.user._id });
+  const ingredient = await Ingredient.findOneAndDelete({
+    _id: ingredientId,
+    user: req.user._id,
+  });
 
-  // Check if the user ingredient document exists
-  if (!userIngredients) {
-    return next(new AppError(req.t("meals:error.noIngredientsFound"), 404));
-  }
-
-  // Find the index of the ingredient to delete
-  const ingredientIndex = userIngredients.ingredients.findIndex(
-    (ingredient) => ingredient._id.toString() === ingredientId,
-  );
-
-  // Check if the ingredient exists
-  if (ingredientIndex === -1) {
+  if (!ingredient) {
     return next(new AppError(req.t("meals:error.ingredientNotFound"), 404));
   }
-
-  // Get the ingredient details before deletion
-  const ingredientToDelete = userIngredients.ingredients[ingredientIndex];
-
-  // Remove the ingredient from the user's ingredient list
-  userIngredients.ingredients.splice(ingredientIndex, 1);
-  await userIngredients.save();
 
   // Find all meals that used the deleted ingredient
   const mealsToUpdate = await Meal.find({
@@ -289,7 +247,7 @@ exports.deleteIngredient = catchAsync(async (req, res, next) => {
     );
 
     // Recalculate the total nutrition info for the meal
-    const newNutrition = meal.ingredients.reduce(
+    meal.nutrition = meal.ingredients.reduce(
       (acc, curr) => {
         acc.calories = Number((acc.calories + curr.calories).toFixed(1));
         acc.protein = Number((acc.protein + curr.protein).toFixed(1));
@@ -300,9 +258,6 @@ exports.deleteIngredient = catchAsync(async (req, res, next) => {
       { calories: 0, protein: 0, fat: 0, carbs: 0 },
     );
 
-    // Update the meal's nutrition info
-    meal.nutrition = newNutrition;
-
     // Save the updated meal
     await meal.save();
   }
@@ -312,7 +267,7 @@ exports.deleteIngredient = catchAsync(async (req, res, next) => {
     status: "success",
     message: req.t("meals:ingredientDeletedSuccessfully"),
     data: {
-      ingredient: ingredientToDelete,
+      ingredient,
       mealsUpdated: mealsToUpdate.length,
     },
   });
@@ -325,7 +280,6 @@ exports.deleteIngredient = catchAsync(async (req, res, next) => {
 exports.updateIngredient = catchAsync(async (req, res, next) => {
   const { ingredientId } = req.params;
   const { title, unit, calories, protein, carbs, amount, fat } = req.body;
-
   // Get the language from the request object
   const lang = req.lng || "en";
 
@@ -334,95 +288,76 @@ exports.updateIngredient = catchAsync(async (req, res, next) => {
     return next(new AppError(req.t("meals:error.ingredientIdRequired"), 400));
   }
 
-  // Query the database for the user ingredient document
-  const userIngredients = await UserIngredient.findOne({ user: req.user._id });
-
-  // Check if the user ingredient document exists
-  if (!userIngredients) {
-    return next(new AppError(req.t("meals:error.noIngredientsFound"), 404));
-  }
-
   // Check if the ingredient title already exists in the user ingredient document on other ingredient
-  const ingredientExists = userIngredients.ingredients.find(
-    (ingredient) =>
-      ingredient.title[lang].toLowerCase() === title.toLowerCase() &&
-      ingredient._id.toString() !== ingredientId,
+  const ingredients = await Ingredient.find({
+    user: req.user._id,
+    [`title.${lang}`]: title.toLowerCase(),
+    _id: { $ne: ingredientId },
+  });
+
+  const ingredientMatches = ingredients.filter(
+    (ingredient) => ingredient.title[lang] === title.toLowerCase(),
   );
 
-  if (ingredientExists) {
+  if (ingredientMatches.length > 0) {
     return next(new AppError(req.t("meals:error.ingredientExists"), 400));
   }
 
-  // Find the index of the ingredient to update
-  const ingredientIndex = userIngredients.ingredients.findIndex(
-    (ingredient) => ingredient._id.toString() === ingredientId,
+  // Update the ingredient
+  const ingredient = await Ingredient.findOneAndUpdate(
+    { _id: ingredientId, user: req.user._id },
+    {
+      title: { en: title, lt: title },
+      unit,
+      calories,
+      protein,
+      carbs,
+      amount,
+      fat,
+    },
+    { new: true },
   );
 
-  // Check if the ingredient exists
-  if (ingredientIndex === -1) {
+  if (!ingredient) {
     return next(new AppError(req.t("meals:error.ingredientNotFound"), 404));
   }
 
-  // Update the ingredient
-  userIngredients.ingredients[ingredientIndex].title = { en: title, lt: title };
-  userIngredients.ingredients[ingredientIndex].unit = unit;
-  userIngredients.ingredients[ingredientIndex].calories = calories;
-  userIngredients.ingredients[ingredientIndex].protein = protein;
-  userIngredients.ingredients[ingredientIndex].carbs = carbs;
-  userIngredients.ingredients[ingredientIndex].amount = amount;
-  userIngredients.ingredients[ingredientIndex].fat = fat;
-
-  // Save the user ingredient document
-  await userIngredients.save();
-
-  // Get the updated ingredient
-  const updatedIngredient = userIngredients.ingredients[ingredientIndex];
-
-  // Recalculate meals that use this ingredient
+  // Update meals that reference this ingredient
   const mealsToUpdate = await Meal.find({
     user: req.user._id,
     "ingredients.ingredientId": ingredientId,
   });
 
-  // Update the meals that use the updated ingredient
   for (const meal of mealsToUpdate) {
     meal.ingredients = meal.ingredients.map((mealIngredient) => {
       if (mealIngredient.ingredientId.toString() === ingredientId) {
-        const scalingFactor =
-          mealIngredient.currentAmount / updatedIngredient.amount;
+        const scalingFactor = mealIngredient.currentAmount / amount;
 
         return {
           ...mealIngredient._doc,
-          title: updatedIngredient.title[lang],
-          unit: updatedIngredient.unit,
-          calories: Number(
-            (updatedIngredient.calories * scalingFactor).toFixed(1),
-          ),
-          protein: Number(
-            (updatedIngredient.protein * scalingFactor).toFixed(1),
-          ),
-          fat: Number((updatedIngredient.fat * scalingFactor).toFixed(1)),
-          carbs: Number((updatedIngredient.carbs * scalingFactor).toFixed(1)),
+          title: ingredient.title[lang],
+          unit: ingredient.unit,
+          calories: (ingredient.calories * scalingFactor).toFixed(1),
+          protein: (ingredient.protein * scalingFactor).toFixed(1),
+          fat: (ingredient.fat * scalingFactor).toFixed(1),
+          carbs: (ingredient.carbs * scalingFactor).toFixed(1),
         };
       }
       return mealIngredient;
     });
 
-    // Recalculate the total nutrition info for the meal
-    const newNutrition = meal.ingredients.reduce(
+    // Recalculate the nutrition info
+    meal.nutrition = meal.ingredients.reduce(
       (acc, curr) => {
-        acc.calories = Number((acc.calories + curr.calories).toFixed(1));
-        acc.protein = Number((acc.protein + curr.protein).toFixed(1));
-        acc.fat = Number((acc.fat + curr.fat).toFixed(1));
-        acc.carbs = Number((acc.carbs + curr.carbs).toFixed(1));
+        acc.calories += curr.calories;
+        acc.protein += curr.protein;
+        acc.fat += curr.fat;
+        acc.carbs += curr.carbs;
         return acc;
       },
       { calories: 0, protein: 0, fat: 0, carbs: 0 },
     );
 
-    meal.nutrition = newNutrition;
-
-    // Save the updated meal
     await meal.save();
   }
 
@@ -431,14 +366,14 @@ exports.updateIngredient = catchAsync(async (req, res, next) => {
     status: "success",
     message: req.t("meals:ingredientUpdatedSuccessfully"),
     data: {
-      ingredientId: updatedIngredient._id,
-      title: updatedIngredient.title[lang],
-      unit: updatedIngredient.unit,
-      amount: updatedIngredient.amount,
-      calories: updatedIngredient.calories,
-      protein: updatedIngredient.protein,
-      fat: updatedIngredient.fat,
-      carbs: updatedIngredient.carbs,
+      ingredientId: ingredient._id,
+      title: ingredient.title[lang],
+      unit: ingredient.unit,
+      amount: ingredient.amount,
+      calories: ingredient.calories,
+      protein: ingredient.protein,
+      fat: ingredient.fat,
+      carbs: ingredient.carbs,
     },
   });
 });
@@ -449,8 +384,6 @@ exports.updateIngredient = catchAsync(async (req, res, next) => {
 //
 exports.getIngredientSearch = catchAsync(async (req, res, next) => {
   const query = req.query.query;
-
-  // Get the language from the request object
   const lang = req.lng || "en";
 
   // Check if the query parameter is provided
@@ -462,27 +395,24 @@ exports.getIngredientSearch = catchAsync(async (req, res, next) => {
   const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const regex = new RegExp(escapedQuery, "i");
 
-  // Query the database for ingredients matching the query in the specified language
-  const userIngredients = await UserIngredient.find({
+  // Query the `Ingredient` collection for matching titles
+  const ingredients = await Ingredient.find({
     user: req.user._id,
+    [`title.${lang}`]: { $regex: regex }, // Dynamically match language-specific title
+    archived: { $ne: true },
   });
 
-  // Extract matching ingredients with only the current language title
-  const results = userIngredients.flatMap((doc) =>
-    doc.ingredients
-      .filter((ingredient) => regex.test(ingredient.title[lang]))
-      .filter((ingredient) => !ingredient.archived)
-      .map((ingredient) => ({
-        ingredientId: ingredient._id,
-        title: ingredient.title[lang],
-        unit: ingredient.unit,
-        amount: ingredient.amount,
-        calories: ingredient.calories,
-        protein: ingredient.protein,
-        fat: ingredient.fat,
-        carbs: ingredient.carbs,
-      })),
-  );
+  // Map the results to the desired format
+  const results = ingredients.map((ingredient) => ({
+    ingredientId: ingredient._id,
+    title: ingredient.title[lang],
+    unit: ingredient.unit,
+    amount: ingredient.amount,
+    calories: ingredient.calories,
+    protein: ingredient.protein,
+    fat: ingredient.fat,
+    carbs: ingredient.carbs,
+  }));
 
   // Send the response
   res.status(200).json({
@@ -517,25 +447,16 @@ exports.getIngredientNutrition = catchAsync(async (req, res, next) => {
     );
   }
 
-  // Query the database for the ingredient
-  const userIngredient = await UserIngredient.findOne(
-    { user: new mongoose.Types.ObjectId(req.user._id) },
-    {
-      ingredients: {
-        $elemMatch: {
-          _id: new mongoose.Types.ObjectId(ingredientId),
-        },
-      },
-    },
-  );
+  // Query the `Ingredient` collection
+  const ingredient = await Ingredient.findOne({
+    _id: ingredientId,
+    user: req.user._id,
+  });
 
   // Check if the ingredient exists
-  if (!userIngredient.ingredients.length) {
+  if (!ingredient) {
     return next(new AppError(req.t("meals:error.ingredientNotFound"), 404));
   }
-
-  // Get the ingredient object
-  const ingredient = userIngredient.ingredients[0];
 
   // Calculate the nutrition info based on the current amount
   const scalingFactor = currentAmount / ingredient.amount;

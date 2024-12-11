@@ -1,13 +1,16 @@
-const UserIngredient = require("../models/UserIngredient");
 const Plans = require("../models/Plans");
 const mapPriceIdToPlan = require("../utils/generalHelpers");
 const Meal = require("../models/Meal");
+const Ingredient = require("../models/Ingredient");
 
-//
-//
-// Downgrade the user plan functionality based on the plan features
-//
-//
+/**
+ * Downgrade the user plan functionality based on the plan features
+ *
+ * @param {*} user  The user object
+ * @param {*} planId  The plan ID
+ * @returns
+ *
+ */
 exports.downgradeOrUpgradePlanHandler = async (user, planId) => {
   try {
     // Extract the plans from the database
@@ -28,23 +31,19 @@ exports.downgradeOrUpgradePlanHandler = async (user, planId) => {
     const resourceConfigs = [
       {
         resourceType: "ingredients",
-        model: UserIngredient,
-        field: "ingredients",
+        model: Ingredient,
         limitKey: "ingredients_limit",
-        isNested: true,
       },
       {
         resourceType: "meals",
         model: Meal,
-        field: null,
         limitKey: "meals_limit",
-        isNested: false,
       },
     ];
 
     // Compare the limits and downgrade the user if necessary
     for (const config of resourceConfigs) {
-      const { resourceType, model, field, limitKey, isNested } = config;
+      const { resourceType, model, limitKey } = config;
 
       // Ingredients limit from plans
       const currentLimits = userPlan.features[limitKey] ?? 0;
@@ -52,7 +51,7 @@ exports.downgradeOrUpgradePlanHandler = async (user, planId) => {
 
       // Handle unlimited case
       if (newLimits === -1) {
-        await unarchiveAllResources(model, user._id, field, isNested);
+        await unarchiveAllResources(model, user._id);
         user.archivedData = null;
         continue;
       }
@@ -61,8 +60,6 @@ exports.downgradeOrUpgradePlanHandler = async (user, planId) => {
       const { activeResources, archivedResources } = await getResources(
         model,
         user._id,
-        field,
-        isNested,
       );
 
       // Downgrade logic: Archive excess resources
@@ -74,18 +71,14 @@ exports.downgradeOrUpgradePlanHandler = async (user, planId) => {
             excessResources,
           );
 
-          await archiveResources(
-            model,
-            user._id,
-            field,
-            resourcesToArchive,
-            isNested,
-          );
+          await archiveResources(model, resourcesToArchive);
 
+          const resourcesIsArchived =
+            archivedResources.length + resourcesToArchive.length;
           user.archivedData = {
             ...user.archivedData,
             [resourceType]:
-              archivedResources.length + resourcesToArchive.length,
+              resourcesIsArchived !== 0 ? resourcesIsArchived : null,
             messageRead: false,
           };
         } else {
@@ -107,17 +100,13 @@ exports.downgradeOrUpgradePlanHandler = async (user, planId) => {
             unarchiveCount,
           );
 
-          await unarchiveResources(
-            model,
-            user._id,
-            field,
-            resourcesToUnarchive,
-            isNested,
-          );
+          await unarchiveResources(model, resourcesToUnarchive);
 
+          const resourcesIsArchived = archivedResources.length - unarchiveCount;
           user.archivedData = {
             ...user.archivedData,
-            [resourceType]: archivedResources.length - unarchiveCount,
+            [resourceType]:
+              resourcesIsArchived !== 0 ? resourcesIsArchived : null,
             messageRead: false,
           };
         } else {
@@ -137,81 +126,42 @@ exports.downgradeOrUpgradePlanHandler = async (user, planId) => {
 /**
  *  Fetch active and archived resources
  */
-async function getResources(model, userId, field, isNested) {
-  if (isNested) {
-    const userDoc = await model.findOne({ user: userId });
-    const resources = userDoc?.[field] || [];
-    return {
-      activeResources: resources.filter((res) => !res.archived),
-      archivedResources: resources.filter((res) => res.archived),
-    };
-  } else {
-    const resources = await model.find({ user: userId });
-    return {
-      activeResources: resources.filter((res) => !res.archived),
-      archivedResources: resources.filter((res) => res.archived),
-    };
-  }
+async function getResources(model, userId) {
+  const resources = await model.find({ user: userId });
+  return {
+    activeResources: resources.filter((res) => !res.archived),
+    archivedResources: resources.filter((res) => res.archived),
+  };
 }
 
 /**
  * Archive specific resources
  */
-async function archiveResources(model, userId, field, resourceIds, isNested) {
-  if (isNested) {
-    await model.updateOne(
-      { user: userId },
-      {
-        $set: {
-          [`${field}.$[elem].archived`]: true,
-        },
-      },
-      {
-        arrayFilters: [{ "elem._id": { $in: resourceIds } }],
-      },
-    );
-  } else {
-    await model.updateMany(
-      { _id: { $in: resourceIds } },
-      { $set: { archived: true } },
-    );
-  }
+async function archiveResources(model, resourceIds) {
+  await model.updateMany(
+    { _id: { $in: resourceIds } },
+    { $set: { archived: true } },
+  );
 }
 
 /**
  * Unarchive specified resources
  */
-async function unarchiveResources(model, userId, field, resourceIds, isNested) {
-  if (isNested) {
-    await model.updateOne(
-      { user: userId },
-      { $set: { [`${field}.$[elem].archived`]: false } },
-      { arrayFilters: [{ "elem._id": { $in: resourceIds } }] },
-    );
-  } else {
-    await model.updateMany(
-      { _id: { $in: resourceIds } },
-      { $set: { archived: false } },
-    );
-  }
+async function unarchiveResources(model, resourceIds) {
+  await model.updateMany(
+    { _id: { $in: resourceIds } },
+    { $set: { archived: false } },
+  );
 }
 
 /**
  * Unarchive all resources
  */
-async function unarchiveAllResources(model, userId, field, isNested) {
-  if (isNested) {
-    await model.updateOne(
-      { user: userId },
-      { $set: { [`${field}.$[elem].archived`]: false } },
-      { arrayFilters: [{ "elem.archived": true }] },
-    );
-  } else {
-    await model.updateMany(
-      { user: userId, archived: true },
-      { $set: { archived: false } },
-    );
-  }
+async function unarchiveAllResources(model, userId) {
+  await model.updateMany(
+    { user: userId, archived: true },
+    { $set: { archived: false } },
+  );
 }
 
 /**
