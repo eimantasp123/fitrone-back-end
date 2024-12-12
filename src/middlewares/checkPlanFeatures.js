@@ -1,6 +1,7 @@
 const Ingredient = require("../models/Ingredient");
 const Meal = require("../models/Meal");
 const Plans = require("../models/Plans"); // Import Plan model
+const WeekPlan = require("../models/WeekPlan");
 const AppError = require("../utils/appError"); // Error handler
 
 // Middleware to check if the user has reached the limit for a specific feature
@@ -22,28 +23,20 @@ const checkPlanFeatures = (resourceType, featureKey) => {
       // Switch statement to handle different resource types
       switch (resourceType) {
         case "ingredients":
-          const userIngredients = await Ingredient.find({
-            user: user._id,
-          });
-          if (userIngredients && userIngredients.length > 0) {
-            currentCount = userIngredients.filter((i) => !i.archived).length;
-          }
+          currentCount = await getUserActiveResources(user._id, Ingredient);
           break;
 
         case "meals":
-          const meals = await Meal.find({ user: user._id });
-          if (meals) {
-            currentCount = meals.filter((m) => !m.archived).length;
-          }
+          currentCount = await getUserActiveResources(user._id, Meal);
+          break;
+
+        case "weekPlans":
+          currentCount = await getUserActiveResources(user._id, WeekPlan);
           break;
 
         case "clients":
           // Replace with your Client model logic
           currentCount = await Client.countDocuments({ userId: user._id });
-          break;
-
-        case "meal_per_week":
-          console.log("meal_per_week");
           break;
 
         default:
@@ -56,7 +49,6 @@ const checkPlanFeatures = (resourceType, featureKey) => {
 
       // Handle "unlimited" case (-1)
       if (userLimit !== -1 && currentCount >= userLimit) {
-        console.log("userLimit:", userLimit, "currentCount:", currentCount);
         return res.status(200).json({
           status: "limit_reached",
           message: req.t(`featuresMessages.${featureKey}`, {
@@ -68,9 +60,6 @@ const checkPlanFeatures = (resourceType, featureKey) => {
 
       // Optionally warn users when they're close to their limit
       if (userLimit !== -1 && userLimit - (currentCount + 1) === 3) {
-        console.log("Warning message");
-        console.log("userLimit:", userLimit, "currentCount:", currentCount);
-
         req.warning = req.t(`featuresMessages.${featureKey}_warning`, {
           userLimit,
           userPlanName,
@@ -78,11 +67,21 @@ const checkPlanFeatures = (resourceType, featureKey) => {
         });
       }
 
-      next(); // Allow request to proceed if all checks pass
+      next();
     } catch (err) {
-      next(err); // Forward errors to the global error handler
+      next(err);
     }
   };
+};
+
+// Helper function to check the number of active resources for a user
+const getUserActiveResources = async (userId, model) => {
+  const data = await model.find({ user: userId });
+  if (data && data.length > 0) {
+    return data.filter((d) => !d.archived).length;
+  } else {
+    return 0;
+  }
 };
 
 module.exports = checkPlanFeatures;

@@ -14,11 +14,14 @@ const checkPlanFeatures = require("../middlewares/checkPlanFeatures");
 
 const router = express.Router();
 
-// Apply authentication middleware to all routes below this line
+/**
+ * Apply authentication middleware to all routes below this line
+ */
 router.use(authMiddleware);
 
-// Restrict access to admin and supplier roles
-// and to the basic, pro, and premium plans
+/**
+ * Restrict access to admin and supplier roles and to the basic, pro, and premium plans
+ */
 router.use(
   authController.restrictTo({
     roles: ["admin", "supplier"],
@@ -26,9 +29,9 @@ router.use(
   }),
 );
 
-//
-// Routes for ingredients and check plan features
-//
+/**
+ * Routes for ingredients
+ */
 
 // Add a new ingredient
 router.post(

@@ -5,10 +5,9 @@ const catchAsync = require("../utils/catchAsync");
 const User = require("../models/User");
 const verificationHelper = require("./../helper/verificationHelper");
 
-//
-//
-// Registers a new user by email and sends a verification email.
-//
+/**
+ * Register a new user by email and send a verification email.
+ */
 exports.registerEmail = catchAsync(async (req, res, next) => {
   const { email } = req.body;
 
@@ -57,10 +56,9 @@ exports.registerEmail = catchAsync(async (req, res, next) => {
   );
 });
 
-//
-//
-// Verifies a user's email using a verification code
-//
+/**
+ * Verify user email using a verification code.
+ */
 exports.verifyEmail = catchAsync(async (req, res, next) => {
   const { email, code } = req.body;
 
@@ -89,10 +87,9 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
   });
 });
 
-//
-//
-// Resends a verification email to a user
-//
+/**
+ * Resend verification email to user.
+ */
 exports.resendVerificationEmailCode = catchAsync(async (req, res, next) => {
   // Find user with email and is not verified
   const user = await User.findOne({
@@ -114,10 +111,9 @@ exports.resendVerificationEmailCode = catchAsync(async (req, res, next) => {
   );
 });
 
-//
-//
-// Complete user registration with email, password, first name and last name
-//
+/**
+ * Complete user registration with email, password, first name and last name.
+ */
 exports.completeRegistration = catchAsync(async (req, res, next) => {
   const { email, password, passwordConfirm, firstName, lastName } = req.body;
 
@@ -150,10 +146,9 @@ exports.completeRegistration = catchAsync(async (req, res, next) => {
   );
 });
 
-//
-//
-// Login user with email and password and send access token and refresh token to cookies
-//
+/**
+ * Login user with email and password and send access token and refresh token to cookies.
+ */
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
@@ -207,10 +202,9 @@ exports.login = catchAsync(async (req, res, next) => {
   );
 });
 
-//
-//
-// Resend verification code to user
-//
+/**
+ * Resend verification code to user.
+ */
 exports.resendCode = catchAsync(async (req, res, next) => {
   const { userId } = req.body;
 
@@ -229,10 +223,9 @@ exports.resendCode = catchAsync(async (req, res, next) => {
   });
 });
 
-//
-//
-// Verify login with user ID and code and send access token and refresh token to cookies
-//
+/**
+ * Verify login with user ID and code and send access token and refresh token to cookies.
+ */
 exports.verifyLogin = catchAsync(async (req, res, next) => {
   const { userId, code } = req.body;
 
@@ -259,10 +252,9 @@ exports.verifyLogin = catchAsync(async (req, res, next) => {
   );
 });
 
-//
-//
-// Logout user and remove access token and refresh token from cookies
-//
+/**
+ * Logout user and clear cookies.
+ */
 exports.logout = catchAsync(async (req, res, next) => {
   const { accessToken } = req.cookies;
 
@@ -281,10 +273,9 @@ exports.logout = catchAsync(async (req, res, next) => {
     .json({ status: "success", message: req.t("auth:logoutSuccess") });
 });
 
-//
-//
-// Forgot password functionality to send reset password email to user
-//
+/**
+ * Forgot password functionality to send reset password email to user.
+ */
 exports.forgotPassword = catchAsync(async (req, res, next) => {
   const { email } = req.body;
 
@@ -318,10 +309,9 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   );
 });
 
-//
-//
-// Reset password functionality to reset user's password
-//
+/**
+ * Reset user password with reset token.
+ */
 exports.resetPassword = catchAsync(async (req, res, next) => {
   const { token } = req.params;
   const { password, passwordConfirm } = req.body.data;
@@ -342,10 +332,9 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   );
 });
 
-//
-//
-// Login user with Facebook and send access token and refresh token to cookies
-//
+/**
+ * Login user with Facebook and send access token and refresh token to cookies.
+ */
 exports.facebookAuth = catchAsync(async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -412,10 +401,9 @@ exports.facebookAuth = catchAsync(async (req, res, next) => {
   );
 });
 
-//
-//
-// Login user with Google and send access token and refresh token to cookies
-//
+/**
+ * Login user with Google and send access token and refresh token to cookies.
+ */
 exports.googleAuth = catchAsync(async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -492,10 +480,9 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
   }
 });
 
-//
-//
-// Refresh access token with refresh token
-//
+/**
+ * Refresh access token with refresh token.
+ */
 exports.refreshToken = catchAsync(async (req, res, next) => {
   const { refreshToken } = req.cookies;
   if (!refreshToken) {
@@ -519,10 +506,9 @@ exports.refreshToken = catchAsync(async (req, res, next) => {
   );
 });
 
-//
-//
-// Get current user details
-//
+/**
+ * Get current user details.
+ */
 exports.getCurrentUser = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.user.id);
   if (!user) {
@@ -536,7 +522,9 @@ exports.getCurrentUser = catchAsync(async (req, res, next) => {
   });
 });
 
-// Restrict routes to specific roles
+/**
+ * Restrict access to specific roles and plans.
+ */
 exports.restrictTo =
   ({ roles = [], plans = [] }) =>
   (req, res, next) => {

@@ -11,20 +11,23 @@ const {
   deleteFromS3,
 } = require("../utils/s3Helpers");
 
-// Constants
+/**
+ * Constants for file upload
+ */
 const maxFileSize = 5 * 1024 * 1024; // 5MB
 const allowedFileTypes = ["image/jpeg", "image/png", "image/jpg"]; // Allowed image types
 
-// Multer storage
+/**
+ * Multer memory storage for storing files in memory
+ */
 const storage = multer.memoryStorage();
 exports.upload = multer({ storage });
 const DEFAULT_PROFILE_IMAGE =
   "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y";
 
-//
-//
-// Upload profile image to AWS S3 bucket and update user profile image
-//
+/**
+ * Upload profile image to AWS S3 bucket and update user profile image
+ */
 exports.uploadImage = catchAsync(async (req, res, next) => {
   if (!req.file) {
     return next(new AppError(req.t("noFileUploaded"), 400));
@@ -88,10 +91,9 @@ exports.uploadImage = catchAsync(async (req, res, next) => {
   });
 });
 
-//
-//
-// Delete profile image from AWS S3 bucket and set profile image to default
-//
+/**
+ * Delete user profile image from AWS S3 bucket and set profile image to default
+ */
 exports.deleteImage = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.user.id);
   if (!user) {
@@ -124,10 +126,9 @@ exports.deleteImage = catchAsync(async (req, res, next) => {
   });
 });
 
-//
-//
-// Update user profile details (firstName, lastName, email, phone) in the database and return updated fields
-//
+/**
+ * Update user profile details in the database
+ */
 exports.updateProfileDetails = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.user.id);
   if (!user) {
@@ -155,10 +156,9 @@ exports.updateProfileDetails = catchAsync(async (req, res, next) => {
   });
 });
 
-//
-//
-// Update user password in the database
-//
+/**
+ * Update user password in the database
+ */
 exports.updateProfilePassword = catchAsync(async (req, res, next) => {
   const { oldPassword, newPassword, confirmNewPassword } = req.body;
   const user = await User.findById(req.user.id).select("+password");
@@ -190,10 +190,9 @@ exports.updateProfilePassword = catchAsync(async (req, res, next) => {
     .json({ message: req.t("profile:passwordChangedSuccessfully") });
 });
 
-//
-//
-// Request 2FA code to be sent to user's phone
-//
+/**
+ * Request 2FA code to be sent to user's phone
+ */
 exports.request2FACode = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.user.id);
 
@@ -211,10 +210,9 @@ exports.request2FACode = catchAsync(async (req, res, next) => {
     .json({ message: req.t("profile:verifyCodeSendSuccessfully") });
 });
 
-//
-//
-// Verify 2FA code sent to user's phone
-//
+/**
+ * Verify 2FA code sent to user's phone
+ */
 exports.verify2FACode = catchAsync(async (req, res, next) => {
   const { code } = req.body;
   const user = await User.findById(req.user.id);
@@ -248,10 +246,9 @@ exports.verify2FACode = catchAsync(async (req, res, next) => {
   });
 });
 
-//
-//
-// Delete user account from the database
-//
+/**
+ * Delete user account from the database
+ */
 exports.deleteAccount = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.user.id);
 

@@ -12,26 +12,23 @@ const {
 } = require("../utils/s3Helpers");
 const Ingredient = require("../models/Ingredient");
 
-//
-//
-// AWS S3 file upload
-//
+/**
+ * Multer middleware for file upload
+ */
 const storage = multer.memoryStorage();
 exports.upload = multer({ storage });
 
-//
-//
-// Constants
-//
+/**
+ * Constants for image upload
+ */
 const DEFAULT_IMAGE_URL =
   "https://fitronelt.s3.eu-north-1.amazonaws.com/cb169cd415.jpg";
 const maxFileSize = 5 * 1024 * 1024; // 5MB
 const allowedFileTypes = ["image/jpeg", "image/png", "image/jpg"]; // Allowed image types
 
-//
-//
-// Add meal to the user meal document
-//
+/**
+ * Add a new meal for the user
+ */
 exports.addMeal = catchAsync(async (req, res, next) => {
   const { title, description, category } = req.body;
   const { lng } = req;
@@ -162,10 +159,9 @@ exports.addMeal = catchAsync(async (req, res, next) => {
   res.status(201).json(responseData);
 });
 
-//
-//
-// Update meal for the user
-//
+/**
+ * Update a meal for the user
+ */
 exports.updateMeal = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const { title, description, category } = req.body;
@@ -329,10 +325,9 @@ exports.updateMeal = catchAsync(async (req, res, next) => {
   });
 });
 
-//
-//
-// Delete meal for the user
-//
+/**
+ * Delete a meal for the user
+ */
 exports.deleteMeal = catchAsync(async (req, res, next) => {
   const { mealId: id } = req.query;
 
@@ -376,10 +371,9 @@ exports.deleteMeal = catchAsync(async (req, res, next) => {
   });
 });
 
-//
-//
-// Get all meals for the user
-//
+/**
+ * Get all meals for the user
+ */
 exports.getMeals = catchAsync(async (req, res, next) => {
   const { page = 1, limit = 10, category, preference, restriction } = req.query;
 

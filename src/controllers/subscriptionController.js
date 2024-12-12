@@ -4,7 +4,9 @@ const catchAsync = require("../utils/catchAsync");
 const { createStripeCustomerIfNotExists } = require("../utils/stripeHelper");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
-// Create a customer portal for the user
+/**
+ * Create a customer portal for the user
+ */
 exports.createCustomerPortal = catchAsync(async (req, res, next) => {
   // Retrieve the user and the Stripe customer ID
   const user = await User.findById(req.user.id).select("+stripeCustomerId");
@@ -36,7 +38,9 @@ exports.createCustomerPortal = catchAsync(async (req, res, next) => {
   });
 });
 
-// Create chekout session for the user
+/**
+ * Create a checkout session for the user
+ */
 exports.createCheckoutSession = catchAsync(async (req, res, next) => {
   const { priceId } = req.body;
   const user = await User.findById(req.user.id).select("+stripeCustomerId");
@@ -83,7 +87,9 @@ exports.createCheckoutSession = catchAsync(async (req, res, next) => {
   });
 });
 
-// Get subscription details for the user
+/**
+ * Get subscription details for the user
+ */
 exports.getSubscriptionDetails = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.user.id).select(
     "+stripeCustomerId +stripeSubscriptionId",
@@ -115,7 +121,9 @@ exports.getSubscriptionDetails = catchAsync(async (req, res, next) => {
   });
 });
 
-// Mark the user archived data as read
+/**
+ * Mark the user's archived data as read
+ */
 exports.markArchivedDataAsRead = catchAsync(async (req, res, next) => {
   // Retrieve the user
   const user = await User.findById(req.user.id);

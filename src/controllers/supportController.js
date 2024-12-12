@@ -2,14 +2,18 @@ const Support = require("../models/Support");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 
-// Send support message
+/**
+ * Send a support message.
+ */
 exports.support = catchAsync(async (req, res, next) => {
-  console.log(req.body);
   const { message, subject, email, name } = req.body;
+
+  // Check if the required fields are provided
   if (!message || !subject) {
     return next(new AppError(req.t("error.missingMessageOrSubject"), 400));
   }
-  // Create message
+
+  // Create message and save it
   const support = await Support.create({
     name,
     email,
@@ -17,7 +21,6 @@ exports.support = catchAsync(async (req, res, next) => {
     subject,
     user: req.user._id,
   });
-
   support.save();
 
   // Send response

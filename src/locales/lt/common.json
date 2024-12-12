@@ -32,5 +32,21 @@
     "individual_request_form": "Individualios užklausos formos funkcija nėra prieinama jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte naudotis šia funkcija.",
     "order_processing_simulations": "Užsakymų apdorojimo simuliacijos nėra prieinamos jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte naudotis šia funkcija.",
     "weekly_reports": "Savaitinės ataskaitos nėra prieinamos jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte generuoti savaitines ataskaitas."
+  },
+  "weekPlanMessages": {
+    "titleStartDateEndDateRequired": "Pavadinimas, pradžios data ir pabaigos data yra privalomi",
+    "weekPlanCreated": "Savaitės planas sukurtas sėkmingai",
+    "noDataProvided": "Duomenys nebuvo pateikti",
+    "startDateMustBeBeforeEndDate": "Pradžios data turi būti prieš pabaigos datą",
+    "weekPlanNotFound": "Savaitės planas nerastas",
+    "weekPlanDeleted": "Savaitės planas sėkmingai ištrintas",
+    "weekPlanUpdated": "Savaitės planas atnaujintas sėkmingai",
+
+    "dayCategoryAndMealIdRequired": "Diena, kategorija ir patiekalo ID yra privalomi",
+    "invalidDay": "Netinkama diena",
+    "mealNotFound": "Patiekalas nerastas",
+    "invalidDayInWeekPlan": "Netinkama diena savaitės plane",
+    "mealSuccessfullyAddedToTheWeekPlan": "Patiekalas sėkmingai pridėtas prie savaitės plano",
+    "mealSuccessfullyRemovedFromTheWeekPlan": "Patiekalas sėkmingai pašalintas iš savaitės plano"
   }
 }

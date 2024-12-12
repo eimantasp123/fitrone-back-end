@@ -22,6 +22,7 @@
     "imageDeleteFailed": "Nepavyko ištrinti nuotraukos",
     "ingredientIdAndCurrentAmountIsRequired": "Ingredientas ir reikalingas kiekis yra privaloma",
     "ingredientIdRequired": "Ingrediento ID yra privalomas",
-    "ingredientNotFound": "Ingredientas nerastas"
+    "ingredientNotFound": "Ingredientas nerastas",
+    "mealUpdateError": "Klaida atnaujinant patiekalą"
   }
 }

@@ -6,17 +6,16 @@ const { zodResponseFormat } = require("openai/helpers/zod");
 const Meal = require("../models/Meal");
 const { default: mongoose } = require("mongoose");
 const Ingredient = require("../models/Ingredient");
+const UpdateService = require("../utils/updateService");
 
-//
-//
-// Auth for openAi
-//
+/**
+ * OpenAI API key
+ */
 const openAi = new openai(process.env.OPENAI_API_KEY);
 
-//
-//
-// Schema for the nutrition information
-//
+/**
+ * Nutrition information schema
+ */
 const nutritionSchema = z.object({
   title: z.object({
     lt: z.string(),
@@ -30,10 +29,9 @@ const nutritionSchema = z.object({
   carbs: z.number(),
 });
 
-//
-//
-// Get ingredient information from FatSecret API
-//
+/**
+ * Get ingredient information from the FatSecret API
+ */
 exports.getIngredientInfo = catchAsync(async (req, res, next) => {
   let { query, unit, amount } = req.body;
 
@@ -86,10 +84,9 @@ exports.getIngredientInfo = catchAsync(async (req, res, next) => {
   });
 });
 
-//
-//
-// Add ingredient to the user ingredient document
-//
+/**
+ * Add a new ingredient to the user ingredient document
+ */
 exports.addIngredient = catchAsync(async (req, res, next) => {
   const {
     title,
@@ -180,10 +177,9 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
   res.status(201).json(responseData);
 });
 
-//
-//
-// Get all ingredients for the user
-//
+/**
+ * Get all ingredients for the user
+ */
 exports.getIngredients = catchAsync(async (req, res, next) => {
   // Get the language from the request object
   const lang = req.lng || "en";
@@ -213,10 +209,9 @@ exports.getIngredients = catchAsync(async (req, res, next) => {
   });
 });
 
-//
-//
-// Delete ingredient from the user ingredient document
-//
+/**
+ * Delete ingredient from the user ingredient document
+ */
 exports.deleteIngredient = catchAsync(async (req, res, next) => {
   const { ingredientId } = req.params;
 
@@ -273,13 +268,13 @@ exports.deleteIngredient = catchAsync(async (req, res, next) => {
   });
 });
 
-//
-//
-// Update ingredient in the user ingredient document
-//
+/**
+ * Update ingredient in the user ingredient document
+ */
 exports.updateIngredient = catchAsync(async (req, res, next) => {
   const { ingredientId } = req.params;
   const { title, unit, calories, protein, carbs, amount, fat } = req.body;
+
   // Get the language from the request object
   const lang = req.lng || "en";
 
@@ -295,6 +290,7 @@ exports.updateIngredient = catchAsync(async (req, res, next) => {
     _id: { $ne: ingredientId },
   });
 
+  // Check if the ingredient title already exists in the user ingredient document
   const ingredientMatches = ingredients.filter(
     (ingredient) => ingredient.title[lang] === title.toLowerCase(),
   );
@@ -303,85 +299,45 @@ exports.updateIngredient = catchAsync(async (req, res, next) => {
     return next(new AppError(req.t("meals:error.ingredientExists"), 400));
   }
 
-  // Update the ingredient
-  const ingredient = await Ingredient.findOneAndUpdate(
-    { _id: ingredientId, user: req.user._id },
-    {
-      title: { en: title, lt: title },
-      unit,
-      calories,
-      protein,
-      carbs,
-      amount,
-      fat,
-    },
-    { new: true },
+  // Define updates
+  const updates = {
+    title: { en: title, lt: title }, // Assuming bilingual titles
+    unit,
+    calories,
+    protein,
+    carbs,
+    amount,
+    fat,
+  };
+
+  // Use the UpdateService to handle the ingredient update and cascading logic
+  const updatedIngredient = await UpdateService.updateIngredient(
+    ingredientId,
+    updates,
+    req,
+    next,
   );
-
-  if (!ingredient) {
-    return next(new AppError(req.t("meals:error.ingredientNotFound"), 404));
-  }
-
-  // Update meals that reference this ingredient
-  const mealsToUpdate = await Meal.find({
-    user: req.user._id,
-    "ingredients.ingredientId": ingredientId,
-  });
-
-  for (const meal of mealsToUpdate) {
-    meal.ingredients = meal.ingredients.map((mealIngredient) => {
-      if (mealIngredient.ingredientId.toString() === ingredientId) {
-        const scalingFactor = mealIngredient.currentAmount / amount;
-
-        return {
-          ...mealIngredient._doc,
-          title: ingredient.title[lang],
-          unit: ingredient.unit,
-          calories: (ingredient.calories * scalingFactor).toFixed(1),
-          protein: (ingredient.protein * scalingFactor).toFixed(1),
-          fat: (ingredient.fat * scalingFactor).toFixed(1),
-          carbs: (ingredient.carbs * scalingFactor).toFixed(1),
-        };
-      }
-      return mealIngredient;
-    });
-
-    // Recalculate the nutrition info
-    meal.nutrition = meal.ingredients.reduce(
-      (acc, curr) => {
-        acc.calories += curr.calories;
-        acc.protein += curr.protein;
-        acc.fat += curr.fat;
-        acc.carbs += curr.carbs;
-        return acc;
-      },
-      { calories: 0, protein: 0, fat: 0, carbs: 0 },
-    );
-
-    await meal.save();
-  }
 
   // Send the response
   res.status(200).json({
     status: "success",
     message: req.t("meals:ingredientUpdatedSuccessfully"),
     data: {
-      ingredientId: ingredient._id,
-      title: ingredient.title[lang],
-      unit: ingredient.unit,
-      amount: ingredient.amount,
-      calories: ingredient.calories,
-      protein: ingredient.protein,
-      fat: ingredient.fat,
-      carbs: ingredient.carbs,
+      ingredientId: updatedIngredient._id,
+      title: updatedIngredient.title[lang],
+      unit: updatedIngredient.unit,
+      amount: updatedIngredient.amount,
+      calories: updatedIngredient.calories,
+      protein: updatedIngredient.protein,
+      fat: updatedIngredient.fat,
+      carbs: updatedIngredient.carbs,
     },
   });
 });
 
-//
-//
-// Search for ingredients in the user ingredient document
-//
+/**
+ *  Search for ingredients in the user ingredient document
+ */
 exports.getIngredientSearch = catchAsync(async (req, res, next) => {
   const query = req.query.query;
   const lang = req.lng || "en";
@@ -422,10 +378,9 @@ exports.getIngredientSearch = catchAsync(async (req, res, next) => {
   });
 });
 
-//
-//
-// Get ingredient by id from the user ingredient document and calculate the nutrition info based on the current amount
-//
+/**
+ * Get ingredient nutrition info by ID from the user ingredient document and calculate the nutrition info based on the current amount
+ */
 exports.getIngredientNutrition = catchAsync(async (req, res, next) => {
   const { ingredientId } = req.params;
   const { currentAmount } = req.query;

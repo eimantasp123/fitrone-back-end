@@ -29,6 +29,7 @@ const supportRoutes = require("./routes/supportRoutes");
 const mealPlanRoutes = require("./routes/mealPlanRoutes");
 const subscriptionRoutes = require("./routes/subscriptionRoutes");
 const ingredientsRoutes = require("./routes/ingredientsRoutes");
+const weekPlanRoutes = require("./routes/weekPlanRoutes");
 const webhookRoutes = require("./utils/webhookRoutes");
 
 // Initialize i18next for localization
@@ -117,6 +118,7 @@ app.use("/api/v1/feedback", feedbackRoutes);
 app.use("/api/v1/support", supportRoutes);
 app.use("/api/v1/meals", mealsRoutes);
 app.use("/api/v1/ingredients", ingredientsRoutes);
+app.use("/api/v1/week-plan", weekPlanRoutes);
 app.use("/api/v1/subscription", subscriptionRoutes);
 //
 app.use("/api/v1/meal-plan", mealPlanRoutes);

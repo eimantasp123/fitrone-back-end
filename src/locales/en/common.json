@@ -32,5 +32,22 @@
     "individual_request_form": "The individual request form feature is not available in your {{userPlanName}} plan. Upgrade your plan to access this feature.",
     "order_processing_simulations": "Order processing simulations are not available in your {{userPlanName}} plan. Upgrade your plan to access this feature.",
     "weekly_reports": "Weekly reports are not available in your {{userPlanName}} plan. Upgrade your plan to generate weekly reports."
+  },
+
+  "weekPlanMessages": {
+    "titleStartDateEndDateRequired": "Title, start date, and end date are required",
+    "weekPlanCreated": "Week plan created successfully",
+    "noDataProvided": "No data provided",
+    "startDateMustBeBeforeEndDate": "Start date must be before end date",
+    "weekPlanNotFound": "Week plan not found",
+    "weekPlanDeleted": "Week plan deleted successfully",
+    "weekPlanUpdated": "Week plan updated successfully",
+
+    "dayCategoryAndMealIdRequired": "Day, category, and meal ID are required",
+    "invalidDay": "Invalid day",
+    "mealNotFound": "Meal not found",
+    "invalidDayInWeekPlan": "Invalid day in week plan",
+    "mealSuccessfullyAddedToTheWeekPlan": "Meal successfully added to the week plan",
+    "mealSuccessfullyRemovedFromTheWeekPlan": "Meal successfully removed from the week plan"
   }
 }

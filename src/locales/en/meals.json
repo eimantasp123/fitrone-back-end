@@ -22,6 +22,7 @@
     "imageDeleteFailed": "Failed to delete image",
     "ingredientIdAndCurrentAmountIsRequired": "Ingredient ID and current amount is required",
     "ingredientIdRequired": "Ingredient ID is required",
-    "ingredientNotFound": "Ingredient not found"
+    "ingredientNotFound": "Ingredient not found",
+    "mealUpdateError": "Error updating meal"
   }
 }
