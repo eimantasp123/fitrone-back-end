@@ -4,9 +4,12 @@ const feedbackController = require("../controllers/feedbackController");
 
 const router = express.Router();
 
-// Apply authentication middleware to all routes below this line
+/**
+ * Apply authentication middleware to all routes below this line
+ */
 router.use(authMiddleware);
-//
+
+// Route to submit feedback
 router.post("/", feedbackController.feedback);
 
 module.exports = router;

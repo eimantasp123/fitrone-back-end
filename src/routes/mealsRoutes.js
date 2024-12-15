@@ -12,20 +12,40 @@ const {
 
 const router = express.Router();
 
-// Apply authentication middleware to all routes below this line
+/**
+ * Apply authentication middleware to all routes below this line
+ */
 router.use(authMiddleware);
 
-// Restrict access to admin and supplier roles
-router.use(authController.restrictTo("admin", "supplier"));
+/**
+ * Restrict access to admin and supplier roles and to the basic, pro, and premium plans
+ */
+router.use(
+  authController.restrictTo({
+    roles: ["admin", "supplier"],
+    plans: ["basic", "pro", "premium"],
+  }),
+);
 
+/**
+ * Routes for meals
+ */
+
+// Route to add a new meal
 router.post(
   "/",
   checkPlanFeatures("meals", "meals_limit"),
   upload.single("image"),
   addMeal,
 );
+
+// Route to get all meals
 router.get("/", getMeals);
-router.delete("/", deleteMeal);
+
+// Route to update a meal
 router.put("/:id", upload.single("image"), updateMeal);
+
+// Route to delete a meal
+router.delete("/:id", deleteMeal);
 
 module.exports = router;

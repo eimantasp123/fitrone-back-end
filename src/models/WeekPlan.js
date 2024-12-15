@@ -95,6 +95,18 @@ const weekPlanSchema = new mongoose.Schema(
         default: 0,
       },
     },
+    assignedGroups: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Group",
+      },
+    ],
+    assignedClients: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Customer",
+      },
+    ],
   },
   { timestamps: true },
 );

@@ -329,7 +329,7 @@ exports.updateMeal = catchAsync(async (req, res, next) => {
  * Delete a meal for the user
  */
 exports.deleteMeal = catchAsync(async (req, res, next) => {
-  const { mealId: id } = req.query;
+  const { id } = req.params;
 
   // Check if the id parameter is provided
   if (!id) {

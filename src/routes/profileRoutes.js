@@ -1,22 +1,57 @@
 const express = require("express");
 const authMiddleware = require("../middlewares/authMiddleware");
-const authController = require("../controllers/authController");
-const profileController = require("../controllers/profileController");
+const { restrictTo } = require("../controllers/authController");
+const {
+  upload,
+  uploadImage,
+  deleteImage,
+  updateProfileDetails,
+  updateProfilePassword,
+  request2FACode,
+  verify2FACode,
+  deleteAccount,
+} = require("../controllers/profileController");
 
 const router = express.Router();
-router.use(authMiddleware);
-router.use(authController.restrictTo("admin", "supplier"));
 
-router.patch(
-  "/image",
-  profileController.upload.single("image"),
-  profileController.uploadImage,
+/**
+ * Apply authentication middleware to all routes below this line
+ */
+router.use(authMiddleware);
+
+/**
+ * Restrict access to admin and supplier roles and to the basic, pro, and premium plans
+ */
+router.use(
+  restrictTo({
+    roles: ["admin", "supplier"],
+    plans: ["basic", "pro", "premium"],
+  }),
 );
-router.delete("/image", profileController.deleteImage);
-router.patch("/details", profileController.updateProfileDetails);
-router.patch("/password", profileController.updateProfilePassword);
-router.put("/2fa/request", profileController.request2FACode);
-router.put("/2fa/verify", profileController.verify2FACode);
-router.delete("/account", profileController.deleteAccount);
+
+/**
+ * Routes for updating the user profile
+ */
+
+// Route to upload a profile image
+router.patch("/image", upload.single("image"), uploadImage);
+
+// Route to delete a profile image
+router.delete("/image", deleteImage);
+
+// Route to update profile details
+router.patch("/details", updateProfileDetails);
+
+// Route to update the user password
+router.patch("/password", updateProfilePassword);
+
+// Route to request a 2FA code
+router.put("/2fa/request", request2FACode);
+
+// Route to verify a 2FA code
+router.put("/2fa/verify", verify2FACode);
+
+// Route to delete the user account
+router.delete("/account", deleteAccount);
 
 module.exports = router;

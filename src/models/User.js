@@ -58,6 +58,11 @@ const userSchema = new mongoose.Schema({
     enum: ["base", "basic", "pro", "premium"],
     default: "base",
   },
+  systemLanguage: {
+    type: String,
+    enum: ["en", "lt"],
+    default: "en",
+  },
   stripeCustomerId: { type: String, select: false },
   stripeSubscriptionId: { type: String, select: false },
   hasUsedFreeTrial: { type: Boolean, default: false },
