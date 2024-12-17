@@ -1,0 +1,6 @@
+{
+  "errors": {
+    "titleAlreadyExists": "Savaitinis meniu su tokiu pavadinimu jau yra sukurtas",
+    "weeklyMenuNotFound": "Savaitinis meniu nerastas"
+  }
+}

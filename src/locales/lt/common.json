@@ -10,7 +10,8 @@
     "changePasswordLoginAgain": "Vartotojas neseniai pakeitė slaptažodį! Prašome prisijungti iš naujo.",
     "unexpectedError": "Įvyko netikėta klaida",
     "notEligibleForFeature": "Jūsų planas '{{plan}}' neturi teisės naudotis šia funkcija",
-    "doNotHavePermission": "Jūs neturite teisės atlikti šio veiksmo"
+    "doNotHavePermission": "Jūs neturite teisės atlikti šio veiksmo",
+    "cannotFindThisUrlOnServer": "Negalima rasti {{url}} URL šitame serveryje!"
   },
 
   "userNotFound": "Vartotojas nerastas",

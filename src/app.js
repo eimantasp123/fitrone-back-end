@@ -30,7 +30,9 @@ const mealPlanRoutes = require("./routes/mealPlanRoutes");
 const subscriptionRoutes = require("./routes/subscriptionRoutes");
 const ingredientsRoutes = require("./routes/ingredientsRoutes");
 const weekPlanRoutes = require("./routes/weekPlanRoutes");
+const weeklyMenuRoutes = require("./routes/weeklyMenuRoutes");
 const webhookRoutes = require("./utils/webhookRoutes");
+const { escape } = require("querystring");
 
 // Initialize i18next for localization
 i18next
@@ -40,13 +42,16 @@ i18next
     fallbackLng: "en",
     preload: ["en", "lt"], // Add all supported languages here
     defaultNS: "common",
-    ns: ["common", "auth", "profile", "meals"],
+    ns: ["common", "auth", "profile", "meals", "weeklyMenu"],
     backend: {
       loadPath: path.join(__dirname, "/locales/{{lng}}/{{ns}}.json"),
     },
     detection: {
       order: ["header", "querystring", "cookie"],
       caches: ["cookie"],
+    },
+    interpolation: {
+      escapeValue: false, // Disable HTML escaping globally
     },
   });
 
@@ -114,18 +119,26 @@ app.use(cookieParser());
 // Routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/profile", profileRoutes);
-app.use("/api/v1/feedback", feedbackRoutes);
-app.use("/api/v1/support", supportRoutes);
+app.use("/api/v1/week-plan", weekPlanRoutes);
+app.use("/api/v1/weekly-menu", weeklyMenuRoutes);
 app.use("/api/v1/meals", mealsRoutes);
 app.use("/api/v1/ingredients", ingredientsRoutes);
-app.use("/api/v1/week-plan", weekPlanRoutes);
 app.use("/api/v1/subscription", subscriptionRoutes);
+app.use("/api/v1/support", supportRoutes);
+app.use("/api/v1/feedback", feedbackRoutes);
 //
 app.use("/api/v1/meal-plan", mealPlanRoutes);
 
 // Error handling for invalid routes
 app.all("*", (req, res, next) => {
-  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+  next(
+    new AppError(
+      req.t("error.cannotFindThisUrlOnServer", {
+        url: req.originalUrl,
+      }),
+      404,
+    ),
+  );
 });
 
 // Global error handling middleware

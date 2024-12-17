@@ -1,0 +1,6 @@
+{
+  "errors": {
+    "titleAlreadyExists": "A weekly menu with this name has already been created.",
+    "weeklyMenuNotFound": "Weekly menu not found."
+  }
+}

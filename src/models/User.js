@@ -25,7 +25,6 @@ const userSchema = new mongoose.Schema({
   passwordConfirm: {
     type: String,
     validate: {
-      // This only works on CREATE and SAVE
       validator: function (el) {
         return el === this.password;
       },
@@ -35,11 +34,13 @@ const userSchema = new mongoose.Schema({
   phone: { type: String, select: true, default: "" },
   firstName: {
     type: String,
+    trim: true,
     minlength: [2, "First name must be at least 2 characters long"],
     maxlength: [50, "First name must be less than 50 characters long"],
   },
   lastName: {
     type: String,
+    trim: true,
     required: false,
     maxlength: [50, "Last name must be less than 50 characters long"],
   },

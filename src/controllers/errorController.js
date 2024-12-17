@@ -12,6 +12,7 @@ const handleCastErrorDB = (err) => {
  * Handle duplicate fields error
  */
 const handleDuplicateFieldsDB = (err) => {
+  console.log(err);
   const field = Object.keys(err.keyValue)[0]; // Extract the field causing the duplication
   const value = err.keyValue[field]; // Extract the duplicated value
   const message = `${field} with value "${value}" already exists. Please use another value!`;

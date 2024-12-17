@@ -11,11 +11,13 @@ const ingredientSchema = new mongoose.Schema(
       lt: {
         type: String,
         required: true,
+        trim: true,
         lowercase: true,
       },
       en: {
         type: String,
         required: true,
+        trim: true,
         lowercase: true,
       },
     },

@@ -10,7 +10,8 @@
     "changePasswordLoginAgain": "User recently changed password! Please log in again.",
     "unexpectedError": "An unexpected error occurred.",
     "notEligibleForFeature": "Your plan '{{plan}}' is not eligible to use this feature.",
-    "doNotHavePermission": "You do not have permission to perform this action."
+    "doNotHavePermission": "You do not have permission to perform this action.",
+    "cannotFindThisUrlOnServer": "Can't find {{url}} on this server!"
   },
 
   "userNotFound": "User not found.",
