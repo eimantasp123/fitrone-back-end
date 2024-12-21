@@ -122,6 +122,8 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
     console.log(ingredientMatches);
     return next(new AppError(req.t("meals:error.ingredientExists"), 400));
   }
+
+  console.log(ingredients);
   // Create a new ingredient
   const newIngredient = await Ingredient.create({
     user: req.user._id,

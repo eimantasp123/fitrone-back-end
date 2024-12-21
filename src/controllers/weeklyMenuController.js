@@ -1,3 +1,4 @@
+const Meal = require("../models/Meal");
 const WeeklyMenu = require("../models/WeeklyMenu");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
@@ -8,18 +9,11 @@ const catchAsync = require("../utils/catchAsync");
 exports.createWeeklyMenu = catchAsync(async (req, res, next) => {
   const { title, description, restrictions, preferences } = req.body;
 
-  // Check does the user already have a weekly menu with the same title
-  const existingWeeklyMenu = await WeeklyMenu.findOne({
-    user: req.user._id,
-    title,
-  });
-
-  // If the weekly menu already exists, return an error
-  if (existingWeeklyMenu) {
-    return next(
-      new AppError(req.t("weeklyMenu:errors.titleAlreadyExists"), 400),
-    );
-  }
+  // Create an array of 7 days
+  const days = Array.from({ length: 7 }, (_, i) => ({
+    day: i,
+    meals: [],
+  }));
 
   // If the weekly menu does not exist, create a new one
   const weeklyMenu = await WeeklyMenu.create({
@@ -28,6 +22,7 @@ exports.createWeeklyMenu = catchAsync(async (req, res, next) => {
     description,
     restrictions,
     preferences,
+    days,
   });
 
   // Send the response
@@ -42,7 +37,7 @@ exports.createWeeklyMenu = catchAsync(async (req, res, next) => {
 /**
  * Update a weekly menu.
  */
-exports.updateWeeklyMenu = catchAsync(async (req, res, next) => {
+exports.updateWeeklyMenuBio = catchAsync(async (req, res, next) => {
   // Prepare the updates
   const updates = {};
   if (req.body.title) updates.title = req.body.title;
@@ -77,6 +72,192 @@ exports.updateWeeklyMenu = catchAsync(async (req, res, next) => {
     status: "success",
     data: {
       updatedMenu,
+    },
+  });
+});
+
+/**
+ *  Add meal to a day in a current weekly menu
+ */
+
+exports.addMealToWeeklyMenu = catchAsync(async (req, res, next) => {
+  const { mealId, dayId } = req.query;
+
+  // Find the weekly menu by ID and user
+  const weeklyMenu = await WeeklyMenu.findOne({
+    user: req.user._id,
+    _id: req.params.id,
+  });
+
+  // If the weekly menu does not exist, return an error
+  if (!weeklyMenu) {
+    return next(
+      new AppError(req.t("weeklyMenu:errors.weeklyMenuNotFound"), 404),
+    );
+  }
+
+  // Find the meal by ID and user
+  const meal = await Meal.findOne(
+    {
+      user: req.user._id,
+      _id: mealId,
+      archived: false,
+    },
+    "title nutrition description image restrictions category preferences",
+  );
+
+  console.log(meal);
+
+  // If the meal does not exist, return an error
+  if (!meal) {
+    return next(new AppError(req.t("weeklyMenu:errors.mealNotFound"), 404));
+  }
+
+  // Get the day
+  const day = weeklyMenu.days.id(dayId);
+
+  // If the day does not exist, return an error
+  if (!day) {
+    return next(new AppError(req.t("weeklyMenu:errors.dayNotFound"), 404));
+  }
+
+  // Add the meal to the day (store only the meal ID)
+  day.meals.push({
+    meal: meal._id,
+    category: meal.category.toLowerCase(),
+    time: req.body.time,
+  });
+
+  // Save the weekly menu
+  await weeklyMenu.save();
+
+  // Send the response
+  res.status(200).json({
+    status: "success",
+    data: {
+      meal,
+    },
+  });
+});
+
+/**
+ * Remove meal from a day in a current weekly menu
+ */
+
+exports.removeMealFromWeeklyMenu = catchAsync(async (req, res, next) => {
+  const { mealObjectId, dayId } = req.query;
+
+  // Find the weekly menu by ID and user
+  const weeklyMenu = await WeeklyMenu.findOne({
+    user: req.user._id,
+    _id: req.params.id,
+  });
+
+  // If the weekly menu does not exist, return an error
+
+  if (!weeklyMenu) {
+    return next(
+      new AppError(req.t("weeklyMenu:errors.weeklyMenuNotFound"), 404),
+    );
+  }
+
+  // Get the day
+  const day = weeklyMenu.days.id(dayId);
+
+  // If the day does not exist, return an error
+  if (!day) {
+    return next(new AppError(req.t("weeklyMenu:errors.dayNotFound"), 404));
+  }
+
+  // Remove the meal from the day
+  day.meals.pull(mealObjectId);
+
+  // Save the weekly menu
+  await weeklyMenu.save();
+
+  // Send the response
+  res.status(200).json({
+    status: "success",
+    data: {
+      mealObjectId,
+    },
+  });
+});
+
+/**
+ * Delete a weekly menu.
+ */
+exports.deleteWeeklyMenu = catchAsync(async (req, res, next) => {
+  // Find the weekly menu by ID
+  const weeklyMenu = await WeeklyMenu.findOneAndDelete({
+    user: req.user._id,
+    _id: req.params.id,
+  }).select("_id title");
+
+  // If the weekly menu does not exist, return an error
+  if (!weeklyMenu) {
+    return next(
+      new AppError(req.t("weeklyMenu:errors.weeklyMenuNotFound"), 404),
+    );
+  }
+
+  // Send the response
+  res.status(200).json({
+    status: "success",
+    data: weeklyMenu,
+  });
+});
+
+/**
+ * Get a weekly menu by ID.
+ */
+exports.getWeeklyMenuById = catchAsync(async (req, res, next) => {
+  // Find the weekly menu by ID
+  const weeklyMenu = await WeeklyMenu.findOne({
+    user: req.user._id,
+    _id: req.params.id,
+  }).populate({
+    path: "days.meals.meal",
+    select:
+      "title nutrition description image restrictions category preferences",
+  });
+
+  // If the weekly menu does not exist, return an error
+  if (!weeklyMenu) {
+    return next(
+      new AppError(req.t("weeklyMenu:errors.weeklyMenuNotFound"), 404),
+    );
+  }
+
+  // Send the response
+  res.status(200).json({
+    status: "success",
+    data: {
+      weeklyMenu,
+    },
+  });
+});
+
+/**
+ * Get all weekly menus.
+ */
+exports.getAllWeeklyMenus = catchAsync(async (req, res, next) => {
+  // Find all weekly menus for the user
+  const weeklyMenus = await WeeklyMenu.find({
+    user: req.user._id,
+    archived: false,
+  }).populate({
+    path: "days.meals.meal",
+    select:
+      "title nutrition description image restrictions category preferences",
+  });
+
+  // Send the response
+  res.status(200).json({
+    status: "success",
+    results: weeklyMenus.length,
+    data: {
+      weeklyMenus,
     },
   });
 });

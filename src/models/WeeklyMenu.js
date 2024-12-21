@@ -5,19 +5,19 @@ const WeeklyMenuSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: [true, "userRequired"],
     },
     title: {
       type: String,
-      required: true,
-      maxlength: [70, "Title must be less than 70 characters"],
+      required: [true, "titleRequired"],
+      maxlength: [100, "titleMustBeLessThan"],
       lowercase: true,
       trim: true,
     },
     description: {
       type: String,
       lowercase: true,
-      maxlength: [500, "Description must be less than 500 characters"],
+      maxlength: [500, "descriptionMustBeLessThan"],
       trim: true,
     },
     archived: {
@@ -32,19 +32,56 @@ const WeeklyMenuSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
-    meals: [
+    days: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Meal",
+        day: {
+          type: Number,
+          required: true,
+          min: [0, "Invalid day"],
+          max: [6, "Invalid day"],
+        },
+        meals: [
+          {
+            category: {
+              type: String,
+              required: true,
+              enum: [
+                "breakfast",
+                "lunch",
+                "dinner",
+                "snack",
+                "drink",
+                "dessert",
+                "other",
+              ],
+            },
+            meal: {
+              type: mongoose.Schema.Types.ObjectId,
+              ref: "Meal",
+              required: true,
+            },
+            time: {
+              type: String,
+            },
+          },
+        ],
       },
     ],
   },
   { timestamps: true },
-  { autoIndex: true },
 );
 
-// Ensure the user has only one weekly menu with the same title
-WeeklyMenuSchema.index({ user: 1, title: 1 }, { unique: true });
+// Define a compound index to ensure unique titles per user
+WeeklyMenuSchema.index({ title: 1, user: 1 }, { unique: true });
+
+// Automatically exclude __v and user when converting to JSON
+WeeklyMenuSchema.set("toJSON", {
+  transform: (doc, ret) => {
+    delete ret.__v;
+    delete ret.user;
+    return ret;
+  },
+});
 
 const WeeklyMenu = mongoose.model("WeeklyMenu", WeeklyMenuSchema);
 module.exports = WeeklyMenu;

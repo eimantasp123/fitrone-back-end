@@ -11,7 +11,9 @@
     "unexpectedError": "An unexpected error occurred.",
     "notEligibleForFeature": "Your plan '{{plan}}' is not eligible to use this feature.",
     "doNotHavePermission": "You do not have permission to perform this action.",
-    "cannotFindThisUrlOnServer": "Can't find {{url}} on this server!"
+    "cannotFindThisUrlOnServer": "Can't find {{url}} on this server!",
+    "invalidToken": "Invalid token. Please log in again!",
+    "tokenExpired": "Your token has expired! Please log in again."
   },
 
   "userNotFound": "User not found.",
@@ -50,5 +52,19 @@
     "invalidDayInWeekPlan": "Invalid day in week plan",
     "mealSuccessfullyAddedToTheWeekPlan": "Meal successfully added to the week plan",
     "mealSuccessfullyRemovedFromTheWeekPlan": "Meal successfully removed from the week plan"
+  },
+
+  "validationErrors": {
+    "duplicateWeeklyMenuTitle": "A weekly menu with this name has already been created.",
+    "descriptionRequired": "Description is required.",
+    "titleRequired": "Title is required.",
+    "titleMustBeLessThan": "Title must be less than {{max}} characters.",
+    "titleMustBeMoreThan": "Title must be at least {{min}} characters long.",
+    "descriptionMustBeLessThan": "Description must be less than {{max}} characters.",
+    "descriptionMustBeMoreThan": "Description must be at least {{min}} characters long.",
+    "duplicateTitleGeneral": "Title '{{value}}' already exists. Please provide a different title.",
+    "unexpectedError": "An unexpected error occurred. Please try again later.",
+    "invalidField": "Invalid value '{{value}}' for field '{{field}}'.",
+    "userRequired": "User is required."
   }
 }

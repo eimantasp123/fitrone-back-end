@@ -11,7 +11,9 @@
     "unexpectedError": "Įvyko netikėta klaida",
     "notEligibleForFeature": "Jūsų planas '{{plan}}' neturi teisės naudotis šia funkcija",
     "doNotHavePermission": "Jūs neturite teisės atlikti šio veiksmo",
-    "cannotFindThisUrlOnServer": "Negalima rasti {{url}} URL šitame serveryje!"
+    "cannotFindThisUrlOnServer": "Negalima rasti {{url}} URL šitame serveryje!",
+    "invalidToken": "Netinkamas žetonas. Prašome prisijungti iš naujo!",
+    "tokenExpired": "Jūsų žetonas pasibaigė! Prašome prisijungti iš naujo!"
   },
 
   "userNotFound": "Vartotojas nerastas",
@@ -49,5 +51,19 @@
     "invalidDayInWeekPlan": "Netinkama diena savaitės plane",
     "mealSuccessfullyAddedToTheWeekPlan": "Patiekalas sėkmingai pridėtas prie savaitės plano",
     "mealSuccessfullyRemovedFromTheWeekPlan": "Patiekalas sėkmingai pašalintas iš savaitės plano"
+  },
+
+  "validationErrors": {
+    "duplicateWeeklyMenuTitle": "Savaitinis meniu su tokiu pavadinimu jau yra sukurtas.",
+    "descriptionRequired": "Aprašymas yra privalomas.",
+    "titleRequired": "Pavadinimas yra privalomas.",
+    "titleMustBeLessThan": "Pavadinimas turi būti trumpesnis nei {{max}} simbolių.",
+    "titleMustBeMoreThan": "Pavadinimas turi būti ilgesnis nei {{min}} simbolių.",
+    "descriptionMustBeLessThan": "Aprašymas turi būti trumpesnis nei {{max}} simbolių.",
+    "descriptionMustBeMoreThan": "Aprašymas turi būti ilgesnis nei {{min}} simbolių.",
+    "duplicateTitleGeneral": "Pavadinimas '{{value}}' jau egzistuoja. Prašome pateikti kitą pavadinimą.",
+    "unexpectedError": "Įvyko netikėta klaida. Prašome bandyti dar kartą.",
+    "invalidField": "Netinkama reikšmė '{{value}}' laukui '{{field}}'.",
+    "userRequired": "Vartotojas yra privalomas"
   }
 }

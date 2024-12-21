@@ -1,61 +1,76 @@
 const AppError = require("../utils/appError");
+const mongoose = require("mongoose");
 
 /**
  * Handle invalid CastErrorDB error
  */
-const handleCastErrorDB = (err) => {
-  const message = `Invalid ${err.path}: ${err.value}.`;
+const handleCastErrorDB = (err, req) => {
+  const message = req.t("validationErrors.invalidField", {
+    field: err.path,
+    value: err.value,
+  });
   return new AppError(message, 400);
 };
-
 /**
  * Handle duplicate fields error
  */
-const handleDuplicateFieldsDB = (err) => {
-  console.log(err);
-  const field = Object.keys(err.keyValue)[0]; // Extract the field causing the duplication
-  const value = err.keyValue[field]; // Extract the duplicated value
-  const message = `${field} with value "${value}" already exists. Please use another value!`;
-  return new AppError(message, 400);
+const handleDuplicateFieldsDB = (err, req) => {
+  // Check if keyValue exists and has at least one field
+  if (err.keyValue && Object.keys(err.keyValue).length > 0) {
+    const field = Object.keys(err.keyValue)[0]; // Extract the first field causing the duplication
+    const value = err.keyValue[field]; // Extract the duplicated value
+
+    // Generate a localized error message
+    const message = req.t("validationErrors.duplicateTitleGeneral", { value });
+    return new AppError(message, 400);
+  }
+  // Fallback for unexpected error formats
+  console.error("Unexpected duplicate key error format:", err);
+  return new AppError(req.t("validationErrors.unexpectedError"), 500);
 };
 
 /**
  * Handle validation error
  */
-const handleValidationErrorDB = (err) => {
-  const errors = Object.values(err.errors).map((el) => ({
-    field: el.path,
-    message: el.message,
-    kind: el.kind,
-    value: el.value,
-  }));
-  const message = "Validation failed. Please check the input data.";
-  return new AppError(message, 400, errors);
+const handleValidationErrorDB = (err, req) => {
+  // Check if the error is a validation error
+  if (err instanceof mongoose.Error.ValidationError) {
+    const errors = Object.values(err.errors).map((item) => {
+      const dynamicValues = {};
+
+      // Check if the error is a required field error
+      if (item.kind === "maxlength")
+        dynamicValues.max = item.properties.maxlength;
+      if (item.kind === "minlength")
+        dynamicValues.min = item.properties.minlength;
+
+      // Generate a localized error message
+      const errorMessage = req.t(
+        `validationErrors.${item.message}`,
+        dynamicValues,
+      );
+
+      // Return the error message
+      return { message: errorMessage };
+    });
+    return new AppError(errors[0].message, 400);
+  }
+
+  // Fallback for unexpected error formats
+  console.error("Unexpected validation error format:", err);
+  return new AppError(req.t("validationErrors.unexpectedError"), 500);
 };
 
 /**
  * Handle invalid JWT error
  */
-const handleJWTError = (err) =>
-  new AppError("Invalid token. Please log in again!", 401);
+const handleJWTError = (req) => new AppError(req.t("error.invalidToken"), 401);
 
 /**
  * Handle expired JWT error
  */
-const handleJWTExpiredError = (err) =>
-  new AppError("Your token has expired! Please log in again.", 401);
-
-/**
- * Send error in development mode
- */
-const sendErrorDev = (err, res) => {
-  res.status(err.statusCode).json({
-    status: err.status,
-    error: err,
-    message: err.message,
-    stack: err.stack,
-  });
-};
+const handleJWTExpiredError = (req) =>
+  new AppError(req.t("error.tokenExpired"), 401);
 
 /**
  * Handle Stripe errors
@@ -92,6 +107,18 @@ const handleStripeError = (err) => {
 };
 
 /**
+ * Send error in development mode
+ */
+const sendErrorDev = (error, errGlobal, res) => {
+  res.status(error.statusCode).json({
+    status: error.status,
+    message: error.message,
+    error: errGlobal,
+    stack: error.stack,
+  });
+};
+
+/**
  * Send error in production mode
  */
 const sendErrorProd = (err, res) => {
@@ -118,34 +145,35 @@ module.exports = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || "error";
 
+  let error = err;
+
+  // Handle Stripe errors
+  if (error.type && error.type.includes("Stripe"))
+    error = handleStripeError(error, req);
+
+  // Handle invalid CastErrorDB error
+  if (error.code === 11000) error = handleDuplicateFieldsDB(error, req);
+
+  // Handle validation error
+  if (error.name === "ValidationError")
+    error = handleValidationErrorDB(error, req);
+
+  // Handle CastErrorDB error
+  if (error.name === "CastError") error = handleCastErrorDB(error, req);
+
+  // Handle invalid JWT error
+  if (error.name === "JsonWebTokenError") error = handleJWTError(req);
+
+  // Handle expired JWT error
+  if (error.name === "TokenExpiredError") error = handleJWTExpiredError(req);
+  // Send error
+
   // Send error in development
   if (process.env.NODE_ENV === "development") {
-    sendErrorDev(err, res);
+    sendErrorDev(error, err, res);
 
     // Send error in production
   } else if (process.env.NODE_ENV === "production") {
-    let error = err;
-
-    // Handle Stripe errors
-    if (err.type && err.type.includes("Stripe")) error = handleStripeError(err);
-
-    // Handle invalid CastErrorDB error
-    if (error.code === 11000) error = handleDuplicateFieldsDB(error);
-
-    // Handle validation error
-    if (error.name === "ValidationError")
-      error = handleValidationErrorDB(error);
-
-    // Handle CastErrorDB error
-    if (error.name === "CastError") error = handleCastErrorDB(error);
-
-    // Handle invalid JWT error
-    if (error.name === "JsonWebTokenError") error = handleJWTError(error);
-
-    // Handle expired JWT error
-    if (error.name === "TokenExpiredError")
-      error = handleJWTExpiredError(error);
-    // Send error
     sendErrorProd(error, res);
   }
 };

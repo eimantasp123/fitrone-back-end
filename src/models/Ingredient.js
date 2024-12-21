@@ -5,18 +5,18 @@ const ingredientSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: [true, "userRequired"],
     },
     title: {
       lt: {
         type: String,
-        required: true,
+        required: [true, "titleRequired"],
         trim: true,
         lowercase: true,
       },
       en: {
         type: String,
-        required: true,
+        required: [true, "titleRequired"],
         trim: true,
         lowercase: true,
       },

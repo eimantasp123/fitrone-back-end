@@ -58,8 +58,7 @@ exports.createWeekPlan = catchAsync(async (req, res, next) => {
  * Update a week plan by ID with new data
  */
 exports.updateWeekPlan = catchAsync(async (req, res, next) => {
-  const weekPlanId = req.params.weekPlanId;
-
+  // Check if the request body is empty
   if (Object.keys(req.body).length === 0) {
     return next(new AppError(req.t("weekPlanMessages.noDataProvided"), 400));
   }
@@ -88,7 +87,7 @@ exports.updateWeekPlan = catchAsync(async (req, res, next) => {
   // Find the week plan
   const updatedWeekPlan = await WeekPlan.findOne({
     user: req.user._id,
-    _id: weekPlanId,
+    _id: req.params.weekPlanId,
   }).select("title description restrictions preferences startDate endDate");
 
   if (!updatedWeekPlan) {

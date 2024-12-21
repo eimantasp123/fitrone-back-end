@@ -5,7 +5,12 @@ const checkPlanFeatures = require("../middlewares/checkPlanFeatures");
 const router = express.Router();
 const {
   createWeeklyMenu,
-  updateWeeklyMenu,
+  updateWeeklyMenuBio,
+  deleteWeeklyMenu,
+  getAllWeeklyMenus,
+  getWeeklyMenuById,
+  addMealToWeeklyMenu,
+  removeMealFromWeeklyMenu,
 } = require("../controllers/weeklyMenuController");
 
 // Apply authentication middleware to all routes below this line
@@ -23,8 +28,25 @@ router.use(
  * Routes for weekly menu creation and management
  */
 
-// Create weekly menu
+// Get all weekly menus
+router.get("/", getAllWeeklyMenus);
+
+// Create a new weekly menu
 router.post("/", createWeeklyMenu);
-router.patch("/:id", updateWeeklyMenu);
+
+// Update the bio of a weekly menu
+router.patch("/:id", updateWeeklyMenuBio);
+
+// Delete a weekly menu
+router.delete("/:id", deleteWeeklyMenu);
+
+// Get a weekly menu by ID
+router.get("/:id", getWeeklyMenuById);
+
+// Add a meal to a weekly menu
+router.post("/:id/meal", addMealToWeeklyMenu);
+
+// Remove a meal from a weekly menu
+router.delete("/:id/meal", removeMealFromWeeklyMenu);
 
 module.exports = router;

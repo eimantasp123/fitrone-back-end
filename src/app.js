@@ -32,7 +32,6 @@ const ingredientsRoutes = require("./routes/ingredientsRoutes");
 const weekPlanRoutes = require("./routes/weekPlanRoutes");
 const weeklyMenuRoutes = require("./routes/weeklyMenuRoutes");
 const webhookRoutes = require("./utils/webhookRoutes");
-const { escape } = require("querystring");
 
 // Initialize i18next for localization
 i18next

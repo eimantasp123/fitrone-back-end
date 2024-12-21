@@ -6,15 +6,17 @@ const weekPlanSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: [true, "userRequired"],
     },
     title: {
       type: String,
       required: true,
+      required: [true, "titleRequired"],
+      maxlength: [70, "titleMustBeLessThan"],
     },
     description: {
       type: String,
-      maxLength: [500, "Description must be less than 500 characters"],
+      maxlength: [500, "descriptionMustBeLessThan"],
     },
     restrictions: {
       type: [String],
