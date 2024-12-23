@@ -1,4 +1,10 @@
 {
+  "messages": {
+    "created": "Weekly menu created successfully.",
+    "updated": "Weekly menu updated successfully.",
+    "deleted": "Weekly menu deleted successfully."
+  },
+
   "errors": {
     "titleAlreadyExists": "A weekly menu with this name has already been created.",
     "weeklyMenuNotFound": "Weekly menu not found."

@@ -28,9 +28,8 @@ exports.createWeeklyMenu = catchAsync(async (req, res, next) => {
   // Send the response
   res.status(200).json({
     status: "success",
-    data: {
-      weeklyMenu,
-    },
+    message: req.t("weeklyMenu:messages.created"),
+    data: weeklyMenu,
   });
 });
 
@@ -123,8 +122,8 @@ exports.addMealToWeeklyMenu = catchAsync(async (req, res, next) => {
 
   // Add the meal to the day (store only the meal ID)
   day.meals.push({
-    meal: meal._id,
-    category: meal.category.toLowerCase(),
+    mealId: meal._id,
+    category: meal.category,
     time: req.body.time,
   });
 
@@ -217,7 +216,7 @@ exports.getWeeklyMenuById = catchAsync(async (req, res, next) => {
     user: req.user._id,
     _id: req.params.id,
   }).populate({
-    path: "days.meals.meal",
+    path: "days.meals.mealId",
     select:
       "title nutrition description image restrictions category preferences",
   });
@@ -242,22 +241,56 @@ exports.getWeeklyMenuById = catchAsync(async (req, res, next) => {
  * Get all weekly menus.
  */
 exports.getAllWeeklyMenus = catchAsync(async (req, res, next) => {
-  // Find all weekly menus for the user
-  const weeklyMenus = await WeeklyMenu.find({
+  const {
+    page = 1,
+    limit = 10,
+    preference,
+    restriction,
+    archived,
+    query,
+  } = req.query;
+
+  // Pagination options
+  const skip = (page - 1) * limit;
+
+  // Query options
+  const dbQuery = {
     user: req.user._id,
-    archived: false,
-  }).populate({
-    path: "days.meals.meal",
-    select:
-      "title nutrition description image restrictions category preferences",
-  });
+    archived: archived ?? false,
+  };
+
+  // Add preferences, restrictions, and search query to the dbQuery
+  if (preference && preference.length > 0) {
+    dbQuery.preferences = preference;
+  }
+
+  if (restriction && restriction.length > 0) {
+    dbQuery.restrictions = restriction;
+  }
+
+  if (query && query.length > 0) {
+    dbQuery.$or = [
+      { title: { $regex: query, $options: "i" } },
+      { description: { $regex: query, $options: "i" } },
+    ];
+  }
+
+  // Get the total number of results
+  const totalResults = await WeeklyMenu.countDocuments(dbQuery);
+
+  // Find all weekly menus for the user
+  const weeklyMenus = await WeeklyMenu.find(dbQuery)
+    .skip(skip)
+    .limit(parseInt(limit))
+    .sort({ createdAt: -1 });
 
   // Send the response
   res.status(200).json({
     status: "success",
     results: weeklyMenus.length,
-    data: {
-      weeklyMenus,
-    },
+    totalResults,
+    totalPages: Math.ceil(totalResults / limit),
+    currentPage: parseInt(page),
+    data: weeklyMenus,
   });
 });

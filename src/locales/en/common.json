@@ -65,6 +65,9 @@
     "duplicateTitleGeneral": "Title '{{value}}' already exists. Please provide a different title.",
     "unexpectedError": "An unexpected error occurred. Please try again later.",
     "invalidField": "Invalid value '{{value}}' for field '{{field}}'.",
-    "userRequired": "User is required."
+    "userRequired": "User is required.",
+    "invalidPreference": "Invalid value '{{value}}' for dietary preference.",
+    "invalidRestriction": "Invalid value '{{value}}' for dietary restriction.",
+    "invalidCategory": "Invalid value '{{value}}' for category."
   }
 }

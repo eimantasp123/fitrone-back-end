@@ -64,6 +64,9 @@
     "duplicateTitleGeneral": "Pavadinimas '{{value}}' jau egzistuoja. Prašome pateikti kitą pavadinimą.",
     "unexpectedError": "Įvyko netikėta klaida. Prašome bandyti dar kartą.",
     "invalidField": "Netinkama reikšmė '{{value}}' laukui '{{field}}'.",
-    "userRequired": "Vartotojas yra privalomas"
+    "userRequired": "Vartotojas yra privalomas",
+    "invalidPreference": "Netinkama reikšmė '{{value}}' dietiniui pasirinkimui.",
+    "invalidRestriction": "Netinkama reikšmė '{{value}}' dietiniui apribojimui.",
+    "invalidCategory": "Netinkama reikšmė '{{value}}' kategorijai."
   }
 }

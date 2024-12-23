@@ -24,13 +24,64 @@ const WeeklyMenuSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    restrictions: {
-      type: [String],
-      default: [],
+    nutrition: {
+      calories: {
+        type: Number,
+        default: 0,
+      },
+      protein: {
+        type: Number,
+        default: 0,
+      },
+      fat: {
+        type: Number,
+        default: 0,
+      },
+      carbs: {
+        type: Number,
+        default: 0,
+      },
     },
     preferences: {
       type: [String],
       default: [],
+      enum: {
+        values: [
+          "vegetarian",
+          "vegan",
+          "pescatarian",
+          "flexitarian",
+          "paleo",
+          "keto",
+          "lowCarb",
+          "mediterranean",
+          "highProtein",
+          "plantBased",
+          "balanced",
+          "spicy",
+          "sweet",
+        ],
+        message: "invalidPreference",
+      },
+    },
+    restrictions: {
+      type: [String],
+      default: [],
+      enum: {
+        values: [
+          "glutenFree",
+          "dairyFree",
+          "nutFree",
+          "eggFree",
+          "soyFree",
+          "shellfishFree",
+          "halal",
+          "kosher",
+          "lowSodium",
+          "sugarFree",
+        ],
+        message: "invalidRestriction",
+      },
     },
     days: [
       {
@@ -45,17 +96,20 @@ const WeeklyMenuSchema = new mongoose.Schema(
             category: {
               type: String,
               required: true,
-              enum: [
-                "breakfast",
-                "lunch",
-                "dinner",
-                "snack",
-                "drink",
-                "dessert",
-                "other",
-              ],
+              enum: {
+                values: [
+                  "breakfast",
+                  "lunch",
+                  "dinner",
+                  "snack",
+                  "drink",
+                  "dessert",
+                  "other",
+                ],
+                message: "invalidCategory",
+              },
             },
-            meal: {
+            mealId: {
               type: mongoose.Schema.Types.ObjectId,
               ref: "Meal",
               required: true,

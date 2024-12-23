@@ -43,6 +43,10 @@ const handleValidationErrorDB = (err, req) => {
         dynamicValues.max = item.properties.maxlength;
       if (item.kind === "minlength")
         dynamicValues.min = item.properties.minlength;
+      if (item.kind === "enum") {
+        dynamicValues.value = item.value;
+        dynamicValues.enumValues = item.properties.enumValues.join(", ");
+      }
 
       // Generate a localized error message
       const errorMessage = req.t(
