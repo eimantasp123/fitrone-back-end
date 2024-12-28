@@ -6,23 +6,33 @@ const menuData = [
   {
     title: "balanced week menu 1",
     description: "a weekly menu designed for balance and variety in meals",
+    restrictions: ["glutenFree", "dairyFree"],
   },
   {
     title: "healthy choices menu 2",
     description: "focuses on nutritious meals to support a healthy lifestyle",
+    status: "active",
+    restrictions: ["glutenFree", "dairyFree"],
   },
   {
     title: "vegetarian vibes menu",
     description: "crafted for a vegetarian-friendly week",
+    restrictions: ["glutenFree", "dairyFree"],
   },
   {
     title: "protein-packed menu",
     description:
       "great for fitness enthusiasts looking to up their protein intake",
+    status: "active",
+    preferences: ["vegetarian", "vegan"],
+    restrictions: ["glutenFree", "dairyFree"],
   },
   {
     title: "low-carb menu",
     description: "ideal for those following a low-carb diet",
+    status: "active",
+    preferences: ["vegetarian", "vegan"],
+    restrictions: ["glutenFree", "dairyFree"],
   },
   {
     title: "sweet and spicy menu",
@@ -35,6 +45,7 @@ const menuData = [
   {
     title: "plant-based menu",
     description: "perfect for a plant-based lifestyle",
+    status: "active",
   },
   {
     title: "family-friendly menu",
@@ -52,27 +63,33 @@ const menuData = [
   {
     title: "keto-friendly menu",
     description: "tailored for those on a keto diet",
+    status: "active",
+    preferences: ["vegetarian", "vegan"],
   },
   {
     title: "flexitarian menu",
     description: "balanced meals with a mix of plant and animal proteins",
+    status: "active",
   },
   {
     title: "high-protein vegetarian menu",
     description: "a vegetarian menu with a protein boost",
+    preferences: ["vegetarian", "vegan"],
   },
   {
     title: "pescatarian week menu",
     description: "perfect for a pescatarian lifestyle",
+    status: "active",
+    preferences: ["vegetarian", "vegan"],
   },
   {
     title: "spicy week menu",
     description: "for those who love their meals with a kick",
   },
-  { title: "gluten-free menu", description: "crafted for a gluten-free diet" },
   {
-    title: "low-sodium menu",
+    title: "glutenFree menu",
     description: "great for those watching their sodium intake",
+    preferences: ["vegetarian", "vegan"],
   },
   {
     title: "sugar-free week menu",
@@ -81,10 +98,12 @@ const menuData = [
   {
     title: "budget-friendly menu",
     description: "delicious meals that are easy on your wallet",
+    status: "active",
   },
   {
     title: "seasonal flavors menu",
     description: "features ingredients that highlight the season",
+    preferences: ["vegetarian", "vegan"],
   },
   {
     title: "kids-approved menu",
@@ -97,15 +116,19 @@ const menuData = [
   {
     title: "high-energy menu",
     description: "meals designed to fuel your active lifestyle",
+    status: "active",
+    preferences: ["vegetarian", "vegan"],
   },
   {
     title: "detox week menu",
     description: "light meals to cleanse and refresh",
+    preferences: ["vegetarian", "vegan"],
   },
   {
     title: "weekend feast menu",
     description: "indulge in hearty meals for the weekend",
     archived: true,
+    preferences: ["vegetarian", "vegan"],
   },
   {
     title: "workday lunch menu",
@@ -116,6 +139,8 @@ const menuData = [
     title: "chef's special menu",
     description: "unique recipes curated by professional chefs",
     archived: true,
+    preferences: ["vegetarian", "vegan"],
+    restrictions: ["glutenFree", "dairyFree"],
   },
   {
     title: "vegetable lovers menu",
@@ -131,6 +156,7 @@ const menuData = [
     title: "slow-cooker menu",
     description: "easy slow-cooked meals for busy days",
     archived: true,
+    preferences: ["vegetarian", "vegan"],
   },
   {
     title: "one-pot wonders menu",
@@ -141,11 +167,13 @@ const menuData = [
     title: "fusion flavors menu",
     description: "a creative mix of different culinary traditions",
     archived: true,
+    restrictions: ["glutenFree", "dairyFree"],
   },
   {
     title: "sustainable cooking menu",
     description: "eco-friendly meals using sustainable ingredients",
     archived: true,
+    restrictions: ["glutenFree", "dairyFree"],
   },
   {
     title: "meal-prep menu",
@@ -191,19 +219,29 @@ const seedWeeklyMenu = async () => {
       meals: [],
     }));
 
-    // Map over menuData and insert each weekly menu
-    const weeklyMenus = menuData.map((menu) => ({
-      user: userId,
-      title: menu.title,
-      description: menu.description,
-      archived: menu.archived ?? false,
-      preferences: [],
-      restrictions: [],
-      days: defaultDays,
-    }));
+    // Delay function to pause execution for a specified time
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    // Insert all weekly menus into the database
-    await WeeklyMenu.insertMany(weeklyMenus);
+    // Map over menuData and insert each weekly menu with a 2-second delay
+    for (const menu of menuData) {
+      const weeklyMenu = {
+        user: userId,
+        title: menu.title,
+        description: menu.description,
+        archived: menu.archived ?? false,
+        status: menu.status ?? "inactive",
+        preferences: menu.preferences ?? [],
+        restrictions: menu.restrictions ?? [],
+        days: defaultDays,
+      };
+
+      // Insert the menu into the database
+      await WeeklyMenu.create(weeklyMenu);
+      console.log(`Inserted weekly menu: ${menu.title}`);
+
+      // Wait for 2 seconds before processing the next menu
+      await delay(200);
+    }
 
     console.log("Weekly menus have been successfully added!");
   } catch (error) {

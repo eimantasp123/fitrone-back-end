@@ -25,7 +25,12 @@ const plansSchema = new mongoose.Schema({
       required: true,
       default: -1, // Use null for unlimited
     },
-    meal_week_types_limit: {
+    weekly_menus_limit: {
+      type: Number,
+      required: true,
+      default: -1,
+    },
+    weekly_plan_limit: {
       type: Number,
       required: true,
       default: -1,

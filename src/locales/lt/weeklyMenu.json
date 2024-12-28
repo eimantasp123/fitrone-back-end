@@ -2,11 +2,14 @@
   "messages": {
     "created": "Savaitinis meniu sukurtas sėkmingai.",
     "updated": "Savaitinis meniu atnaujintas sėkmingai.",
-    "deleted": "Savaitinis meniu ištrintas sėkmingai."
+    "deleted": "Savaitinis meniu ištrintas sėkmingai.",
+    "archived": "Savaitinis meniu archyvuotas sėkmingai.",
+    "unarchived": "Savaitinis meniu išarchyvuotas sėkmingai."
   },
 
   "errors": {
-    "titleAlreadyExists": "Savaitinis meniu su tokiu pavadinimu jau yra sukurtas",
-    "weeklyMenuNotFound": "Savaitinis meniu nerastas"
+    "titleAlreadyExists": "Savaitinis meniu su tokiu pavadinimu jau yra sukurtas.",
+    "weeklyMenuNotFound": "Savaitinis meniu nerastas.",
+    "weeklyMenuActive": "Savaitinis meniu yra aktyvus ir negali atlikti šios veiksmo."
   }
 }

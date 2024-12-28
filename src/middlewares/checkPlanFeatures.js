@@ -1,6 +1,7 @@
 const Ingredient = require("../models/Ingredient");
 const Meal = require("../models/Meal");
 const Plans = require("../models/Plans"); // Import Plan model
+const WeeklyMenu = require("../models/WeeklyMenu");
 const WeekPlan = require("../models/WeekPlan");
 const AppError = require("../utils/appError"); // Error handler
 
@@ -28,6 +29,10 @@ const checkPlanFeatures = (resourceType, featureKey) => {
 
         case "meals":
           currentCount = await getUserActiveResources(user._id, Meal);
+          break;
+
+        case "weeklyMenus":
+          currentCount = await getUserActiveResources(user._id, WeeklyMenu);
           break;
 
         case "weekPlans":
@@ -60,6 +65,9 @@ const checkPlanFeatures = (resourceType, featureKey) => {
 
       // Optionally warn users when they're close to their limit
       if (userLimit !== -1 && userLimit - (currentCount + 1) === 3) {
+        console.log("Warning: User is close to the limit", userLimit);
+        console.log("currentCount:", currentCount);
+
         req.warning = req.t(`featuresMessages.${featureKey}_warning`, {
           userLimit,
           userPlanName,

@@ -11,7 +11,8 @@ const plans = [
     features: {
       ingredients_limit: 0,
       meals_limit: 0,
-      meal_week_types_limit: 0,
+      weekly_menus_limit: 0,
+      weekly_plan_limit: 0,
       clients_limit: 0,
       ai_search: false,
       business_page: false,
@@ -28,7 +29,8 @@ const plans = [
     features: {
       ingredients_limit: 5,
       meals_limit: 3,
-      meal_week_types_limit: 2,
+      weekly_menus_limit: 5,
+      weekly_plan_limit: 10,
       clients_limit: 10,
       ai_search: false,
       business_page: false,
@@ -45,7 +47,8 @@ const plans = [
     features: {
       ingredients_limit: 10,
       meals_limit: 7,
-      meal_week_types_limit: 5,
+      weekly_menus_limit: 10,
+      weekly_plan_limit: 20,
       clients_limit: 50,
       ai_search: true,
       business_page: true,

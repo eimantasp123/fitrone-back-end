@@ -11,6 +11,8 @@ const {
   getWeeklyMenuById,
   addMealToWeeklyMenu,
   removeMealFromWeeklyMenu,
+  archiveWeeklyMenu,
+  unarchiveWeeklyMenu,
 } = require("../controllers/weeklyMenuController");
 
 // Apply authentication middleware to all routes below this line
@@ -28,11 +30,12 @@ router.use(
  * Routes for weekly menu creation and management
  */
 
-// Get all weekly menus
-router.get("/", getAllWeeklyMenus);
-
 // Create a new weekly menu
-router.post("/", createWeeklyMenu);
+router.post(
+  "/",
+  checkPlanFeatures("weeklyMenus", "weekly_menus_limit"),
+  createWeeklyMenu,
+);
 
 // Update the bio of a weekly menu
 router.patch("/:id", updateWeeklyMenuBio);
@@ -40,8 +43,21 @@ router.patch("/:id", updateWeeklyMenuBio);
 // Delete a weekly menu
 router.delete("/:id", deleteWeeklyMenu);
 
+// Archive a weekly menu
+router.patch("/archive/:id", archiveWeeklyMenu);
+
+// Unarchive a weekly menu
+router.patch(
+  "/unarchive/:id",
+  checkPlanFeatures("weeklyMenus", "weekly_menus_limit"),
+  unarchiveWeeklyMenu,
+);
+
 // Get a weekly menu by ID
 router.get("/:id", getWeeklyMenuById);
+
+// Get all weekly menus
+router.get("/", getAllWeeklyMenus);
 
 // Add a meal to a weekly menu
 router.post("/:id/meal", addMealToWeeklyMenu);

@@ -28,6 +28,9 @@
     "meals_limit": "You have reached your meals limit of {{userLimit}} for your '{{userPlanName}}' plan. Upgrade to add more meals!",
     "meals_limit_warning": "You are near your meals limit of {{userLimit}} for your '{{userPlanName}}' plan. You have {{remaining}} meals left before reaching the limit. Upgrade to add more!",
 
+    "weekly_menus_limit": "You have reached your weekly menus limit of {{userLimit}} for your '{{userPlanName}}' plan. Upgrade to manage more weekly menus!",
+    "weekly_menus_limit_warning": "You are near your weekly menus limit of {{userLimit}} for your '{{userPlanName}}' plan. You have {{remaining}} weekly menus left before reaching the limit. Upgrade to manage more!",
+
     "meal_week_types_limit": "You have reached your meal week types limit of {{userLimit}} for your {{userPlanName}} plan. Upgrade to create more meal week types!",
     "clients_limit": "You have reached your clients limit of {{userLimit}} for your {{userPlanName}} plan. Upgrade to add more clients!",
     "use_ai_search": "AI ingredient search is not available in your {{userPlanName}} plan. Upgrade your plan to access this feature.",

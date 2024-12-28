@@ -28,6 +28,9 @@
     "meals_limit": "Jūs pasiekėte savo patiekalų limitą {{userLimit}} jūsų '{{userPlanName}}' plane. Atnaujinkite planą, kad galėtumėte pridėti daugiau patiekalų!",
     "meals_limit_warning": "Jūs artėjate prie savo patiekalų limito {{userLimit}} jūsų '{{userPlanName}}' plane. Jums liko {{remaining}} patiekalai iki pasiekiant ribą. Atnaujinkite planą, kad galėtumėte pridėti daugiau!",
 
+    "weekly_menus_limit": "Jūs pasiekėte savo savaitinių meniu limitą {{userLimit}} jūsų '{{userPlanName}}' plane. Atnaujinkite planą, kad galėtumėte valdyti daugiau savaitinių meniu!",
+    "weekly_menus_limit_warning": "Jūs artėjate prie savo savaitinių meniu limito {{userLimit}} jūsų '{{userPlanName}}' plane. Jums liko {{remaining}} savaitiniai meniu iki pasiekiant ribą. Atnaujinkite planą, kad galėtumėte valdyti daugiau savaitės meniu!",
+
     "meal_week_types_limit": "Jūs pasiekėte savo savaitinių patiekalų tipų limitą {{userLimit}} jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte sukurti daugiau tipų!",
     "clients_limit": "Jūs pasiekėte savo klientų limitą {{userLimit}} jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte pridėti daugiau klientų!",
     "use_ai_search": "AI ingredientų paieška nėra prieinama jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte naudotis šia funkcija.",

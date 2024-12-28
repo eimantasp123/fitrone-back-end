@@ -2,11 +2,14 @@
   "messages": {
     "created": "Weekly menu created successfully.",
     "updated": "Weekly menu updated successfully.",
-    "deleted": "Weekly menu deleted successfully."
+    "deleted": "Weekly menu deleted successfully.",
+    "archived": "Weekly menu archived successfully.",
+    "unarchived": "Weekly menu unarchived successfully."
   },
 
   "errors": {
     "titleAlreadyExists": "A weekly menu with this name has already been created.",
-    "weeklyMenuNotFound": "Weekly menu not found."
+    "weeklyMenuNotFound": "Weekly menu not found.",
+    "weeklyMenuActive": "Weekly menu is active and cannot perform this action."
   }
 }
