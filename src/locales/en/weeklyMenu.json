@@ -4,12 +4,18 @@
     "updated": "Weekly menu updated successfully.",
     "deleted": "Weekly menu deleted successfully.",
     "archived": "Weekly menu archived successfully.",
-    "unarchived": "Weekly menu unarchived successfully."
+    "unarchived": "Weekly menu unarchived successfully.",
+    "mealAdded": "Meal added successfully.",
+    "mealsAdded": "Meals added successfully.",
+    "mealRemoved": "Meal removed successfully."
   },
 
   "errors": {
     "titleAlreadyExists": "A weekly menu with this name has already been created.",
     "weeklyMenuNotFound": "Weekly menu not found.",
-    "weeklyMenuActive": "Weekly menu is active and cannot perform this action."
+    "weeklyMenuActive": "Weekly menu is active and cannot perform this action.",
+    "mealNotFoundInDay": "Meal not found in this day.",
+    "someMealNotFound": "Some meals were not found.",
+    "dayNotFound": "Day not found."
   }
 }

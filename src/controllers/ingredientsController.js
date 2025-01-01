@@ -3,10 +3,10 @@ const catchAsync = require("../utils/catchAsync");
 const openai = require("openai");
 const z = require("zod");
 const { zodResponseFormat } = require("openai/helpers/zod");
-const Meal = require("../models/Meal");
 const { default: mongoose } = require("mongoose");
 const Ingredient = require("../models/Ingredient");
 const UpdateService = require("../utils/updateService");
+const { roundTo } = require("../helper/roundeNumber");
 
 /**
  * OpenAI API key
@@ -123,17 +123,16 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
     return next(new AppError(req.t("meals:error.ingredientExists"), 400));
   }
 
-  console.log(ingredients);
   // Create a new ingredient
   const newIngredient = await Ingredient.create({
     user: req.user._id,
     title: { en: title, lt: title }, // Assuming titles in both languages are the same
     unit,
     amount,
-    calories,
-    protein,
-    carbs,
-    fat,
+    calories: roundTo(calories, 1),
+    protein: roundTo(protein, 1),
+    carbs: roundTo(carbs, 1),
+    fat: roundTo(fat, 1),
   });
 
   // Calculate the nutrition info based on the current amount
@@ -143,12 +142,12 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
     nutritionInfo = {
       ingredientId: newIngredient._id,
       title: newIngredient.title[lang],
-      currentAmount: Number(currentAmount),
+      currentAmount: roundTo(currentAmount, 1),
       unit: newIngredient.unit,
-      calories: Number((newIngredient.calories * scalingFactor).toFixed(1)),
-      protein: Number((newIngredient.protein * scalingFactor).toFixed(1)),
-      fat: Number((newIngredient.fat * scalingFactor).toFixed(1)),
-      carbs: Number((newIngredient.carbs * scalingFactor).toFixed(1)),
+      calories: roundTo(newIngredient.calories * scalingFactor, 1),
+      protein: roundTo(newIngredient.protein * scalingFactor, 1),
+      fat: roundTo(newIngredient.fat * scalingFactor, 1),
+      carbs: roundTo(newIngredient.carbs * scalingFactor, 1),
     };
   } else {
     nutritionInfo = {
@@ -222,42 +221,12 @@ exports.deleteIngredient = catchAsync(async (req, res, next) => {
     return next(new AppError(req.t("meals:error.ingredientIdRequired"), 400));
   }
 
-  const ingredient = await Ingredient.findOneAndDelete({
-    _id: ingredientId,
-    user: req.user._id,
-  });
-
-  if (!ingredient) {
-    return next(new AppError(req.t("meals:error.ingredientNotFound"), 404));
-  }
-
-  // Find all meals that used the deleted ingredient
-  const mealsToUpdate = await Meal.find({
-    user: req.user._id,
-    "ingredients.ingredientId": ingredientId,
-  });
-
-  for (const meal of mealsToUpdate) {
-    // Filter out the ingredient to delete
-    meal.ingredients = meal.ingredients.filter(
-      (ingredient) => ingredient.ingredientId.toString() !== ingredientId,
-    );
-
-    // Recalculate the total nutrition info for the meal
-    meal.nutrition = meal.ingredients.reduce(
-      (acc, curr) => {
-        acc.calories = Number((acc.calories + curr.calories).toFixed(1));
-        acc.protein = Number((acc.protein + curr.protein).toFixed(1));
-        acc.fat = Number((acc.fat + curr.fat).toFixed(1));
-        acc.carbs = Number((acc.carbs + curr.carbs).toFixed(1));
-        return acc;
-      },
-      { calories: 0, protein: 0, fat: 0, carbs: 0 },
-    );
-
-    // Save the updated meal
-    await meal.save();
-  }
+  // Use the UpdateService to handle the ingredient deletion and cascading logic
+  const { ingredient, mealsToUpdate } = await UpdateService.deleteIngredient(
+    ingredientId,
+    req,
+    next,
+  );
 
   // Send the response
   res.status(200).json({
@@ -305,11 +274,11 @@ exports.updateIngredient = catchAsync(async (req, res, next) => {
   const updates = {
     title: { en: title, lt: title }, // Assuming bilingual titles
     unit,
-    calories,
-    protein,
-    carbs,
-    amount,
-    fat,
+    calories: roundTo(calories, 1),
+    protein: roundTo(protein, 1),
+    carbs: roundTo(carbs, 1),
+    amount: roundTo(amount, 1),
+    fat: roundTo(fat, 1),
   };
 
   // Use the UpdateService to handle the ingredient update and cascading logic
@@ -422,10 +391,10 @@ exports.getIngredientNutrition = catchAsync(async (req, res, next) => {
     title: ingredient.title[lang],
     currentAmount: Number(currentAmount),
     unit: ingredient.unit,
-    calories: Number((ingredient.calories * scalingFactor).toFixed(1)),
-    protein: Number((ingredient.protein * scalingFactor).toFixed(1)),
-    fat: Number((ingredient.fat * scalingFactor).toFixed(1)),
-    carbs: Number((ingredient.carbs * scalingFactor).toFixed(1)),
+    calories: roundTo(ingredient.calories * scalingFactor, 1),
+    protein: roundTo(ingredient.protein * scalingFactor, 1),
+    fat: roundTo(ingredient.fat * scalingFactor, 1),
+    carbs: roundTo(ingredient.carbs * scalingFactor, 1),
   };
 
   // Send the response

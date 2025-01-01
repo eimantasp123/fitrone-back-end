@@ -4,12 +4,18 @@
     "updated": "Savaitinis meniu atnaujintas sėkmingai.",
     "deleted": "Savaitinis meniu ištrintas sėkmingai.",
     "archived": "Savaitinis meniu archyvuotas sėkmingai.",
-    "unarchived": "Savaitinis meniu išarchyvuotas sėkmingai."
+    "unarchived": "Savaitinis meniu išarchyvuotas sėkmingai.",
+    "mealAdded": "Patiekalas pridėtas sėkmingai.",
+    "mealsAdded": "Patiekalai pridėti sėkmingai.",
+    "mealRemoved": "Patiekalas pašalintas sėkmingai."
   },
 
   "errors": {
     "titleAlreadyExists": "Savaitinis meniu su tokiu pavadinimu jau yra sukurtas.",
     "weeklyMenuNotFound": "Savaitinis meniu nerastas.",
-    "weeklyMenuActive": "Savaitinis meniu yra aktyvus ir negali atlikti šios veiksmo."
+    "weeklyMenuActive": "Savaitinis meniu yra aktyvus ir negali atlikti šios veiksmo.",
+    "mealNotFoundInDay": "Patiekalas nerastas šioje dienoje.",
+    "someMealNotFound": "Kai kurie patiekalai nerasti.",
+    "dayNotFound": "Diena nerasta."
   }
 }

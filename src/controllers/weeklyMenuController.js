@@ -1,3 +1,4 @@
+const { roundTo } = require("../helper/roundeNumber");
 const Meal = require("../models/Meal");
 const WeeklyMenu = require("../models/WeeklyMenu");
 const AppError = require("../utils/appError");
@@ -202,7 +203,7 @@ exports.getWeeklyMenuById = catchAsync(async (req, res, next) => {
     user: req.user._id,
     _id: req.params.id,
   }).populate({
-    path: "days.meals.mealId",
+    path: "days.meals.meal",
     select:
       "title nutrition description image restrictions category preferences",
   });
@@ -285,64 +286,23 @@ exports.getAllWeeklyMenus = catchAsync(async (req, res, next) => {
 /**
  *  Add meal to a day in a current weekly menu
  */
+exports.addMealsToWeeklyMenu = catchAsync(async (req, res, next) => {
+  const { meals, dayId } = req.body;
 
-exports.addMealToWeeklyMenu = catchAsync(async (req, res, next) => {
-  const { mealId, dayId } = req.query;
-
-  // Find the weekly menu by ID and user
-  const weeklyMenu = await WeeklyMenu.findOne({
-    user: req.user._id,
-    _id: req.params.id,
-  });
-
-  // If the weekly menu does not exist, return an error
-  if (!weeklyMenu) {
-    return next(
-      new AppError(req.t("weeklyMenu:errors.weeklyMenuNotFound"), 404),
-    );
-  }
-
-  // Find the meal by ID and user
-  const meal = await Meal.findOne(
-    {
-      user: req.user._id,
-      _id: mealId,
-      archived: false,
-    },
-    "title nutrition description image restrictions category preferences",
-  );
-
-  console.log(meal);
-
-  // If the meal does not exist, return an error
-  if (!meal) {
-    return next(new AppError(req.t("weeklyMenu:errors.mealNotFound"), 404));
-  }
-
-  // Get the day
-  const day = weeklyMenu.days.id(dayId);
-
-  // If the day does not exist, return an error
-  if (!day) {
-    return next(new AppError(req.t("weeklyMenu:errors.dayNotFound"), 404));
-  }
-
-  // Add the meal to the day (store only the meal ID)
-  day.meals.push({
-    mealId: meal._id,
-    category: meal.category,
-    time: req.body.time,
-  });
-
-  // Save the weekly menu
-  await weeklyMenu.save();
-
-  // Send the response
-  res.status(200).json({
-    status: "success",
-    message: req.t("weeklyMenu:messages.mealAdded"),
-    data: {
-      meal,
+  await manageMealsInWeeklyMenu({
+    req,
+    res,
+    mealsArray: meals,
+    dayId,
+    next,
+    actionType: "add",
+    updateDayMeals: (day, meal) => {
+      // Add the meal to the day (store only the meal ID)
+      day.meals.push({
+        meal: meal._id,
+        category: meal.category,
+        time: req.body.time,
+      });
     },
   });
 });
@@ -350,17 +310,52 @@ exports.addMealToWeeklyMenu = catchAsync(async (req, res, next) => {
 /**
  * Remove meal from a day in a current weekly menu
  */
-
 exports.removeMealFromWeeklyMenu = catchAsync(async (req, res, next) => {
-  const { mealObjectId, dayId } = req.query;
+  const { mealId, dayId } = req.query;
+  const mealsArray = [mealId];
 
+  await manageMealsInWeeklyMenu({
+    req,
+    res,
+    mealsArray,
+    dayId,
+    next,
+    actionType: "remove",
+    updateDayMeals: (day, meal) => {
+      // Find the meal object in the day
+      const mealIndex = day.meals.findIndex((mealObject) => {
+        return mealObject.meal.toString() === meal._id.toString();
+      });
+
+      if (mealIndex === -1) {
+        return next(
+          new AppError(req.t("weeklyMenu:errors.mealNotFoundInDay"), 404),
+        );
+      }
+
+      // Remove the meal from the day
+      day.meals.splice(mealIndex, 1);
+    },
+  });
+});
+
+/**
+ * General utility to manage meals in a weekly menu
+ */
+const manageMealsInWeeklyMenu = async ({
+  req,
+  res,
+  dayId,
+  mealsArray,
+  next,
+  actionType,
+  updateDayMeals,
+}) => {
   // Find the weekly menu by ID and user
   const weeklyMenu = await WeeklyMenu.findOne({
     user: req.user._id,
     _id: req.params.id,
   });
-
-  // If the weekly menu does not exist, return an error
 
   if (!weeklyMenu) {
     return next(
@@ -368,25 +363,83 @@ exports.removeMealFromWeeklyMenu = catchAsync(async (req, res, next) => {
     );
   }
 
+  let mealList = [];
+
+  if (Array.isArray(mealsArray) && mealsArray.length > 0) {
+    // Find the meals by ID and user
+    mealList = await Meal.find({
+      user: req.user._id,
+      _id: { $in: mealsArray },
+    });
+
+    if (mealList.length !== mealsArray.length) {
+      return next(
+        new AppError(req.t("weeklyMenu:errors.someMealNotFound"), 404),
+      );
+    }
+  }
+
   // Get the day
   const day = weeklyMenu.days.id(dayId);
 
-  // If the day does not exist, return an error
   if (!day) {
     return next(new AppError(req.t("weeklyMenu:errors.dayNotFound"), 404));
   }
 
-  // Remove the meal from the day
-  day.meals.pull(mealObjectId);
+  // Update the day with the meals
+  mealList.forEach((meal) => {
+    updateDayMeals(day, meal);
+
+    // Determine the multiplier based on the action type
+    const multiplier = actionType === "add" ? 1 : -1;
+
+    // Calculate the nutrition info for the day
+    day.nutrition = Object.keys(meal.nutrition).reduce((acc, key) => {
+      acc[key] = roundTo(
+        (day.nutrition[key] || 0) + multiplier * meal.nutrition[key],
+        1,
+      );
+      return acc;
+    }, day.nutrition);
+  });
 
   // Save the weekly menu
   await weeklyMenu.save();
 
+  // Get current weekly menu day with meals and populate the meals
+  const weeklyMenuWithMeal = await WeeklyMenu.findOne(
+    {
+      user: req.user._id,
+      _id: req.params.id,
+    },
+    {
+      days: {
+        $elemMatch: {
+          _id: dayId,
+        },
+      },
+    },
+  ).populate({
+    path: "days.meals.meal",
+    select:
+      "title nutrition description image restrictions category preferences",
+  });
+
+  // Prepare the response message
+  const messageForResponse = (() => {
+    if (actionType === "add" && mealList.length > 1) {
+      return req.t("weeklyMenu:messages.mealsAdded");
+    } else if (actionType === "add" && mealList.length === 1) {
+      return req.t("weeklyMenu:messages.mealAdded");
+    } else {
+      return req.t("weeklyMenu:messages.mealRemoved");
+    }
+  })();
+
   // Send the response
   res.status(200).json({
     status: "success",
-    data: {
-      mealObjectId,
-    },
+    message: messageForResponse,
+    data: weeklyMenuWithMeal.days[0],
   });
-});
+};

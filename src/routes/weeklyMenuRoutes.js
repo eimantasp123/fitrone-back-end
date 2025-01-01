@@ -9,7 +9,7 @@ const {
   deleteWeeklyMenu,
   getAllWeeklyMenus,
   getWeeklyMenuById,
-  addMealToWeeklyMenu,
+  addMealsToWeeklyMenu,
   removeMealFromWeeklyMenu,
   archiveWeeklyMenu,
   unarchiveWeeklyMenu,
@@ -60,7 +60,7 @@ router.get("/:id", getWeeklyMenuById);
 router.get("/", getAllWeeklyMenus);
 
 // Add a meal to a weekly menu
-router.post("/:id/meal", addMealToWeeklyMenu);
+router.post("/:id/meal", addMealsToWeeklyMenu);
 
 // Remove a meal from a weekly menu
 router.delete("/:id/meal", removeMealFromWeeklyMenu);

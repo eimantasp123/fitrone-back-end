@@ -11,6 +11,7 @@ const {
   deleteFromS3,
 } = require("../utils/s3Helpers");
 const Ingredient = require("../models/Ingredient");
+const { roundTo } = require("../helper/roundeNumber");
 
 /**
  * Multer middleware for file upload
@@ -32,8 +33,6 @@ const allowedFileTypes = ["image/jpeg", "image/png", "image/jpg"]; // Allowed im
 exports.addMeal = catchAsync(async (req, res, next) => {
   const { title, description, category } = req.body;
   const { lng } = req;
-
-  console.log("req.body:", req.body);
 
   // Ensure required fields are present
   if (!title || !category || !req.body.ingredients) {
@@ -69,10 +68,10 @@ exports.addMeal = catchAsync(async (req, res, next) => {
         title: ingredientDoc.title[lng],
         currentAmount: Number(ingredient.currentAmount),
         unit: ingredientDoc.unit,
-        calories: Number((ingredientDoc.calories * scalingFactor).toFixed(1)),
-        protein: Number((ingredientDoc.protein * scalingFactor).toFixed(1)),
-        fat: Number((ingredientDoc.fat * scalingFactor).toFixed(1)),
-        carbs: Number((ingredientDoc.carbs * scalingFactor).toFixed(1)),
+        calories: roundTo(ingredientDoc.calories * scalingFactor, 1),
+        protein: roundTo(ingredientDoc.protein * scalingFactor, 1),
+        fat: roundTo(ingredientDoc.fat * scalingFactor, 1),
+        carbs: roundTo(ingredientDoc.carbs * scalingFactor, 1),
       };
     }),
   );
@@ -80,10 +79,10 @@ exports.addMeal = catchAsync(async (req, res, next) => {
   // Calculate the total nutrition info for the meal
   const totalNutrition = ingredientDetails.reduce(
     (acc, curr) => {
-      acc.calories = Number((acc.calories + curr.calories).toFixed(1));
-      acc.protein = Number((acc.protein + curr.protein).toFixed(1));
-      acc.fat = Number((acc.fat + curr.fat).toFixed(1));
-      acc.carbs = Number((acc.carbs + curr.carbs).toFixed(1));
+      acc.calories = roundTo(acc.calories + curr.calories, 1);
+      acc.protein = roundTo(acc.protein + curr.protein, 1);
+      acc.fat = roundTo(acc.fat + curr.fat, 1);
+      acc.carbs = roundTo(acc.carbs + curr.carbs, 1);
       return acc;
     },
     { calories: 0, protein: 0, fat: 0, carbs: 0 },
@@ -228,10 +227,10 @@ exports.updateMeal = catchAsync(async (req, res, next) => {
         title: ingredientDoc.title[lng],
         currentAmount: Number(ingredient.currentAmount),
         unit: ingredientDoc.unit,
-        calories: Number((ingredientDoc.calories * scalingFactor).toFixed(1)),
-        protein: Number((ingredientDoc.protein * scalingFactor).toFixed(1)),
-        fat: Number((ingredientDoc.fat * scalingFactor).toFixed(1)),
-        carbs: Number((ingredientDoc.carbs * scalingFactor).toFixed(1)),
+        calories: roundTo(ingredientDoc.calories * scalingFactor, 1),
+        protein: roundTo(ingredientDoc.protein * scalingFactor, 1),
+        fat: roundTo(ingredientDoc.fat * scalingFactor, 1),
+        carbs: roundTo(ingredientDoc.carbs * scalingFactor, 1),
       };
     }),
   );
@@ -239,10 +238,10 @@ exports.updateMeal = catchAsync(async (req, res, next) => {
   // Calculate the total nutrition info for the meal
   const totalNutrition = ingredientDetails.reduce(
     (acc, curr) => {
-      acc.calories = Number((acc.calories + curr.calories).toFixed(1));
-      acc.protein = Number((acc.protein + curr.protein).toFixed(1));
-      acc.fat = Number((acc.fat + curr.fat).toFixed(1));
-      acc.carbs = Number((acc.carbs + curr.carbs).toFixed(1));
+      acc.calories = roundTo(acc.calories + curr.calories, 1);
+      acc.protein = roundTo(acc.protein + curr.protein, 1);
+      acc.fat = roundTo(acc.fat + curr.fat, 1);
+      acc.carbs = roundTo(acc.carbs + curr.carbs, 1);
       return acc;
     },
     { calories: 0, protein: 0, fat: 0, carbs: 0 },
@@ -301,7 +300,11 @@ exports.updateMeal = catchAsync(async (req, res, next) => {
 
   // Update the meal
   meal.title = title;
-  meal.description = description || meal.description;
+  if (description || description === "") {
+    meal.description = description;
+  } else {
+    meal.description = meal.description;
+  }
   meal.category = category || meal.category;
   meal.ingredients = ingredientDetails;
   meal.nutrition = totalNutrition;
@@ -383,6 +386,7 @@ exports.getMeals = catchAsync(async (req, res, next) => {
   // Query the database for all meals for the user
   const query = { user: req.user._id, archived: false };
 
+  // Add filters if provided
   if (category) {
     query.category = category;
   }
@@ -421,5 +425,85 @@ exports.getMeals = catchAsync(async (req, res, next) => {
     totalPages: Math.ceil(totalResults / limit),
     currentPage: parseInt(page),
     data: formattedMeals,
+  });
+});
+
+/**
+ * Get all meal by category, preference, restriction or search query
+ */
+exports.searchMeals = catchAsync(async (req, res, next) => {
+  const {
+    limit = 10,
+    category,
+    preference,
+    restriction,
+    searchQuery,
+  } = req.query;
+
+  // Query the database for all meals for the user
+  const DbQuery = { user: req.user._id, archived: false };
+
+  // Add filters if provided
+  if (category) {
+    DbQuery.category = category;
+  }
+
+  if (preference) {
+    DbQuery.preferences = preference;
+  }
+
+  if (restriction) {
+    DbQuery.restrictions = restriction;
+  }
+
+  if (searchQuery && searchQuery.length > 0) {
+    DbQuery.title = { $regex: searchQuery, $options: "i" };
+  }
+
+  // Fetch filtered meals with pagination
+  const meals = await Meal.find(DbQuery)
+    .limit(parseInt(limit))
+    .sort({ createdAt: -1 })
+    .select("title category"); // Newest first
+
+  // Send the response
+  res.status(200).json({
+    status: "success",
+    data: meals,
+  });
+});
+
+/**
+ * Get a meal by ID
+ */
+exports.getMealById = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+
+  // Check if the id parameter is provided
+  if (!id) {
+    return next(new AppError(req.t("meals:error.idRequired"), 400));
+  }
+
+  // Query the database for the meal
+  const meal = await Meal.findOne({
+    user: req.user._id,
+    _id: id,
+  });
+
+  // Check if the meal exists
+  if (!meal) {
+    return next(new AppError(req.t("meals:error.mealNotFound"), 404));
+  }
+
+  // Format response object
+  const formattedMeal = meal.toObject();
+  delete formattedMeal.user;
+  delete formattedMeal.__v;
+  delete formattedMeal.updatedAt;
+
+  // Send the response
+  res.status(200).json({
+    status: "success",
+    data: formattedMeal,
   });
 });

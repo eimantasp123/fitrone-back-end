@@ -1,206 +1,12 @@
 const mongoose = require("mongoose");
 const connectDB = require("../config/dbConfig");
 const WeeklyMenu = require("../models/WeeklyMenu");
+const { menuData } = require("./data/weeklyMenu");
+const Meal = require("../models/Meal");
+const { roundTo } = require("../helper/roundeNumber");
 
-const menuData = [
-  {
-    title: "balanced week menu 1",
-    description: "a weekly menu designed for balance and variety in meals",
-    restrictions: ["glutenFree", "dairyFree"],
-  },
-  {
-    title: "healthy choices menu 2",
-    description: "focuses on nutritious meals to support a healthy lifestyle",
-    status: "active",
-    restrictions: ["glutenFree", "dairyFree"],
-  },
-  {
-    title: "vegetarian vibes menu",
-    description: "crafted for a vegetarian-friendly week",
-    restrictions: ["glutenFree", "dairyFree"],
-  },
-  {
-    title: "protein-packed menu",
-    description:
-      "great for fitness enthusiasts looking to up their protein intake",
-    status: "active",
-    preferences: ["vegetarian", "vegan"],
-    restrictions: ["glutenFree", "dairyFree"],
-  },
-  {
-    title: "low-carb menu",
-    description: "ideal for those following a low-carb diet",
-    status: "active",
-    preferences: ["vegetarian", "vegan"],
-    restrictions: ["glutenFree", "dairyFree"],
-  },
-  {
-    title: "sweet and spicy menu",
-    description: "a perfect balance of sweetness and spice",
-  },
-  {
-    title: "mediterranean delights menu",
-    description: "inspired by the Mediterranean diet",
-  },
-  {
-    title: "plant-based menu",
-    description: "perfect for a plant-based lifestyle",
-    status: "active",
-  },
-  {
-    title: "family-friendly menu",
-    description: "meals the whole family will love",
-  },
-  { title: "quick and easy menu", description: "perfect for busy weeks" },
-  {
-    title: "gourmet week menu",
-    description: "for the foodies who love gourmet meals",
-  },
-  {
-    title: "comfort food menu",
-    description: "indulge in classic comfort foods",
-  },
-  {
-    title: "keto-friendly menu",
-    description: "tailored for those on a keto diet",
-    status: "active",
-    preferences: ["vegetarian", "vegan"],
-  },
-  {
-    title: "flexitarian menu",
-    description: "balanced meals with a mix of plant and animal proteins",
-    status: "active",
-  },
-  {
-    title: "high-protein vegetarian menu",
-    description: "a vegetarian menu with a protein boost",
-    preferences: ["vegetarian", "vegan"],
-  },
-  {
-    title: "pescatarian week menu",
-    description: "perfect for a pescatarian lifestyle",
-    status: "active",
-    preferences: ["vegetarian", "vegan"],
-  },
-  {
-    title: "spicy week menu",
-    description: "for those who love their meals with a kick",
-  },
-  {
-    title: "glutenFree menu",
-    description: "great for those watching their sodium intake",
-    preferences: ["vegetarian", "vegan"],
-  },
-  {
-    title: "sugar-free week menu",
-    description: "ideal for those reducing sugar intake",
-  },
-  {
-    title: "budget-friendly menu",
-    description: "delicious meals that are easy on your wallet",
-    status: "active",
-  },
-  {
-    title: "seasonal flavors menu",
-    description: "features ingredients that highlight the season",
-    preferences: ["vegetarian", "vegan"],
-  },
-  {
-    title: "kids-approved menu",
-    description: "simple and fun meals your kids will enjoy",
-  },
-  {
-    title: "world cuisine menu",
-    description: "explore tastes from around the globe",
-  },
-  {
-    title: "high-energy menu",
-    description: "meals designed to fuel your active lifestyle",
-    status: "active",
-    preferences: ["vegetarian", "vegan"],
-  },
-  {
-    title: "detox week menu",
-    description: "light meals to cleanse and refresh",
-    preferences: ["vegetarian", "vegan"],
-  },
-  {
-    title: "weekend feast menu",
-    description: "indulge in hearty meals for the weekend",
-    archived: true,
-    preferences: ["vegetarian", "vegan"],
-  },
-  {
-    title: "workday lunch menu",
-    description: "quick and satisfying lunches for busy workdays",
-    archived: true,
-  },
-  {
-    title: "chef's special menu",
-    description: "unique recipes curated by professional chefs",
-    archived: true,
-    preferences: ["vegetarian", "vegan"],
-    restrictions: ["glutenFree", "dairyFree"],
-  },
-  {
-    title: "vegetable lovers menu",
-    description: "celebrating a variety of fresh vegetables",
-    archived: true,
-  },
-  {
-    title: "fruit-forward menu",
-    description: "meals and desserts with a fruity twist",
-    archived: true,
-  },
-  {
-    title: "slow-cooker menu",
-    description: "easy slow-cooked meals for busy days",
-    archived: true,
-    preferences: ["vegetarian", "vegan"],
-  },
-  {
-    title: "one-pot wonders menu",
-    description: "delicious meals made in just one pot",
-    archived: true,
-  },
-  {
-    title: "fusion flavors menu",
-    description: "a creative mix of different culinary traditions",
-    archived: true,
-    restrictions: ["glutenFree", "dairyFree"],
-  },
-  {
-    title: "sustainable cooking menu",
-    description: "eco-friendly meals using sustainable ingredients",
-    archived: true,
-    restrictions: ["glutenFree", "dairyFree"],
-  },
-  {
-    title: "meal-prep menu",
-    description: "meals designed for easy prepping ahead of time",
-    archived: true,
-  },
-  {
-    title: "quick breakfast menu",
-    description: "easy and healthy breakfast options",
-    archived: true,
-  },
-  {
-    title: "celebration menu",
-    description: "festive meals for special occasions",
-    archived: true,
-  },
-  {
-    title: "fitness-focused menu",
-    description: "perfect for staying on track with your fitness goals",
-    archived: true,
-  },
-  {
-    title: "heart-healthy menu",
-    description: "meals crafted to promote heart health",
-    archived: true,
-  },
-];
+// Utility function for delay
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Seed ingredients into the database
 const seedWeeklyMenu = async () => {
@@ -213,17 +19,58 @@ const seedWeeklyMenu = async () => {
     await WeeklyMenu.deleteMany({ user: userId });
     console.log(`Existing weekly menus for user ${userId} have been deleted.`);
 
-    // Create an array of 7 days
-    const defaultDays = Array.from({ length: 7 }, (_, i) => ({
-      day: i,
-      meals: [],
-    }));
+    // Fetch all meals created by the user
+    const meals = await Meal.find({ user: userId });
+    if (meals.length === 0) {
+      console.error(
+        "No meals found. Please seed meals before running this script.",
+      );
+      return;
+    }
 
-    // Delay function to pause execution for a specified time
-    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    console.log(`Found ${meals.length} meals for user ${userId}.`);
 
-    // Map over menuData and insert each weekly menu with a 2-second delay
+    // Iterate over menu data and create weekly menus
     for (const menu of menuData) {
+      const defaultDays = Array.from({ length: 7 }, (_, i) => ({
+        day: i,
+        meals: [],
+        nutrition: {
+          calories: 0,
+          protein: 0,
+          carbs: 0,
+          fat: 0,
+        },
+      }));
+
+      // Randomly assign meals to days and calculate nutrition
+      for (const day of defaultDays) {
+        const assignMeals = Math.random() > 0.3; // 70% chance to assign meals to a day
+        if (assignMeals) {
+          const randomMeals = meals
+            .sort(() => 0.5 - Math.random())
+            .slice(0, Math.floor(Math.random() * 3) + 1); // Assign 1-3 meals
+
+          day.meals = randomMeals.map((meal) => ({
+            category: meal.category,
+            meal: meal._id,
+          }));
+
+          // Calculate day nutrition based on assigned meals
+          day.nutrition = randomMeals.reduce(
+            (acc, meal) => {
+              acc.calories = roundTo(acc.calories + meal.nutrition.calories, 1);
+              acc.protein = roundTo(acc.protein + meal.nutrition.protein, 1);
+              acc.carbs = roundTo(acc.carbs + meal.nutrition.carbs, 1);
+              acc.fat = roundTo(acc.fat + meal.nutrition.fat, 1);
+              return acc;
+            },
+            { calories: 0, protein: 0, carbs: 0, fat: 0 },
+          );
+        }
+      }
+
+      // Create a weekly menu object
       const weeklyMenu = {
         user: userId,
         title: menu.title,
@@ -239,7 +86,7 @@ const seedWeeklyMenu = async () => {
       await WeeklyMenu.create(weeklyMenu);
       console.log(`Inserted weekly menu: ${menu.title}`);
 
-      // Wait for 2 seconds before processing the next menu
+      // Add delay between each menu insertion
       await delay(200);
     }
 

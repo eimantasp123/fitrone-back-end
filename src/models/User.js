@@ -83,6 +83,7 @@ const userSchema = new mongoose.Schema({
   trialEnd: { type: Date },
   subscriptionCancelAtPeriodEnd: { type: Boolean, default: false },
   subscriptionCancelAt: { type: Date },
+
   googleId: { type: String, unique: true, sparse: true },
   facebookId: { type: String, unique: true, sparse: true },
   isVerified: { type: Boolean, default: false, select: false },
@@ -96,6 +97,7 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpires: { type: Date },
   createdAt: { type: Date, default: Date.now },
   passwordChangedAt: { type: Date },
+
   archivedData: {
     messageRead: { type: Boolean, default: false },
     ingredients: { type: Number, default: null },
