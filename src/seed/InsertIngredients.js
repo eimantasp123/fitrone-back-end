@@ -1,9 +1,9 @@
 const mongoose = require("mongoose");
 const connectDB = require("../config/dbConfig");
-const UserIngredient = require("../models/UserIngredient");
-const { ingredients } = require("./data/ingredients");
+const Ingredient = require("../models/Ingredient");
 
-// Array of 20 ingredients to add
+// Utility function to add delay
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Seed ingredients into the database
 const seedIngredients = async () => {
@@ -12,26 +12,27 @@ const seedIngredients = async () => {
 
     const userId = "674f3d2abd2012ba7e4a7f01"; // The user's ID
 
-    // Find or create the user document
-    let userIngredients = await UserIngredient.findOne({ user: userId });
+    await Ingredient.deleteMany({ user: userId });
 
-    if (!userIngredients) {
-      // If the user's ingredient document doesn't exist, create it
-      userIngredients = await UserIngredient.create({
-        user: userId,
-        ingredients: [],
+    let ingredients = [];
+    for (let i = 0; i < 400; i++) {
+      ingredients.push({
+        title: { lt: `ingredient${i}`, en: `ingredient${i}` },
+        unit: "g",
+        amount: Math.floor(Math.random() * 200) + 50,
+        calories: Math.floor(Math.random() * 500) + 10,
+        protein: parseFloat((Math.random() * 10).toFixed(1)),
+        fat: parseFloat((Math.random() * 10).toFixed(1)),
+        carbs: parseFloat((Math.random() * 100).toFixed(1)),
       });
     }
 
-    // Clear all existing ingredients
-    userIngredients.ingredients = [];
-
-    // Add ingredients to the user's document
-    userIngredients.ingredients.push(...ingredients);
-
-    // Save the updated document
-    await userIngredients.save();
-
+    // Insert ingredients into the database
+    for (const ingredient of ingredients) {
+      await Ingredient.create({ ...ingredient, user: userId });
+      console.log(`Inserted ingredient: ${ingredient.title.lt}`);
+      await delay(50); // 200ms delay between each ingredient insertion
+    }
     console.log("Ingredients have been successfully added!");
   } catch (error) {
     console.error("Error inserting ingredients: ", error);

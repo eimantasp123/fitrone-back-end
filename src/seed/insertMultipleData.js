@@ -19,7 +19,8 @@ const seedMultiple = async () => {
   try {
     await connectDB(); // Connect to the database
 
-    const userId = "674f3d2abd2012ba7e4a7f01"; // The user's ID
+    const userId = "674f3d2abd2012ba7e4a7f01"; // The user's ID eimantaspetrikas18
+    // const userId = "6737e6460dd6907c4fd14e72"; // The user's ID eimiuxxx09
 
     // Delete existing ingredients and meals for the user
     await Ingredient.deleteMany({ user: userId });
@@ -28,15 +29,12 @@ const seedMultiple = async () => {
       `Existing ingredients and meals for user ${userId} have been deleted.`,
     );
 
-    // Insert new ingredients
-    const ingredientDocuments = ingredients.map((ingredient) => ({
-      ...ingredient,
-      user: userId,
-    }));
-
-    const insertedIngredients =
-      await Ingredient.insertMany(ingredientDocuments);
-    console.log(`Inserted ${insertedIngredients.length} ingredients.`);
+    // Insert ingredients into the database
+    for (const ingredient of ingredients) {
+      await Ingredient.create({ ...ingredient, user: userId });
+      console.log(`Inserted ingredient: ${ingredient.title.lt}`);
+      await delay(200); // 200ms delay between each ingredient insertion
+    }
 
     // Fetch all newly inserted ingredients
     const allIngredients = await Ingredient.find({ user: userId });

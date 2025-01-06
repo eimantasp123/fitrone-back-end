@@ -3,10 +3,7 @@ const WeeklyMenu = require("../models/WeeklyMenu");
 
 const connectDB = async () => {
   try {
-    await mongoose.connect("mongodb://127.0.0.1:27017/testdb", {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect("mongodb://127.0.0.1:27017/testdb");
     console.log("MongoDB connected");
 
     // Rebuild indexes for WeeklyMenu

@@ -23,6 +23,7 @@
     "ingredientIdAndCurrentAmountIsRequired": "Ingredient ID and current amount is required",
     "ingredientIdRequired": "Ingredient ID is required",
     "ingredientNotFound": "Ingredient not found",
-    "mealUpdateError": "Error updating meal"
+    "mealUpdateError": "Error updating meal",
+    "invalidIngredientId": "Invalid ingredient ID"
   }
 }

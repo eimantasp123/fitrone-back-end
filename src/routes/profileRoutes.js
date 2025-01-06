@@ -25,7 +25,7 @@ router.use(authMiddleware);
 router.use(
   restrictTo({
     roles: ["admin", "supplier"],
-    plans: ["basic", "pro", "premium"],
+    plans: ["base", "basic", "pro", "premium"],
   }),
 );
 
