@@ -7,6 +7,8 @@ const { default: mongoose } = require("mongoose");
 const Ingredient = require("../models/Ingredient");
 const UpdateService = require("../utils/updateService");
 const { roundTo } = require("../helper/roundeNumber");
+const { sendMessageToClients } = require("../utils/websocket");
+const DeleteService = require("../utils/deleteService");
 
 /**
  * OpenAI API key
@@ -33,7 +35,7 @@ const nutritionSchema = z.object({
  * Get ingredient information from the FatSecret API
  */
 exports.getIngredientInfo = catchAsync(async (req, res, next) => {
-  let { query, unit, amount } = req.body;
+  let { query, unit } = req.body;
 
   // Get the language from the request object
   const lang = req.lng || "en";
@@ -57,7 +59,7 @@ exports.getIngredientInfo = catchAsync(async (req, res, next) => {
         content: `
             ingredient: ${query}
             unit: ${unit}
-            amount: ${amount}
+            amount: 100
         `,
       },
     ],
@@ -103,9 +105,24 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
   // Get the language from the request object
   const lang = req.lng || "en";
 
+  console.log("req.body", req.body);
+
   // Validate input
-  if (!title || !unit || !amount || !calories || !protein || !fat || !carbs) {
+  if (!title || !unit) {
     return next(new AppError(req.t("meals:error.missingRequiredFields"), 400));
+  }
+
+  // List of numeric fields to validate
+  const numericFields = { amount, calories, protein, fat, carbs };
+
+  // Check if any field is missing or less than 0
+  for (const value of Object.entries(numericFields)) {
+    if (value === undefined || value === null || value < 0) {
+      return next(
+        new AppError(req.t("meals:error.missingRequiredFields")),
+        400,
+      );
+    }
   }
 
   // Check if the ingredient already exists in the user ingredient document
@@ -119,7 +136,6 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
   );
 
   if (ingredientMatches.length > 0) {
-    console.log(ingredientMatches);
     return next(new AppError(req.t("meals:error.ingredientExists"), 400));
   }
 
@@ -182,14 +198,31 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
  * Get all ingredients for the user
  */
 exports.getIngredients = catchAsync(async (req, res, next) => {
+  const { query } = req.query;
   // Get the language from the request object
   const lang = req.lng || "en";
 
-  // Query the `Ingredient` collection for the user's ingredients
-  const ingredients = await Ingredient.find({
+  // Define the query object
+  const dbQuery = {
     user: req.user._id,
     archived: { $ne: true },
-  }).sort({ createdAt: -1 });
+  };
+
+  // Check if the query parameter is provided
+  if (query && query.length > 0) {
+    dbQuery[`title.${lang}`] = { $regex: new RegExp(query, "i") };
+  }
+
+  // page and limit
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 10;
+  const skip = (page - 1) * limit;
+
+  // Query the `Ingredient` collection for the user's ingredients
+  const ingredients = await Ingredient.find(dbQuery)
+    .skip(skip)
+    .limit(parseInt(limit))
+    .sort({ createdAt: -1 });
 
   const response = ingredients.map((ingredient) => ({
     ingredientId: ingredient._id,
@@ -202,10 +235,19 @@ exports.getIngredients = catchAsync(async (req, res, next) => {
     carbs: ingredient.carbs,
   }));
 
+  // Get the total number of ingredients
+  const total = await Ingredient.countDocuments({
+    user: req.user._id,
+    archived: { $ne: true },
+  });
+
   // Send the response
   res.status(200).json({
     status: "success",
     results: response.length,
+    total,
+    currentPage: page,
+    totalPages: Math.ceil(total / limit),
     data: response,
   });
 });
@@ -216,26 +258,23 @@ exports.getIngredients = catchAsync(async (req, res, next) => {
 exports.deleteIngredient = catchAsync(async (req, res, next) => {
   const { ingredientId } = req.params;
 
+  // Check if the ingredient ID is valid
+  if (!mongoose.isValidObjectId(ingredientId)) {
+    return next(new AppError(req.t("meals:error.invalidIngredientId"), 400));
+  }
+
   // Check if the id parameter is provided
   if (!ingredientId) {
     return next(new AppError(req.t("meals:error.ingredientIdRequired"), 400));
   }
 
   // Use the UpdateService to handle the ingredient deletion and cascading logic
-  const { ingredient, mealsToUpdate } = await UpdateService.deleteIngredient(
-    ingredientId,
-    req,
-    next,
-  );
+  await DeleteService.deleteIngredient(ingredientId, req, next);
 
   // Send the response
   res.status(200).json({
     status: "success",
     message: req.t("meals:ingredientDeletedSuccessfully"),
-    data: {
-      ingredient,
-      mealsUpdated: mealsToUpdate.length,
-    },
   });
 });
 
@@ -282,27 +321,12 @@ exports.updateIngredient = catchAsync(async (req, res, next) => {
   };
 
   // Use the UpdateService to handle the ingredient update and cascading logic
-  const updatedIngredient = await UpdateService.updateIngredient(
-    ingredientId,
-    updates,
-    req,
-    next,
-  );
+  await UpdateService.updateIngredient(ingredientId, updates, req, next);
 
   // Send the response
   res.status(200).json({
     status: "success",
     message: req.t("meals:ingredientUpdatedSuccessfully"),
-    data: {
-      ingredientId: updatedIngredient._id,
-      title: updatedIngredient.title[lang],
-      unit: updatedIngredient.unit,
-      amount: updatedIngredient.amount,
-      calories: updatedIngredient.calories,
-      protein: updatedIngredient.protein,
-      fat: updatedIngredient.fat,
-      carbs: updatedIngredient.carbs,
-    },
   });
 });
 

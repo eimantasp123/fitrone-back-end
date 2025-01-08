@@ -261,7 +261,7 @@ exports.getAllWeeklyMenus = catchAsync(async (req, res, next) => {
   }
 
   // Get the total number of results
-  const totalResults = await WeeklyMenu.countDocuments(dbQuery);
+  const total = await WeeklyMenu.countDocuments({ user: req.user._id });
 
   // Find all weekly menus for the user
   const weeklyMenus = await WeeklyMenu.find(dbQuery)
@@ -276,9 +276,9 @@ exports.getAllWeeklyMenus = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     results: weeklyMenus.length,
-    totalResults,
-    totalPages: Math.ceil(totalResults / limit),
+    total,
     currentPage: parseInt(page),
+    totalPages: Math.ceil(total / limit),
     data: weeklyMenus,
   });
 });

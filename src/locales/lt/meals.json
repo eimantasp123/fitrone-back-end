@@ -23,6 +23,7 @@
     "ingredientIdAndCurrentAmountIsRequired": "Ingredientas ir reikalingas kiekis yra privaloma",
     "ingredientIdRequired": "Ingrediento ID yra privalomas",
     "ingredientNotFound": "Ingredientas nerastas",
-    "mealUpdateError": "Klaida atnaujinant patiekalą"
+    "mealUpdateError": "Klaida atnaujinant patiekalą",
+    "invalidIngredientId": "Netinkamas ingrediento ID"
   }
 }

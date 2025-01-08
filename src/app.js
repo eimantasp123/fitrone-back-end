@@ -15,6 +15,7 @@ const i18next = require("i18next");
 const Backend = require("i18next-fs-backend");
 const middleware = require("i18next-http-middleware");
 const path = require("path");
+const http = require("http");
 
 // Require custom modules
 const connectDB = require("./config/dbConfig");
@@ -32,6 +33,7 @@ const ingredientsRoutes = require("./routes/ingredientsRoutes");
 const weekPlanRoutes = require("./routes/weekPlanRoutes");
 const weeklyMenuRoutes = require("./routes/weeklyMenuRoutes");
 const webhookRoutes = require("./utils/webhookRoutes");
+const { initWebSocketServer } = require("./utils/websocket");
 
 // Initialize i18next for localization
 i18next
@@ -56,6 +58,10 @@ i18next
 
 // Initialize express app
 const app = express();
+const server = http.createServer(app);
+
+// Initialize WebSocket server
+initWebSocketServer(server);
 
 // Use the i18next middleware to attach `req.t` function to requests
 app.use(middleware.handle(i18next));
@@ -146,7 +152,7 @@ app.use(globalErrorHandler);
 // Start server
 const PORT = process.env.PORT || 5000;
 // app.listen(process.env.PORT);
-app.listen(PORT, "0.0.0.0", () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server is running on http://0.0.0.0:${PORT}`);
 });
 

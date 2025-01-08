@@ -378,32 +378,46 @@ exports.deleteMeal = catchAsync(async (req, res, next) => {
  * Get all meals for the user
  */
 exports.getMeals = catchAsync(async (req, res, next) => {
-  const { page = 1, limit = 10, category, preference, restriction } = req.query;
+  const {
+    page = 1,
+    limit = 10,
+    category,
+    preference,
+    restriction,
+    query,
+  } = req.query;
 
   // Pagination options
   const skip = (page - 1) * limit;
 
   // Query the database for all meals for the user
-  const query = { user: req.user._id, archived: false };
+  const dbQuery = { user: req.user._id, archived: false };
 
   // Add filters if provided
   if (category) {
-    query.category = category;
+    dbQuery.category = category;
   }
 
   if (preference) {
-    query.preferences = preference;
+    dbQuery.preferences = preference;
   }
 
   if (restriction) {
-    query.restrictions = restriction;
+    dbQuery.restrictions = restriction;
+  }
+
+  if (query && query.length > 0) {
+    dbQuery.title = { $regex: query, $options: "i" };
   }
 
   // Get the total number of results
-  const totalResults = await Meal.countDocuments(query);
+  const total = await Meal.countDocuments({
+    user: req.user._id,
+    archived: false,
+  });
 
   // Fetch filtered meals with pagination
-  const meals = await Meal.find(query)
+  const meals = await Meal.find(dbQuery)
     .skip(skip)
     .limit(parseInt(limit))
     .sort({ createdAt: -1 }); // Newest first
@@ -421,9 +435,9 @@ exports.getMeals = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     results: meals.length,
-    totalResults,
-    totalPages: Math.ceil(totalResults / limit),
+    total,
     currentPage: parseInt(page),
+    totalPages: Math.ceil(total / limit),
     data: formattedMeals,
   });
 });
