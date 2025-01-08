@@ -105,9 +105,24 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
   // Get the language from the request object
   const lang = req.lng || "en";
 
+  console.log("req.body", req.body);
+
   // Validate input
-  if (!title || !unit || !amount || !calories || !protein || !fat || !carbs) {
+  if (!title || !unit) {
     return next(new AppError(req.t("meals:error.missingRequiredFields"), 400));
+  }
+
+  // List of numeric fields to validate
+  const numericFields = { amount, calories, protein, fat, carbs };
+
+  // Check if any field is missing or less than 0
+  for (const value of Object.entries(numericFields)) {
+    if (value === undefined || value === null || value < 0) {
+      return next(
+        new AppError(req.t("meals:error.missingRequiredFields")),
+        400,
+      );
+    }
   }
 
   // Check if the ingredient already exists in the user ingredient document
@@ -221,7 +236,10 @@ exports.getIngredients = catchAsync(async (req, res, next) => {
   }));
 
   // Get the total number of ingredients
-  const total = await Ingredient.countDocuments(dbQuery);
+  const total = await Ingredient.countDocuments({
+    user: req.user._id,
+    archived: { $ne: true },
+  });
 
   // Send the response
   res.status(200).json({

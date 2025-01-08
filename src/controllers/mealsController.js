@@ -411,7 +411,10 @@ exports.getMeals = catchAsync(async (req, res, next) => {
   }
 
   // Get the total number of results
-  const total = await Meal.countDocuments(dbQuery);
+  const total = await Meal.countDocuments({
+    user: req.user._id,
+    archived: false,
+  });
 
   // Fetch filtered meals with pagination
   const meals = await Meal.find(dbQuery)

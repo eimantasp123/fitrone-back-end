@@ -70,10 +70,10 @@ const UpdateService = {
       // Recalculate the nutrition info for the meal
       meal.nutrition = meal.ingredients.reduce(
         (acc, curr) => {
-          acc.calories += curr.calories;
-          acc.protein += curr.protein;
-          acc.fat += curr.fat;
-          acc.carbs += curr.carbs;
+          acc.calories = roundTo(acc.calories + curr.calories, 1);
+          acc.protein = roundTo(acc.protein + curr.protein, 1);
+          acc.fat = roundTo(acc.fat + curr.fat, 1);
+          acc.carbs = roundTo(acc.carbs + curr.carbs, 1);
           return acc;
         },
         { calories: 0, protein: 0, fat: 0, carbs: 0 },
