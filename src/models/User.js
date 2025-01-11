@@ -64,6 +64,10 @@ const userSchema = new mongoose.Schema({
     enum: ["en", "lt"],
     default: "en",
   },
+  timezone: {
+    type: String,
+    default: null,
+  },
   stripeCustomerId: { type: String, select: false },
   stripeSubscriptionId: { type: String, select: false },
   hasUsedFreeTrial: { type: Boolean, default: false },

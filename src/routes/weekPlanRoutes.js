@@ -5,10 +5,7 @@ const checkPlanFeatures = require("../middlewares/checkPlanFeatures");
 const router = express.Router();
 const {
   createWeekPlan,
-  addMealToDay,
-  updateWeekPlan,
-  deleteWeekPlan,
-  removeMealFromDay,
+  setUserTimezone,
 } = require("../controllers/weekPlanController");
 
 // Apply authentication middleware to all routes below this line
@@ -27,15 +24,11 @@ router.use(
  */
 router.post(
   "/",
-  checkPlanFeatures("weekPlans", "meal_week_types_limit"),
+  // checkPlanFeatures("weekPlans", "meal_week_types_limit"),
   createWeekPlan,
 );
-router.patch("/:weekPlanId", updateWeekPlan);
-router.delete("/:weekPlanId", deleteWeekPlan);
-// router.get("/:weekPlanId", getWeekPlanById);
 
-// Add meal to a day in a current week plan
-router.post("/:weekPlanId/add-meal", addMealToDay);
-router.delete("/:weekPlanId/remove-meal", removeMealFromDay);
+// Set user timezone
+router.patch("/set-timezone", setUserTimezone);
 
 module.exports = router;
