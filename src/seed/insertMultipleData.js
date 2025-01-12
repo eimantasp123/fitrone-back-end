@@ -1,3 +1,4 @@
+require("dotenv").config(); // Load environment variables
 const mongoose = require("mongoose");
 const connectDB = require("../config/dbConfig");
 const { ingredients } = require("./data/ingredients");
@@ -19,8 +20,7 @@ const seedMultiple = async () => {
   try {
     await connectDB(); // Connect to the database
 
-    const userId = "674f3d2abd2012ba7e4a7f01"; // The user's ID eimantaspetrikas18
-    // const userId = "6737e6460dd6907c4fd14e72"; // The user's ID eimiuxxx09
+    const userId = process.env.TEST_USER_ID; // The user's ID
 
     // Delete existing ingredients and meals for the user
     await Ingredient.deleteMany({ user: userId });

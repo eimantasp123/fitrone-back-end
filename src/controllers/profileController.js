@@ -9,7 +9,7 @@ const {
   validateFile,
   uploadToS3,
   deleteFromS3,
-} = require("../utils/s3Helpers");
+} = require("../utils/s3helpers");
 
 /**
  * Constants for file upload

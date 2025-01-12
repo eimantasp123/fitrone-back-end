@@ -1,9 +1,11 @@
+require("dotenv").config(); // Load environment variables
+
 const mongoose = require("mongoose");
 const WeeklyMenu = require("../models/WeeklyMenu");
 
 const connectDB = async () => {
   try {
-    await mongoose.connect("mongodb://127.0.0.1:27017/testdb");
+    await mongoose.connect(process.env.MONGO_DB_CONNECTION_STRING);
     console.log("MongoDB connected");
 
     // Rebuild indexes for WeeklyMenu

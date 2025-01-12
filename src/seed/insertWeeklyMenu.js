@@ -1,3 +1,4 @@
+require("dotenv").config(); // Load environment variables
 const mongoose = require("mongoose");
 const connectDB = require("../config/dbConfig");
 const WeeklyMenu = require("../models/WeeklyMenu");
@@ -13,7 +14,7 @@ const seedWeeklyMenu = async () => {
   try {
     await connectDB(); // Connect to the database
 
-    const userId = "674f3d2abd2012ba7e4a7f01"; // The user's IDv
+    const userId = process.env.TEST_USER_ID; // The user's ID
 
     // Delete existing weekly menus for the user
     await WeeklyMenu.deleteMany({ user: userId });

@@ -1,3 +1,4 @@
+require("dotenv").config(); // Load environment variables
 const connectDB = require("../config/dbConfig");
 const WeeklyMenu = require("../models/WeeklyMenu");
 const WeekPlan = require("../models/WeekPlan");
@@ -39,7 +40,7 @@ const seedWeekPlans = async () => {
   try {
     await connectDB();
 
-    const userId = "674f3d2abd2012ba7e4a7f01"; // Replace with the user's ID
+    const userId = process.env.TEST_USER_ID; // The user's ID
 
     await WeekPlan.deleteMany({ user: userId });
 

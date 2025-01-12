@@ -9,7 +9,7 @@ const {
   validateFile,
   uploadToS3,
   deleteFromS3,
-} = require("../utils/s3Helpers");
+} = require("../utils/s3helpers");
 const Ingredient = require("../models/Ingredient");
 const { roundTo } = require("../helper/roundeNumber");
 
