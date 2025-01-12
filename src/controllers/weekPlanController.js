@@ -7,6 +7,8 @@ const _ = require("lodash");
 /**
  * Set user timezone
  */
+
+//
 exports.setUserTimezone = catchAsync(async (req, res, next) => {
   const { timezone } = req.body;
   // Check if timezone is provided
