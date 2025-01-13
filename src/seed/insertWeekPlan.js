@@ -1,4 +1,5 @@
 require("dotenv").config(); // Load environment variables
+
 const connectDB = require("../config/dbConfig");
 const WeeklyMenu = require("../models/WeeklyMenu");
 const WeekPlan = require("../models/WeekPlan");
@@ -88,3 +89,5 @@ const seedWeekPlans = async () => {
 };
 
 seedWeekPlans();
+
+exports.module = seedWeekPlans;

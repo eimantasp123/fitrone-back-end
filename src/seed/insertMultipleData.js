@@ -1,4 +1,5 @@
 require("dotenv").config(); // Load environment variables
+
 const mongoose = require("mongoose");
 const connectDB = require("../config/dbConfig");
 const { ingredients } = require("./data/ingredients");
@@ -16,7 +17,7 @@ const { roundTo } = require("../helper/roundeNumber");
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Seed ingredients into the database
-const seedMultiple = async () => {
+const seedMultipleData = async () => {
   try {
     await connectDB(); // Connect to the database
 
@@ -112,4 +113,6 @@ const seedMultiple = async () => {
   }
 };
 
-seedMultiple();
+seedMultipleData();
+
+module.exports = seedMultipleData;

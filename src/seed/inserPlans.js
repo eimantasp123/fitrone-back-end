@@ -1,3 +1,5 @@
+require("dotenv").config(); // Load environment variables
+
 const mongoose = require("mongoose");
 const Plan = require("../models/Plans"); // Adjust the path to your model
 const connectDB = require("../config/dbConfig");

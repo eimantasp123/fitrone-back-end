@@ -1,10 +1,12 @@
-require("dotenv").config(); // Load environment variables
+// require("dotenv").config(); // Load environment variables
 
 const mongoose = require("mongoose");
 const WeeklyMenu = require("../models/WeeklyMenu");
 
 const connectDB = async () => {
   try {
+    console.log("Connecting to MongoDB...");
+    console.log(process.env.MONGO_DB_CONNECTION_STRING);
     await mongoose.connect(process.env.MONGO_DB_CONNECTION_STRING);
     console.log("MongoDB connected");
 

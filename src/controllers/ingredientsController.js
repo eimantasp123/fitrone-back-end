@@ -38,7 +38,7 @@ exports.getIngredientInfo = catchAsync(async (req, res, next) => {
   let { query, unit } = req.body;
 
   // Get the language from the request object
-  const lang = req.lng || "en";
+  const lang = req.language.split("-")[0].toLowerCase() || "en";
 
   // Check if the query parameter is provided
   if (!query) {
@@ -103,9 +103,7 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
   } = req.body;
 
   // Get the language from the request object
-  const lang = req.lng || "en";
-
-  console.log("req.body", req.body);
+  const lang = req.language.split("-")[0].toLowerCase() || "en";
 
   // Validate input
   if (!title || !unit) {
@@ -200,7 +198,7 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
 exports.getIngredients = catchAsync(async (req, res, next) => {
   const { query } = req.query;
   // Get the language from the request object
-  const lang = req.lng || "en";
+  const lang = req.language.split("-")[0].toLowerCase() || "en";
 
   // Define the query object
   const dbQuery = {
@@ -286,7 +284,7 @@ exports.updateIngredient = catchAsync(async (req, res, next) => {
   const { title, unit, calories, protein, carbs, amount, fat } = req.body;
 
   // Get the language from the request object
-  const lang = req.lng || "en";
+  const lang = req.language.split("-")[0].toLowerCase() || "en";
 
   // Check if the id parameter is provided
   if (!ingredientId) {
@@ -335,7 +333,9 @@ exports.updateIngredient = catchAsync(async (req, res, next) => {
  */
 exports.getIngredientSearch = catchAsync(async (req, res, next) => {
   const query = req.query.query;
-  const lang = req.lng || "en";
+
+  // Get the language from the request object
+  const lang = req.language.split("-")[0].toLowerCase() || "en";
 
   // Check if the query parameter is provided
   if (!query) {
@@ -381,7 +381,7 @@ exports.getIngredientNutrition = catchAsync(async (req, res, next) => {
   const { currentAmount } = req.query;
 
   // Get the language from the request object
-  const lang = req.lng || "en";
+  const lang = req.language.split("-")[0].toLowerCase() || "en";
 
   // Check if the id parameter is provided
   if (
