@@ -1,3 +1,5 @@
+const { parseISO, isValid } = require("date-fns");
+
 // Helper function to map the price ID to a plan
 const mapPriceIdToPlan = (priceId) => {
   switch (priceId) {
@@ -12,4 +14,10 @@ const mapPriceIdToPlan = (priceId) => {
   }
 };
 
-module.exports = mapPriceIdToPlan;
+// Helper function to check if a date is valid
+const inValidDate = (date) => {
+  const parsedDate = new Date(date);
+  return !isNaN(parsedDate.getTime());
+};
+
+module.exports = { mapPriceIdToPlan, inValidDate };

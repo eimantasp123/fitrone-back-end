@@ -6,6 +6,7 @@ const router = express.Router();
 const {
   createWeekPlan,
   setUserTimezone,
+  getWeekPlanByDate,
 } = require("../controllers/weekPlanController");
 
 // Apply authentication middleware to all routes below this line
@@ -30,5 +31,8 @@ router.post(
 
 // Set user timezone
 router.patch("/set-timezone", setUserTimezone);
+
+// Get week plan by date
+router.get("/", getWeekPlanByDate);
 
 module.exports = router;

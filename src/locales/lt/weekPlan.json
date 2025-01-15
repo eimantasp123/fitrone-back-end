@@ -1,5 +1,9 @@
 {
   "messages": {
     "timezoneSetSuccess": "Laiko juosta sėkmingai nustatyta"
+  },
+
+  "validationErrors": {
+    "startAndEndDateIsNotValid": "Pateiktos datos yra neteisingos. Įsitikinkite, kad įvedėte ir pradžios, ir pabaigos datas teisingai, o pradžios data yra ankstesnė nei pabaigos data."
   }
 }

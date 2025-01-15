@@ -1,5 +1,9 @@
 {
   "messages": {
     "timezoneSetSuccess": "Timezone set successfully"
+  },
+
+  "validationErrors": {
+    "startAndEndDateIsNotValid": "The provided dates are invalid. Ensure both start and end dates are entered correctly and the start date is earlier than the end date."
   }
 }

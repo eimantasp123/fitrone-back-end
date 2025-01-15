@@ -238,6 +238,9 @@ exports.getAllWeeklyMenus = catchAsync(async (req, res, next) => {
   // Pagination options
   const skip = (page - 1) * limit;
 
+  // Base query for counting all documents
+  const baseQuery = { user: req.user._id };
+
   // Query options
   const dbQuery = {
     user: req.user._id,
@@ -260,17 +263,18 @@ exports.getAllWeeklyMenus = catchAsync(async (req, res, next) => {
     ];
   }
 
-  // Get the total number of results
-  const total = await WeeklyMenu.countDocuments({ user: req.user._id });
-
-  // Find all weekly menus for the user
-  const weeklyMenus = await WeeklyMenu.find(dbQuery)
-    .skip(skip)
-    .limit(parseInt(limit))
-    .sort({ createdAt: -1 })
-    .select(
-      "title description preferences restrictions archived status nutrition createdAt updatedAt",
-    );
+  // Get the total number of documents and the documents for the current page
+  const [total, totalForFetch, weeklyMenus] = await Promise.all([
+    WeeklyMenu.countDocuments(baseQuery),
+    WeeklyMenu.countDocuments(dbQuery),
+    WeeklyMenu.find(dbQuery)
+      .skip(skip)
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 })
+      .select(
+        "title description preferences restrictions archived status nutrition createdAt updatedAt",
+      ),
+  ]);
 
   // Send the response
   res.status(200).json({
@@ -278,7 +282,7 @@ exports.getAllWeeklyMenus = catchAsync(async (req, res, next) => {
     results: weeklyMenus.length,
     total,
     currentPage: parseInt(page),
-    totalPages: Math.ceil(total / limit),
+    totalPages: Math.ceil(totalForFetch / limit),
     data: weeklyMenus,
   });
 });
