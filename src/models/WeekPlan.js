@@ -7,12 +7,12 @@ const weekPlanSchema = new mongoose.Schema(
       ref: "User",
       required: [true, "userRequired"],
     },
-    startDate: {
-      type: Date,
+    year: {
+      type: Number,
       required: true,
     },
-    endDate: {
-      type: Date,
+    weekNumber: {
+      type: Number,
       required: true,
     },
     assignMenu: [
@@ -20,6 +20,10 @@ const weekPlanSchema = new mongoose.Schema(
         menu: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "WeeklyMenu",
+        },
+        published: {
+          type: Boolean,
+          default: false,
         },
         assignedGroups: [
           {
@@ -35,6 +39,15 @@ const weekPlanSchema = new mongoose.Schema(
         ],
       },
     ],
+    isSnapshot: {
+      type: Boolean,
+      default: false,
+    },
+    status: {
+      type: String,
+      enum: ["active", "expired"],
+      default: "active",
+    },
   },
   { timestamps: true },
 );

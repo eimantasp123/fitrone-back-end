@@ -32,7 +32,9 @@ const allowedFileTypes = ["image/jpeg", "image/png", "image/jpg"]; // Allowed im
  */
 exports.addMeal = catchAsync(async (req, res, next) => {
   const { title, description, category } = req.body;
-  const { lng } = req;
+
+  // Get the language from the request object
+  const lng = req.language.split("-")[0].toLowerCase() || "en";
 
   // Ensure required fields are present
   if (!title || !category || !req.body.ingredients) {
@@ -164,7 +166,9 @@ exports.addMeal = catchAsync(async (req, res, next) => {
 exports.updateMeal = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const { title, description, category } = req.body;
-  const { lng } = req;
+
+  // Get the language from the request object
+  const lng = req.language.split("-")[0].toLowerCase() || "en";
 
   // Check if the id parameter is provided
   if (!id || !mongoose.Types.ObjectId.isValid(id)) {

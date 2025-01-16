@@ -70,11 +70,6 @@
     "userRequired": "Vartotojas yra privalomas",
     "invalidPreference": "Netinkama reikšmė '{{value}}' dietiniui pasirinkimui.",
     "invalidRestriction": "Netinkama reikšmė '{{value}}' dietiniui apribojimui.",
-    "invalidCategory": "Netinkama reikšmė '{{value}}' kategorijai.",
-    "timezoneRequired": "Laiko juosta yra privaloma",
-    "timezoneNotYetSet": "Laiko juosta dar nėra nustatyta. Prašome nustatyti laiko juostą prieš kurdami savaitės planą.",
-    "startDateAndEndDateRequired": "Pradžios data ir pabaigos data yra privalomos.",
-    "assignMenuRequired": "Priskirti meniu yra privaloma.",
-    "weekPlanAlreadyExists": "Savaitės planas su nurodytomis datomis jau egzistuoja. Prašome pateikti kitas datas."
+    "invalidCategory": "Netinkama reikšmė '{{value}}' kategorijai."
   }
 }

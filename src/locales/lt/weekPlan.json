@@ -1,9 +1,21 @@
 {
   "messages": {
-    "timezoneSetSuccess": "Laiko juosta sėkmingai nustatyta"
+    "timezoneSetSuccess": "Laiko juosta sėkmingai nustatyta.",
+    "weekPlanUpdated": "Savaitės planas sėkmingai atnaujintas.",
+    "menuDeleted": "Meniu sėkmingai ištrintas.",
+    "menuPublished": "Meniu sėkmingai publikuotas.",
+    "menuUnpublished": "Meniu sėkmingai išpublikuotas."
   },
 
   "validationErrors": {
-    "startAndEndDateIsNotValid": "Pateiktos datos yra neteisingos. Įsitikinkite, kad įvedėte ir pradžios, ir pabaigos datas teisingai, o pradžios data yra ankstesnė nei pabaigos data."
+    "yearAndWeekNumberIsNotProvided": "Nenurodyti tinkami metai ir savaitės numeris. Prašome patikrinti įvestus duomenis.",
+    "timezoneNotYetSet": "Laiko juosta dar nėra nustatyta. Prašome pirmiausia nustatyti laiko juostą.",
+    "timezoneRequired": "Laiko juosta yra privaloma.",
+    "assignMenuRequired": "Priskirti meniu yra privaloma.",
+    "weekPlanNotFound": "Savaitės planas nerastas.",
+    "invalidObjectId": "Invalid object id.",
+    "menuNotAssigned": "Meniu nėra priskirtas.",
+    "menuPublishedAndCanNotBeDeleted": "Meniu yra publikuotas ir negali būti ištrintas.",
+    "weekPlanMenuPublishFieldsAreRequired": "Savaitės plano meniu publikavimo laukai yra privalomi (metai, savaitė, meniu ID ir publikavimo tipas)."
   }
 }

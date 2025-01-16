@@ -1,9 +1,21 @@
 {
   "messages": {
-    "timezoneSetSuccess": "Timezone set successfully"
+    "timezoneSetSuccess": "Timezone set successfully.",
+    "weekPlanUpdated": "Week plan updated successfully.",
+    "menuDeleted": "Menu deleted successfully.",
+    "menuPublished": "Menu published successfully.",
+    "menuUnpublished": "Menu unpublished successfully."
   },
 
   "validationErrors": {
-    "startAndEndDateIsNotValid": "The provided dates are invalid. Ensure both start and end dates are entered correctly and the start date is earlier than the end date."
+    "yearAndWeekNumberIsNotProvided": "Invalid year and week number. Please check the input data.",
+    "timezoneNotYetSet": "Timezone is not set yet. Please set timezone first.",
+    "timezoneRequired": "Timezone is required.",
+    "assignMenuRequired": "Assign menu is required.",
+    "weekPlanNotFound": "Week plan not found.",
+    "invalidObjectId": "Invalid object id.",
+    "menuNotAssigned": "Menu is not assigned.",
+    "menuPublishedAndCanNotBeDeleted": "Menu is published and can not be deleted.",
+    "weekPlanMenuPublishFieldsAreRequired": "Week plan menu publish fields are required ( year, week, menu ID and publish type )."
   }
 }

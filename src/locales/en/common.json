@@ -71,11 +71,6 @@
     "userRequired": "User is required.",
     "invalidPreference": "Invalid value '{{value}}' for dietary preference.",
     "invalidRestriction": "Invalid value '{{value}}' for dietary restriction.",
-    "invalidCategory": "Invalid value '{{value}}' for category.",
-    "timezoneRequired": "Timezone is required.",
-    "timezoneNotYetSet": "Timezone is not yet set. Please set the timezone before creating a week plan.",
-    "startDateAndEndDateRequired": "Start date and end date are required.",
-    "assignMenuRequired": "Assign menu is required.",
-    "weekPlanAlreadyExists": "Week plan already exists for the given dates."
+    "invalidCategory": "Invalid value '{{value}}' for category."
   }
 }
