@@ -205,7 +205,7 @@ exports.getWeeklyMenuById = catchAsync(async (req, res, next) => {
   }).populate({
     path: "days.meals.meal",
     select:
-      "title nutrition description image restrictions category preferences",
+      "title description nutrition image restrictions category preferences",
   });
 
   // If the weekly menu does not exist, return an error
@@ -238,9 +238,6 @@ exports.getAllWeeklyMenus = catchAsync(async (req, res, next) => {
   // Pagination options
   const skip = (page - 1) * limit;
 
-  // Base query for counting all documents
-  const baseQuery = { user: req.user._id };
-
   // Query options
   const dbQuery = {
     user: req.user._id,
@@ -265,7 +262,7 @@ exports.getAllWeeklyMenus = catchAsync(async (req, res, next) => {
 
   // Get the total number of documents and the documents for the current page
   const [total, totalForFetch, weeklyMenus] = await Promise.all([
-    WeeklyMenu.countDocuments(baseQuery),
+    WeeklyMenu.countDocuments({ user: req.user._id }),
     WeeklyMenu.countDocuments(dbQuery),
     WeeklyMenu.find(dbQuery)
       .skip(skip)
@@ -299,13 +296,11 @@ exports.addMealsToWeeklyMenu = catchAsync(async (req, res, next) => {
     mealsArray: meals,
     dayId,
     next,
-    actionType: "add",
     updateDayMeals: (day, meal) => {
       // Add the meal to the day (store only the meal ID)
       day.meals.push({
         meal: meal._id,
         category: meal.category,
-        time: req.body.time,
       });
     },
   });
@@ -352,8 +347,8 @@ const manageMealsInWeeklyMenu = async ({
   dayId,
   mealsArray,
   next,
-  actionType,
   updateDayMeals,
+  actionType = "add",
 }) => {
   // Find the weekly menu by ID and user
   const weeklyMenu = await WeeklyMenu.findOne({
@@ -393,18 +388,6 @@ const manageMealsInWeeklyMenu = async ({
   // Update the day with the meals
   mealList.forEach((meal) => {
     updateDayMeals(day, meal);
-
-    // Determine the multiplier based on the action type
-    const multiplier = actionType === "add" ? 1 : -1;
-
-    // Calculate the nutrition info for the day
-    day.nutrition = Object.keys(meal.nutrition).reduce((acc, key) => {
-      acc[key] = roundTo(
-        (day.nutrition[key] || 0) + multiplier * meal.nutrition[key],
-        1,
-      );
-      return acc;
-    }, day.nutrition);
   });
 
   // Save the weekly menu

@@ -12,6 +12,9 @@ const {
 } = require("../utils/s3helpers");
 const Ingredient = require("../models/Ingredient");
 const { roundTo } = require("../helper/roundeNumber");
+const { sendMessageToClients } = require("../utils/websocket");
+const DeleteService = require("../utils/deleteService");
+const WeeklyMenu = require("../models/WeeklyMenu");
 
 /**
  * Multer middleware for file upload
@@ -324,6 +327,9 @@ exports.updateMeal = catchAsync(async (req, res, next) => {
   delete formattedMeal.__v;
   delete formattedMeal.updatedAt;
 
+  // Send  message to websocket clients
+  sendMessageToClients(req.user._id, "meals_updated_in_week_plans");
+
   // Send the response
   res.status(200).json({
     status: "success",
@@ -370,6 +376,9 @@ exports.deleteMeal = catchAsync(async (req, res, next) => {
   // Delete the meal
   await mealToDelete.deleteOne();
 
+  // Delete meal from week plans
+  DeleteService.deleteMealFromWeeklyMenu(id, req);
+
   // Send the response
   res.status(200).json({
     status: "success",
@@ -414,17 +423,15 @@ exports.getMeals = catchAsync(async (req, res, next) => {
     dbQuery.title = { $regex: query, $options: "i" };
   }
 
-  // Get the total number of results
-  const total = await Meal.countDocuments({
-    user: req.user._id,
-    archived: false,
-  });
-
-  // Fetch filtered meals with pagination
-  const meals = await Meal.find(dbQuery)
-    .skip(skip)
-    .limit(parseInt(limit))
-    .sort({ createdAt: -1 }); // Newest first
+  // Count the total number of meals and fetch the meals with pagination
+  const [total, totalForFetch, meals] = await Promise.all([
+    Meal.countDocuments({ user: req.user._id, archived: false }),
+    Meal.countDocuments(dbQuery),
+    Meal.find(dbQuery)
+      .skip(skip)
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 }),
+  ]);
 
   // Format response object
   const formattedMeals = meals.map((meal) => {
@@ -441,7 +448,7 @@ exports.getMeals = catchAsync(async (req, res, next) => {
     results: meals.length,
     total,
     currentPage: parseInt(page),
-    totalPages: Math.ceil(total / limit),
+    totalPages: Math.ceil(totalForFetch / limit),
     data: formattedMeals,
   });
 });

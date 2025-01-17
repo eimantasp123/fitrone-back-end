@@ -78,24 +78,6 @@ const WeeklyMenuSchema = new mongoose.Schema(
           min: [0, "Invalid day"],
           max: [6, "Invalid day"],
         },
-        nutrition: {
-          calories: {
-            type: Number,
-            default: 0,
-          },
-          protein: {
-            type: Number,
-            default: 0,
-          },
-          carbs: {
-            type: Number,
-            default: 0,
-          },
-          fat: {
-            type: Number,
-            default: 0,
-          },
-        },
         meals: [
           {
             category: {

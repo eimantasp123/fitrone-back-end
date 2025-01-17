@@ -1,6 +1,8 @@
 const { roundTo } = require("../helper/roundeNumber");
 const Ingredient = require("../models/Ingredient");
 const Meal = require("../models/Meal");
+const WeeklyMenu = require("../models/WeeklyMenu");
+const WeekPlan = require("../models/WeekPlan");
 const AppError = require("./appError");
 const { sendMessageToClients } = require("./websocket");
 
@@ -64,6 +66,39 @@ const DeleteService = {
     // Send message to clients if meals were updated
     if (Array.isArray(mealsToUpdate) && mealsToUpdate.length > 0) {
       sendMessageToClients(req.user._id, "ingredient_deleted_from_meals");
+    }
+  },
+
+  /**
+   * Delete a meal from weekly menus and update week plans that use it
+   * @param {*} mealId - The ID of the meal to delete.
+   * @param {*} req - The request object, for translations and user context.
+   */
+  async deleteMealFromWeeklyMenu(id, req) {
+    // Find all weekly menu plans that contain the meal
+    const weeklyMenuUpdated = await WeeklyMenu.find({
+      user: req.user._id,
+      days: {
+        $elemMatch: {
+          meals: {
+            $elemMatch: { meal: id },
+          },
+        },
+      },
+    });
+
+    // Delete the meal from all weekly menu plans
+    for (const weeklyMenu of weeklyMenuUpdated) {
+      weeklyMenu.days.forEach((day) => {
+        day.meals = day.meals.filter((meal) => meal.meal.toString() !== id);
+      });
+
+      await weeklyMenu.save();
+    }
+
+    // Send message to clients if week plans were updated
+    if (weeklyMenuUpdated.length !== 0) {
+      sendMessageToClients(req.user._id, "meal_deleted_from_week_plans");
     }
   },
 };
