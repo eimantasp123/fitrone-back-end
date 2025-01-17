@@ -65,7 +65,7 @@ const seedMultipleData = async () => {
         return {
           ingredientId: ingredient._id,
           title: ingredient.title.lt,
-          currentAmount: Math.round(ingredient.amount * scalingFactor),
+          currentAmount: roundTo(ingredient.amount * scalingFactor, 1),
           unit: ingredient.unit,
           calories: roundTo(ingredient.calories * scalingFactor, 1),
           protein: roundTo(ingredient.protein * scalingFactor, 1),

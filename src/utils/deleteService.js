@@ -98,7 +98,7 @@ const DeleteService = {
 
     // Send message to clients if week plans were updated
     if (weeklyMenuUpdated.length !== 0) {
-      sendMessageToClients(req.user._id, "meal_deleted_from_week_plans");
+      sendMessageToClients(req.user._id, "meal_deleted_from_weekly_menu_by_id");
     }
   },
 };

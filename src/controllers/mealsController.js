@@ -328,7 +328,7 @@ exports.updateMeal = catchAsync(async (req, res, next) => {
   delete formattedMeal.updatedAt;
 
   // Send  message to websocket clients
-  sendMessageToClients(req.user._id, "meals_updated_in_week_plans");
+  sendMessageToClients(req.user._id, "meals_updated_in_weekly_menu_by_id");
 
   // Send the response
   res.status(200).json({
@@ -495,40 +495,5 @@ exports.searchMeals = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     data: meals,
-  });
-});
-
-/**
- * Get a meal by ID
- */
-exports.getMealById = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-
-  // Check if the id parameter is provided
-  if (!id) {
-    return next(new AppError(req.t("meals:error.idRequired"), 400));
-  }
-
-  // Query the database for the meal
-  const meal = await Meal.findOne({
-    user: req.user._id,
-    _id: id,
-  });
-
-  // Check if the meal exists
-  if (!meal) {
-    return next(new AppError(req.t("meals:error.mealNotFound"), 404));
-  }
-
-  // Format response object
-  const formattedMeal = meal.toObject();
-  delete formattedMeal.user;
-  delete formattedMeal.__v;
-  delete formattedMeal.updatedAt;
-
-  // Send the response
-  res.status(200).json({
-    status: "success",
-    data: formattedMeal,
   });
 });

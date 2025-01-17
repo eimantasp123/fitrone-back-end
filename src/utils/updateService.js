@@ -87,7 +87,7 @@ const UpdateService = {
     // Send client message if meals were updated
     if (Array.isArray(meals) && meals.length > 0) {
       sendMessageToClients(req.user._id, "ingredient_updated_in_meals");
-      sendMessageToClients(req.user._id, "meals_updated_in_week_plans");
+      sendMessageToClients(req.user._id, "meals_updated_in_weekly_menu_by_id");
     }
   },
 };

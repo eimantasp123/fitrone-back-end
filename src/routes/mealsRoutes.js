@@ -47,9 +47,6 @@ router.get("/search", searchMeals);
 // Route to get all meals
 router.get("/", getMeals);
 
-// Route to get a meal by ID
-router.get("/:id", getMealById);
-
 // Route to update a meal
 router.put("/:id", upload.single("image"), updateMeal);
 

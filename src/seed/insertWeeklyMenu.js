@@ -37,12 +37,6 @@ const seedWeeklyMenu = async () => {
       const defaultDays = Array.from({ length: 7 }, (_, i) => ({
         day: i,
         meals: [],
-        nutrition: {
-          calories: 0,
-          protein: 0,
-          carbs: 0,
-          fat: 0,
-        },
       }));
 
       // Randomly assign meals to days and calculate nutrition
@@ -57,18 +51,6 @@ const seedWeeklyMenu = async () => {
             category: meal.category,
             meal: meal._id,
           }));
-
-          // Calculate day nutrition based on assigned meals
-          day.nutrition = randomMeals.reduce(
-            (acc, meal) => {
-              acc.calories = roundTo(acc.calories + meal.nutrition.calories, 1);
-              acc.protein = roundTo(acc.protein + meal.nutrition.protein, 1);
-              acc.carbs = roundTo(acc.carbs + meal.nutrition.carbs, 1);
-              acc.fat = roundTo(acc.fat + meal.nutrition.fat, 1);
-              return acc;
-            },
-            { calories: 0, protein: 0, carbs: 0, fat: 0 },
-          );
         }
       }
 
