@@ -135,6 +135,15 @@ exports.updateProfileDetails = catchAsync(async (req, res, next) => {
     return next(new AppError(req.t("userNotFound"), 404));
   }
 
+  // Check if user has 2FA enabled and trying to change phone number
+  if (
+    req.body.phone !== undefined &&
+    req.body.phone !== user.phone &&
+    user.is2FAEnabled
+  ) {
+    return next(new AppError(req.t("profile:error.changePhoneWith2FA"), 400));
+  }
+
   // Allowed fields to be updated
   const allowedUpdates = ["firstName", "lastName", "email", "phone"];
   const updates = {};
@@ -202,7 +211,7 @@ exports.request2FACode = catchAsync(async (req, res, next) => {
   }
 
   // Send 2FA code to user's phone
-  await verificationHelper.send2FACode(user);
+  await verificationHelper.send2FACode(user, req, next);
 
   // Send response
   res

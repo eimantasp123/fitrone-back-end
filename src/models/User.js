@@ -31,10 +31,11 @@ const userSchema = new mongoose.Schema({
       message: "Passwords do not match",
     },
   },
-  phone: { type: String, select: true, default: "" },
+  phone: { type: String, trim: true, select: true, default: "" },
   firstName: {
     type: String,
     trim: true,
+    lowercase: true,
     minlength: [2, "First name must be at least 2 characters long"],
     maxlength: [50, "First name must be less than 50 characters long"],
   },
@@ -42,6 +43,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true,
     required: false,
+    lowercase: true,
     maxlength: [50, "Last name must be less than 50 characters long"],
   },
   profileImage: {
@@ -148,17 +150,6 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   return false;
 };
 
-// Instance method to create a token for email verification
-userSchema.methods.createEmailVerificationToken = function () {
-  const verificationToken = crypto.randomBytes(32).toString("hex");
-  this.emailVerificationToken = crypto
-    .createHash("sha256")
-    .update(verificationToken)
-    .digest("hex");
-  this.emailVerificationExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
-  return verificationToken;
-};
-
 // Instance method to verify the email verification token
 userSchema.methods.createPasswordResetToken = function () {
   const resetToken = crypto.randomBytes(32).toString("hex");
@@ -192,4 +183,5 @@ userSchema.methods.resetPassword = async function (
   await this.save();
 };
 
-module.exports = mongoose.model("User", userSchema);
+const User = mongoose.model("User", userSchema);
+module.exports = User;

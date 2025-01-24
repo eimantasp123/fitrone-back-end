@@ -1,13 +1,14 @@
 const mongoose = require("mongoose");
+const crypto = require("crypto");
 
 const customerSchema = new mongoose.Schema(
   {
-    firtName: { type: String },
+    firstName: { type: String, required: true },
+    supplier: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     lastName: { type: String },
     email: {
       type: String,
       required: true,
-      unique: true,
     },
     status: {
       type: String,
@@ -16,12 +17,27 @@ const customerSchema = new mongoose.Schema(
     },
     phone: { type: String },
     age: { type: Number },
-    gender: { type: String },
+    gender: { type: String, enum: ["male", "female", "transgender", "other"] },
     height: { type: Number },
     weight: { type: Number },
-    fitnessGoal: { type: String },
-    weightGoals: { type: Number },
-    physicalActivityLevel: { type: String },
+    fitnessGoal: {
+      type: String,
+      enum: [
+        "weightLoss",
+        "weightGain",
+        "weightMaintenance",
+        "improveHealth",
+        "weightLossAndMuscleGain",
+        "other",
+      ],
+    },
+    weightGoal: { type: Number },
+    physicalActivityLevel: {
+      type: String,
+      enum: ["sedentary", "lightlyActive", "moderatelyActive", "veryActive"],
+    },
+    confirmFormToken: { type: String },
+    confirmFormTokenExpires: { type: Date },
     dietaryPreferences: {
       type: [String],
       default: [],
@@ -64,14 +80,35 @@ const customerSchema = new mongoose.Schema(
       },
     },
     foodAllergies: { type: String },
-    address: {
-      type: String,
-    },
+    addressName: { type: String },
+    latitude: { type: String },
+    longitude: { type: String },
   },
   {
     timestamps: true,
   },
 );
+
+// Instance method to create token for confirming the form
+customerSchema.methods.createConfirmFormToken = function () {
+  const confirmFormToken = crypto.randomBytes(32).toString("hex");
+  this.confirmFormToken = crypto
+    .createHash("sha256")
+    .update(confirmFormToken)
+    .digest("hex");
+  this.confirmFormTokenExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+  return confirmFormToken;
+};
+
+// Static method to find a user by crypto token
+customerSchema.statics.findByToken = async function (token) {
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+  const customer = await this.findOne({
+    confirmFormToken: hashedToken,
+    confirmFormTokenExpires: { $gt: Date.now() },
+  });
+  return customer;
+};
 
 const Customer = mongoose.model("Customer", customerSchema);
 module.exports = Customer;

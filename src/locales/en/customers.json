@@ -1,0 +1,9 @@
+{
+  "customerConfirmationEmail": {
+    "subject": "Fill out your meal plan form",
+    "emailTitle": "Hello, {{customerName}}!",
+    "paragraph1": "This email has been sent to you on behalf of {{supplierName}}. Below you will find a button, which when clicked, will redirect you to a special page where you will need to fill out important information about yourself.",
+    "paragraph2": "This information is required by the supplier to accurately select the most suitable nutrition plan for you, perform personalized analysis, and provide you with the best solutions to achieve your desired results.",
+    "buttonText": "Complete the Form"
+  }
+}
