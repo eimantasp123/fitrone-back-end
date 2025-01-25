@@ -15,6 +15,7 @@
     "oldPasswordNotMatch": "Old password is incorrect",
     "invalidOrExpiredCode": "Invalid or expired code",
     "deletingProfileImage": "Error deleting existing profile image",
-    "uploadingProfileImage": "Error uploading profile image"
+    "uploadingProfileImage": "Error uploading profile image",
+    "changePhoneWith2FA": "You can not change phone number, because Two-Factor Authentication is enabled."
   }
 }

@@ -183,7 +183,7 @@ exports.login = catchAsync(async (req, res, next) => {
   // Check if user has 2FA enabled
   if (user.is2FAEnabled) {
     // Send verification code
-    await verificationHelper.send2FACode(user, next);
+    await verificationHelper.send2FACode(user, req, next);
 
     // Send response
     return res.status(200).json({
@@ -214,7 +214,7 @@ exports.resendCode = catchAsync(async (req, res, next) => {
     return res.status(400).json({ message: req.t("auth:invalidUser") });
 
   // Check if user has 2FA enabled
-  await verificationHelper.send2FACode(user, next);
+  await verificationHelper.send2FACode(user, req, next);
 
   // Send response
   return res.status(200).json({
@@ -384,7 +384,7 @@ exports.facebookAuth = catchAsync(async (req, res, next) => {
 
   // Check if user has 2FA enabled
   if (user.is2FAEnabled) {
-    await verificationHelper.send2FACode(user, next);
+    await verificationHelper.send2FACode(user, req, next);
     return res.status(200).json({
       status: "success",
       message: req.t("auth:verificationCodeSent"),
@@ -463,7 +463,7 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
 
   // Check if user has 2FA enabled
   if (user.is2FAEnabled) {
-    await verificationHelper.send2FACode(user, next);
+    await verificationHelper.send2FACode(user, req, next);
     return res.status(200).json({
       status: "success",
       message: req.t("auth:verificationCodeSent"),

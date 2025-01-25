@@ -15,6 +15,7 @@
     "oldPasswordNotMatch": "Senas slaptažodis neteisingas",
     "invalidOrExpiredCode": "Neteisingas arba pasibaigęs kodas",
     "deletingProfileImage": "Klaida ištrinant esamą profilio nuotrauką",
-    "uploadingProfileImage": "Klaida įkeliant profilio nuotrauką"
+    "uploadingProfileImage": "Klaida įkeliant profilio nuotrauką",
+    "changePhoneWith2FA": "Jūs negalite pakeisti telefono numerio, nes įjungta Dviejų veiksnių autentifikacija."
   }
 }

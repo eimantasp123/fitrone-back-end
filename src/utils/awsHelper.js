@@ -1,10 +1,9 @@
+require("dotenv").config(); // Load environment variables
 const AWS = require("aws-sdk");
-const sns = new AWS.SNS({ region: "eu-north-1" });
-const sqs = new AWS.SQS({ region: "eu-north-1" });
+const sqs = new AWS.SQS();
+const sns = new AWS.SNS();
 
-// Helper function to send SMS using AWS SNS service
 const sendSMS = async (phone, message) => {
-  console.log("Message:", message);
   const params = {
     Message: message,
     PhoneNumber: phone,
@@ -23,7 +22,6 @@ const sendSMS = async (phone, message) => {
   try {
     // Send SMS to user phone number
     await sns.publish(params).promise();
-    console.log("SMS sent to publish:", phone);
   } catch (error) {
     console.error("Error sending SMS:", error);
   }
@@ -42,4 +40,4 @@ const sendMessageToQueue = async (messageBody, queueUrl) => {
   }
 };
 
-module.exports = { sendSMS, sendMessageToQueue };
+module.exports = { sendMessageToQueue, sendSMS };

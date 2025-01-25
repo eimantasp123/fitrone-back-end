@@ -24,6 +24,7 @@ const profileRoutes = require("./routes/profileRoutes");
 const feedbackRoutes = require("./routes/feedbackRoutes");
 const mealsRoutes = require("./routes/mealsRoutes");
 const User = require("./models/User");
+const Customer = require("./models/Customer");
 const AppError = require("./utils/appError");
 const globalErrorHandler = require("./controllers/errorController");
 const supportRoutes = require("./routes/supportRoutes");
@@ -33,6 +34,7 @@ const ingredientsRoutes = require("./routes/ingredientsRoutes");
 const weekPlanRoutes = require("./routes/weekPlanRoutes");
 const weeklyMenuRoutes = require("./routes/weeklyMenuRoutes");
 const webhookRoutes = require("./utils/webhookRoutes");
+const customerRoutes = require("./routes/customerRoutes");
 const { initWebSocketServer } = require("./utils/websocket");
 
 // Initialize i18next for localization
@@ -43,7 +45,15 @@ i18next
     fallbackLng: "en",
     preload: ["en", "lt"], // Add all supported languages here
     defaultNS: "common",
-    ns: ["common", "auth", "profile", "meals", "weeklyMenu", "weekPlan"],
+    ns: [
+      "common",
+      "auth",
+      "profile",
+      "meals",
+      "weeklyMenu",
+      "weekPlan",
+      "customers",
+    ],
     backend: {
       loadPath: path.join(__dirname, "/locales/{{lng}}/{{ns}}.json"),
     },
@@ -129,6 +139,7 @@ app.use("/api/v1/weekly-menu", weeklyMenuRoutes);
 app.use("/api/v1/meals", mealsRoutes);
 app.use("/api/v1/ingredients", ingredientsRoutes);
 app.use("/api/v1/subscription", subscriptionRoutes);
+app.use("/api/v1/customers", customerRoutes);
 app.use("/api/v1/support", supportRoutes);
 app.use("/api/v1/feedback", feedbackRoutes);
 //
@@ -181,6 +192,16 @@ cron.schedule("0 0 * * * *", async () => {
         $unset: {
           emailVerificationCode: null,
           emailVerificationExpires: null,
+        },
+      },
+    );
+    // Remove token from customers
+    await Customer.updateMany(
+      { confirmFormTokenExpires: { $lt: new Date() } },
+      {
+        $unset: {
+          confirmFormToken: null,
+          tokenExpconfirmFormTokenExpiresires: null,
         },
       },
     );
