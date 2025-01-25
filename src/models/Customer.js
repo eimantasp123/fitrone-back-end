@@ -38,7 +38,7 @@ const customerSchema = new mongoose.Schema(
     },
     confirmFormToken: { type: String },
     confirmFormTokenExpires: { type: Date },
-    dietaryPreferences: {
+    preferences: {
       type: [String],
       default: [],
       enum: {
@@ -60,7 +60,7 @@ const customerSchema = new mongoose.Schema(
         message: "invalidPreference",
       },
     },
-    dietaryRestrictions: {
+    restrictions: {
       type: [String],
       default: [],
       enum: {
@@ -80,7 +80,7 @@ const customerSchema = new mongoose.Schema(
       },
     },
     foodAllergies: { type: String },
-    addressName: { type: String },
+    address: { type: String },
     latitude: { type: String },
     longitude: { type: String },
   },

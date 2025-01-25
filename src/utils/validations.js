@@ -21,11 +21,11 @@ const updateCustomerSchema = yup.object({
     .string()
     .required("Physical activity level is required"),
   fitnessGoal: yup.string().required("Fitness goal is required"),
-  dietaryPreferences: yup
+  preferences: yup
     .array()
     .of(yup.string())
     .required("Dietary preferences are required"),
-  dietaryRestrictions: yup.array().of(yup.string()),
+  restrictions: yup.array().of(yup.string()),
   address: yup.string().required("Address is required"),
   latitude: yup.string().required("Latitude is required"),
   longitude: yup.string().required("Longitude is required"),

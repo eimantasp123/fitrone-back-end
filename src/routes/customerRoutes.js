@@ -7,6 +7,7 @@ const {
   confirmCustomerForm,
   deleteCustomer,
   updateCustomer,
+  getAllCustomers,
 } = require("../controllers/customerController");
 const router = express.Router();
 
@@ -29,6 +30,9 @@ router.post("/confirm-form/:token", confirmCustomerForm);
 router.delete("/:id", deleteCustomer);
 
 // Update a customer
-router.patch("/:id", updateCustomer);
+router.put("/:id", updateCustomer);
+
+// Get all customers
+router.get("/", getAllCustomers);
 
 module.exports = router;

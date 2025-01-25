@@ -3,7 +3,11 @@ const catchAsync = require("../utils/catchAsync");
 const Customer = require("../models/Customer");
 const { sendMessageToQueue } = require("../utils/awsHelper");
 const { updateCustomerSchema } = require("../utils/validations");
-const { default: axios } = require("axios");
+const {
+  verifyRecaptcha,
+  transformToUppercaseFirstLetter,
+} = require("../utils/generalHelpers");
+const { sendMessageToClients } = require("../utils/websocket");
 
 /**
  * Function to craeat a new customer manually
@@ -55,12 +59,22 @@ exports.updateCustomer = catchAsync(async (req, res, next) => {
   const { id: customerId } = req.params;
   const updates = req.body;
 
+  // Validate the request body
+  let validateDate;
+  try {
+    validateDate = await updateCustomerSchema.validate(updates, {
+      abortEarly: false,
+      stripUnknown: true,
+    });
+  } catch (error) {
+    return next(new AppError(error.errors.join(", "), 400));
+  }
+
   // Find customer and update provided details
   const customer = await Customer.findByIdAndUpdate(
     customerId,
-    { $set: updates },
+    { $set: validateDate },
     {
-      new: true,
       runValidators: true,
     },
   );
@@ -115,10 +129,10 @@ exports.sendFormToCustomer = catchAsync(async (req, res, next) => {
     data: {
       emailSubject: req.t("customers:customerConfirmationEmail.subject"),
       emailTitle: req.t("customers:customerConfirmationEmail.emailTitle", {
-        customerName: firstName,
+        customerName: transformToUppercaseFirstLetter(firstName),
       }),
       paragraph1: req.t("customers:customerConfirmationEmail.paragraph1", {
-        supplierName: req.user.firstName,
+        supplierName: transformToUppercaseFirstLetter(req.user.firstName),
       }),
       paragraph2: req.t("customers:customerConfirmationEmail.paragraph2"),
       buttonText: req.t("customers:customerConfirmationEmail.buttonText"),
@@ -170,10 +184,10 @@ exports.resendFormToCustomer = catchAsync(async (req, res, next) => {
     data: {
       emailSubject: req.t("customers:customerConfirmationEmail.subject"),
       emailTitle: req.t("customers:customerConfirmationEmail.emailTitle", {
-        customerName: customer.firstName,
+        customerName: transformToUppercaseFirstLetter(customer.firstName),
       }),
       paragraph1: req.t("customers:customerConfirmationEmail.paragraph1", {
-        supplierName: req.user.firstName,
+        supplierName: transformToUppercaseFirstLetter(req.user.firstName),
       }),
       paragraph2: req.t("customers:customerConfirmationEmail.paragraph2"),
       buttonText: req.t("customers:customerConfirmationEmail.buttonText"),
@@ -191,20 +205,6 @@ exports.resendFormToCustomer = catchAsync(async (req, res, next) => {
     message: "Form sent to customer successfully",
   });
 });
-
-const verifyRecaptcha = async (token) => {
-  const secretKey = process.env.GOOGLE_RECATCHA_SECRET_KEY;
-  const url = `https://www.google.com/recaptcha/api/siteverify`;
-
-  const response = await axios.post(url, null, {
-    params: {
-      secret: secretKey,
-      response: token,
-    },
-  });
-
-  return response.data.success;
-};
 
 /**
  * Function to confirm form completion
@@ -251,6 +251,9 @@ exports.confirmCustomerForm = catchAsync(async (req, res, next) => {
 
   await customer.save();
 
+  // Send a message to the client
+  sendMessageToClients(customer.supplier, "customer_form_confirmed");
+
   res.status(200).json({
     status: "success",
     message: "Form confirmed successfully",
@@ -281,5 +284,62 @@ exports.deleteCustomer = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     message: "Customer deleted successfully",
+  });
+});
+
+/**
+ * Get all customers
+ */
+exports.getAllCustomers = catchAsync(async (req, res, next) => {
+  const { page = 1, limit = 10, preference, status, gender, query } = req.query;
+
+  // Pagination options
+  const skip = (page - 1) * limit;
+
+  // Query options
+  const dbQuery = {
+    supplier: req.user._id,
+  };
+
+  // Add preferences, restrictions, and search query to the dbQuery
+  if (preference && preference.length > 0) {
+    console.log("set prefrence to dbQuery", preference);
+    dbQuery.preferences = preference;
+  }
+
+  if (status && status.length > 0) {
+    dbQuery.status = status;
+  }
+
+  if (gender && gender.length > 0) {
+    dbQuery.gender = gender;
+  }
+
+  if (query && query.length > 0) {
+    dbQuery.$or = [
+      { firstName: { $regex: query, $options: "i" } },
+      { lastName: { $regex: query, $options: "i" } },
+    ];
+  }
+
+  // Get the total number of documents and the documents for the current page
+  const [total, totalForFetch, customers] = await Promise.all([
+    Customer.countDocuments({ supplier: req.user._id }),
+    Customer.countDocuments(dbQuery),
+    Customer.find(dbQuery)
+      .skip(skip)
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 })
+      .select(" -__v -createdAt -updatedAt"),
+  ]);
+
+  // Send the response
+  res.status(200).json({
+    status: "success",
+    results: customers.length,
+    total,
+    currentPage: parseInt(page),
+    totalPages: Math.ceil(totalForFetch / limit),
+    data: customers,
   });
 });
