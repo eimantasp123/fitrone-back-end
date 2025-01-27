@@ -35,6 +35,7 @@ const weekPlanRoutes = require("./routes/weekPlanRoutes");
 const weeklyMenuRoutes = require("./routes/weeklyMenuRoutes");
 const webhookRoutes = require("./utils/webhookRoutes");
 const customerRoutes = require("./routes/customerRoutes");
+const groupsRoutes = require("./routes/groupsRoutes");
 const { initWebSocketServer } = require("./utils/websocket");
 
 // Initialize i18next for localization
@@ -53,6 +54,7 @@ i18next
       "weeklyMenu",
       "weekPlan",
       "customers",
+      "groups",
     ],
     backend: {
       loadPath: path.join(__dirname, "/locales/{{lng}}/{{ns}}.json"),
@@ -140,6 +142,7 @@ app.use("/api/v1/meals", mealsRoutes);
 app.use("/api/v1/ingredients", ingredientsRoutes);
 app.use("/api/v1/subscription", subscriptionRoutes);
 app.use("/api/v1/customers", customerRoutes);
+app.use("/api/v1/groups", groupsRoutes);
 app.use("/api/v1/support", supportRoutes);
 app.use("/api/v1/feedback", feedbackRoutes);
 //

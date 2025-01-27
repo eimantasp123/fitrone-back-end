@@ -83,6 +83,11 @@ const customerSchema = new mongoose.Schema(
     address: { type: String },
     latitude: { type: String },
     longitude: { type: String },
+    groupId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Group",
+      default: null,
+    },
   },
   {
     timestamps: true,

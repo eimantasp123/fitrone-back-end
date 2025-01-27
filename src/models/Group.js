@@ -1,10 +1,13 @@
 const mongoose = require("mongoose");
+const { trim, isLowercase } = require("validator");
 
 const groupSchema = new mongoose.Schema(
   {
-    name: {
+    title: {
       type: String,
       required: true,
+      lowercase: true,
+      trim: true,
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,

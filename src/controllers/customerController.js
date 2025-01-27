@@ -15,7 +15,12 @@ const { sendMessageToClients } = require("../utils/websocket");
 exports.createCustomerManually = catchAsync(async (req, res, next) => {
   // Check if email and first name are provided
   if (!req.body.email || !req.body.firstName) {
-    return next(new AppError("Email and first name are required", 400));
+    return next(
+      new AppError(
+        req.t("customers:validationErrors.emailAndFirstNameRequired"),
+        400,
+      ),
+    );
   }
 
   // Check if customer with this email already exists
@@ -25,7 +30,12 @@ exports.createCustomerManually = catchAsync(async (req, res, next) => {
   });
 
   if (customer) {
-    return next(new AppError("Customer with this email already exists", 400));
+    return next(
+      new AppError(
+        req.t("customers:validationErrors.customerAlreadyExists"),
+        400,
+      ),
+    );
   }
 
   // Validate the request body
@@ -48,7 +58,7 @@ exports.createCustomerManually = catchAsync(async (req, res, next) => {
 
   res.status(201).json({
     status: "success",
-    message: "Customer created successfully",
+    message: req.t("customers:customerCreated"),
   });
 });
 
@@ -73,7 +83,9 @@ exports.updateCustomer = catchAsync(async (req, res, next) => {
   // Find customer and update provided details
   const customer = await Customer.findByIdAndUpdate(
     customerId,
-    { $set: validateDate },
+    {
+      $set: validateDate,
+    },
     {
       runValidators: true,
     },
@@ -81,12 +93,17 @@ exports.updateCustomer = catchAsync(async (req, res, next) => {
 
   // If customer does not exist, return an error
   if (!customer) {
-    return next(new AppError("Customer not found", 404));
+    return next(
+      new AppError(req.t("customers:validationErrors.customerNotFound"), 404),
+    );
   }
+
+  customer.status = customer.status === "pending" ? "active" : customer.status;
+  await customer.save();
 
   res.status(200).json({
     status: "success",
-    message: "Customer details updated successfully",
+    message: req.t("customers:customerUpdated"),
   });
 });
 
@@ -98,7 +115,12 @@ exports.sendFormToCustomer = catchAsync(async (req, res, next) => {
 
   // Check if email and first name are provided
   if (!email || !firstName) {
-    return next(new AppError("Email and first name are required", 400));
+    return next(
+      new AppError(
+        req.t("customers:validationErrors.emailAndFirstNameRequired"),
+        400,
+      ),
+    );
   }
 
   // Check if customer with this email already exists
@@ -109,7 +131,12 @@ exports.sendFormToCustomer = catchAsync(async (req, res, next) => {
 
   // If customer already exists, return an error
   if (customer) {
-    return next(new AppError("Customer with this email already exists", 400));
+    return next(
+      new AppError(
+        req.t("customers:validationErrors.customerAlreadyExists"),
+        400,
+      ),
+    );
   }
 
   // Create a new customer
@@ -147,7 +174,7 @@ exports.sendFormToCustomer = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: "success",
-    message: "Form sent to customer successfully",
+    message: req.t("customers:formSendSuccessfully"),
   });
 });
 
@@ -159,7 +186,9 @@ exports.resendFormToCustomer = catchAsync(async (req, res, next) => {
 
   // Check if customer ID is provided
   if (!customerId) {
-    return next(new AppError("Customer ID is required", 400));
+    return next(
+      new AppError(req.t("customers:validationErrors.customerIdRequired"), 400),
+    );
   }
 
   // Find the customer by ID
@@ -167,12 +196,19 @@ exports.resendFormToCustomer = catchAsync(async (req, res, next) => {
 
   // If customer does not exist, return an error
   if (!customer) {
-    return next(new AppError("Customer not found", 404));
+    return next(
+      new AppError(req.t("customers:validationErrors.customerNotFound"), 404),
+    );
   }
 
   // If customer status is not pending, return an error
   if (customer.status !== "pending") {
-    return next(new AppError("Customer form already completed", 400));
+    return next(
+      new AppError(
+        req.t("customers:validationErrors.customerFormAlreadySubmitted"),
+        400,
+      ),
+    );
   }
 
   const token = customer.createConfirmFormToken();
@@ -202,7 +238,7 @@ exports.resendFormToCustomer = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: "success",
-    message: "Form sent to customer successfully",
+    message: req.t("customers:formSendSuccessfully"),
   });
 });
 
@@ -216,12 +252,16 @@ exports.confirmCustomerForm = catchAsync(async (req, res, next) => {
   // Verify recaptcha token
   const isHuman = await verifyRecaptcha(recaptchaToken);
   if (!isHuman) {
-    return next(new AppError("Verification failed. Please try again.", 400));
+    return next(
+      new AppError(req.t("customers:validationErrors.verificationFailed"), 400),
+    );
   }
 
   // Check if token is provided
   if (!token) {
-    return next(new AppError("Token is required", 400));
+    return next(
+      new AppError(req.t("customers:validationErrors.tokenIsRequired"), 400),
+    );
   }
 
   // Find the customer by token
@@ -229,7 +269,9 @@ exports.confirmCustomerForm = catchAsync(async (req, res, next) => {
 
   // If customer does not exist, return an error
   if (!customer) {
-    return next(new AppError("Invalid or expired token", 400));
+    return next(
+      new AppError(req.t("customers:validationErrors.invalidToken"), 400),
+    );
   }
 
   let validateDate;
@@ -256,7 +298,7 @@ exports.confirmCustomerForm = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: "success",
-    message: "Form confirmed successfully",
+    message: req.t("customers:formConfirmedSuccessfully"),
   });
 });
 
@@ -268,7 +310,9 @@ exports.deleteCustomer = catchAsync(async (req, res, next) => {
 
   // Check if customer ID is provided
   if (!customerId) {
-    return next(new AppError("Customer ID is required", 400));
+    return next(
+      new AppError(req.t("customers:validationErrors.customerIdRequired"), 400),
+    );
   }
 
   // Find the customer by ID
@@ -276,14 +320,16 @@ exports.deleteCustomer = catchAsync(async (req, res, next) => {
 
   // If customer does not exist, return an error
   if (!customer) {
-    return next(new AppError("Customer not found", 404));
+    return next(
+      new AppError(req.t("customers:validationErrors.customerNotFound"), 404),
+    );
   }
 
   await customer.deleteOne();
 
   res.status(200).json({
     status: "success",
-    message: "Customer deleted successfully",
+    message: req.t("customers:customerDeleted"),
   });
 });
 
@@ -303,7 +349,6 @@ exports.getAllCustomers = catchAsync(async (req, res, next) => {
 
   // Add preferences, restrictions, and search query to the dbQuery
   if (preference && preference.length > 0) {
-    console.log("set prefrence to dbQuery", preference);
     dbQuery.preferences = preference;
   }
 
@@ -341,5 +386,44 @@ exports.getAllCustomers = catchAsync(async (req, res, next) => {
     currentPage: parseInt(page),
     totalPages: Math.ceil(totalForFetch / limit),
     data: customers,
+  });
+});
+
+/**
+ * Function to change customer status
+ */
+exports.changeCustomerStatus = catchAsync(async (req, res, next) => {
+  const { id: customerId } = req.params;
+  const { status } = req.body;
+
+  // Check if customer ID is provided
+  if (!customerId) {
+    return next(
+      new AppError(req.t("customers:validationErrors.customerIdRequired"), 400),
+    );
+  }
+
+  // Find the customer by ID
+  const customer = await Customer.findById(customerId);
+
+  // If customer does not exist, return an error
+  if (!customer) {
+    return next(
+      new AppError(req.t("customers:validationErrors.customerNotFound"), 404),
+    );
+  }
+
+  if (status === customer.status) {
+    return next(
+      new AppError(req.t("customers:validationErrors.customerStatusSame"), 400),
+    );
+  } else {
+    customer.status = status;
+    await customer.save();
+  }
+
+  res.status(200).json({
+    status: "success",
+    message: req.t("customers:customerStatusUpdated"),
   });
 });
