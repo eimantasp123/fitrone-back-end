@@ -29,6 +29,12 @@ const WeeklyMenuSchema = new mongoose.Schema(
       enum: ["active", "inactive"],
       default: "inactive",
     },
+    activeWeeks: [
+      {
+        year: { type: Number },
+        weekNumber: { type: Number },
+      },
+    ],
     preferences: {
       type: [String],
       default: [],

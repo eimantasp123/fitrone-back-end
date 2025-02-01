@@ -1,12 +1,11 @@
-const Meal = require("../models/Meal");
 const WeekPlan = require("../models/WeekPlan");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const _ = require("lodash");
-const { inValidDate } = require("../utils/generalHelpers");
-const { fromZonedTime } = require("date-fns-tz");
 const { default: mongoose } = require("mongoose");
-
+const { setYear, setWeek } = require("date-fns");
+const { toZonedTime } = require("date-fns-tz");
+const WeeklyMenu = require("../models/WeeklyMenu");
 /**
  * Set user timezone
  */
@@ -61,9 +60,17 @@ exports.getWeekPlanByDateAndCreate = catchAsync(async (req, res, next) => {
 
   // If week plan is not found and timezone is set, create a new week plan
   if (!weekPlan && req.user.timezone) {
+    // Check current year and week for user timezone
+    const serverDate = toZonedTime(new Date(), req.user.timezone);
+
+    // Get client date
+    let clientDate = setYear(new Date(serverDate), parseInt(year));
+    clientDate = setWeek(clientDate, parseInt(week));
+
     weekPlan = await WeekPlan.create({
       user: req.user._id,
       year: parseInt(year),
+      status: clientDate >= serverDate ? "active" : "expired", // If week is in the past, set status to expired
       weekNumber: parseInt(week),
     });
 
@@ -117,6 +124,7 @@ exports.assignMenu = catchAsync(async (req, res, next) => {
   // Check if weekPlan exists
   const weekPlan = await WeekPlan.findOne({
     user: req.user._id,
+    status: "active",
     _id: id,
   });
 
@@ -128,15 +136,46 @@ exports.assignMenu = catchAsync(async (req, res, next) => {
   }
 
   // Process assign menu and check if menu is already assigned
-  menus.forEach((menuId) => {
+  for (const menuId of menus) {
     if (
       !weekPlan.assignMenu.find(
         (assigned) => assigned.menu.toString() === menuId,
       )
     ) {
       weekPlan.assignMenu.push({ menu: menuId });
+
+      // Assign week plan to weekly menu
+      try {
+        await WeeklyMenu.findOneAndUpdate(
+          {
+            _id: menuId,
+            activeWeeks: {
+              $not: {
+                $elemMatch: {
+                  year: weekPlan.year,
+                  weekNumber: weekPlan.weekNumber,
+                },
+              },
+            },
+          },
+          {
+            $push: {
+              activeWeeks: {
+                year: weekPlan.year,
+                weekNumber: weekPlan.weekNumber,
+              },
+            },
+            $set: { status: "active" },
+          },
+          { new: true },
+        );
+      } catch (error) {
+        return next(
+          new AppError(req.t("weeklyMenu:errors.weeklyMenuNotFound"), 404),
+        );
+      }
     }
-  });
+  }
 
   // Save week plan
   await weekPlan.save();
@@ -175,6 +214,7 @@ exports.deleteAssignedMenu = catchAsync(async (req, res, next) => {
   // Check if weekPlan exists
   const weekPlan = await WeekPlan.findOne({
     user: req.user._id,
+    status: "active",
     year: parseInt(year),
     weekNumber: parseInt(week),
   });
@@ -212,6 +252,22 @@ exports.deleteAssignedMenu = catchAsync(async (req, res, next) => {
     (assigned) => assigned._id.toString() !== menuId,
   );
 
+  // Remove week plan reference from activeWeeks
+  await WeeklyMenu.updateOne(
+    { _id: assignedMenu.menu },
+    {
+      $pull: {
+        activeWeeks: { year: weekPlan.year, weekNumber: weekPlan.weekNumber },
+      },
+    },
+  );
+
+  // If activeWeeks is now empty, set status to "inactive"
+  await WeeklyMenu.updateOne(
+    { _id: assignedMenu.menu, activeWeeks: { $size: 0 } }, // Only update if array is now empty
+    { $set: { status: "inactive" } },
+  );
+
   // Save week plan
   await weekPlan.save();
 
@@ -241,6 +297,7 @@ exports.managePublishMenu = catchAsync(async (req, res, next) => {
   // Find week plan
   const weekPlan = await WeekPlan.findOne({
     user: req.user._id,
+    status: "active",
     year: parseInt(year),
     weekNumber: parseInt(week),
   });
@@ -301,9 +358,15 @@ exports.assignClient = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const { menuId, clientId } = req.body;
 
-  const weekPlan = await WeekPlan.findById(id);
+  const weekPlan = await WeekPlan.findOne({
+    _id: id,
+    status: "active",
+  });
+
   if (!weekPlan) {
-    return res.status(404).json({ message: "Week Plan not found" });
+    return next(
+      new AppError(req.t("weekPlan:validationErrors.weekPlanNotFound"), 400),
+    );
   }
 
   weekPlan.assignMenu.forEach((menu) => {
@@ -314,7 +377,11 @@ exports.assignClient = catchAsync(async (req, res, next) => {
 
   await weekPlan.save();
 
-  res.status(200).json({ message: "Client assigned successfully", weekPlan });
+  // Send response
+  res.status(200).json({
+    status: "success",
+    message: req.t("weekPlan:messages.clientAssigned"),
+  });
 });
 
 /**
@@ -324,9 +391,15 @@ exports.assignGroup = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const { menuId, groupId } = req.body;
 
-  const weekPlan = await WeekPlan.findById(id);
+  const weekPlan = await WeekPlan.findOne({
+    _id: id,
+    status: "active",
+  });
+
   if (!weekPlan) {
-    return res.status(404).json({ message: "Week Plan not found" });
+    return next(
+      new AppError(req.t("weekPlan:validationErrors.weekPlanNotFound"), 400),
+    );
   }
 
   weekPlan.assignMenu.forEach((menu) => {
@@ -337,5 +410,9 @@ exports.assignGroup = catchAsync(async (req, res, next) => {
 
   await weekPlan.save();
 
-  res.status(200).json({ message: "Group assigned successfully", weekPlan });
+  // Send response
+  res.status(200).json({
+    status: "success",
+    message: req.t("weekPlan:messages.groupAssigned"),
+  });
 });

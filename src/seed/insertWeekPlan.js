@@ -3,35 +3,35 @@ require("dotenv").config(); // Load environment variables
 const connectDB = require("../config/dbConfig");
 const WeeklyMenu = require("../models/WeeklyMenu");
 const WeekPlan = require("../models/WeekPlan");
-const { startOfWeek, endOfWeek, addWeeks } = require("date-fns");
+const {
+  addWeeks,
+  startOfISOWeek,
+  isBefore,
+  getYear,
+  getWeek,
+} = require("date-fns");
 
 // Utility function to generate week ranges
-const generateWeekRanges = () => {
-  const today = new Date();
-  const weeks = [];
+const generateWeekAndYear = (startDate, endDate) => {
+  let weeksAndYears = [];
+  let currentDate = startOfISOWeek(new Date(startDate));
 
-  // Generate weeks for the past month (4 weeks back)
-  for (let i = -4; i < 0; i++) {
-    const startDate = startOfWeek(addWeeks(today, i), { weekStartsOn: 1 });
-    const endDate = endOfWeek(addWeeks(today, i), { weekStartsOn: 1 });
-    weeks.push({ startDate, endDate });
+  while (
+    isBefore(
+      currentDate,
+      new Date(endDate) ||
+        currentDate.toDateString() === new Date(endDate).toDateString(),
+    )
+  ) {
+    weeksAndYears.push({
+      year: getYear(currentDate),
+      week: getWeek(currentDate),
+    });
+
+    currentDate = addWeeks(currentDate, 1);
   }
 
-  // Generate weeks for the current month (4 weeks)
-  for (let i = 0; i < 4; i++) {
-    const startDate = startOfWeek(addWeeks(today, i), { weekStartsOn: 1 });
-    const endDate = endOfWeek(addWeeks(today, i), { weekStartsOn: 1 });
-    weeks.push({ startDate, endDate });
-  }
-
-  // Generate weeks for the next month (4 weeks forward)
-  for (let i = 4; i < 8; i++) {
-    const startDate = startOfWeek(addWeeks(today, i), { weekStartsOn: 1 });
-    const endDate = endOfWeek(addWeeks(today, i), { weekStartsOn: 1 });
-    weeks.push({ startDate, endDate });
-  }
-
-  return weeks;
+  return weeksAndYears;
 };
 
 // Utility function for delay
@@ -56,9 +56,9 @@ const seedWeekPlans = async () => {
 
     console.log(`Found ${weeklyMenus.length} weekly menus for user ${userId}.`);
 
-    const weekRanges = generateWeekRanges();
+    const weekAndYear = generateWeekAndYear("2025-01-15", "2025-02-15");
 
-    for (const week of weekRanges) {
+    for (const item of weekAndYear) {
       const randomMenu = weeklyMenus
         .sort(() => 0.5 - Math.random())
         .slice(0, Math.floor(Math.random() * 8) + 1);
@@ -67,17 +67,27 @@ const seedWeekPlans = async () => {
         menu: menu._id,
         assignedGroups: [],
         assignedClients: [],
+        activeWeeks: [],
       }));
+
+      if (assignMenu.length !== 0) {
+        for (const menu of assignMenu) {
+          await WeeklyMenu.findByIdAndUpdate(menu.menu, {
+            $push: { activeWeeks: { year: item.year, weekNumber: item.week } },
+            $set: { status: "active" },
+          });
+        }
+      }
 
       const weekPlan = {
         user: userId,
-        startDate: week.startDate,
-        endDate: week.endDate,
+        year: item.year,
+        weekNumber: item.week,
         assignMenu,
       };
 
       await WeekPlan.create(weekPlan);
-      console.log(`Week plan created for ${week.startDate} - ${week.endDate}.`);
+      console.log(`Week plan created for ${item.year} - ${item.week}.`);
 
       await delay(200); // Delay for 1 second
     }

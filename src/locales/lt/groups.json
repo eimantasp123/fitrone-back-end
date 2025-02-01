@@ -3,6 +3,7 @@
   "groupDeletedSuccessfully": "Grupė sėkmingai ištrinta",
   "groupUpdatedSuccessfully": "Grupė sėkmingai atnaujinta",
   "membersAttachedSuccessfully": "Nariai sėkmingai pridėti",
+  "customerRemovedSuccessfully": "Klientas sėkmingai pašalintas",
 
   "validationErrors": {
     "groupAlreadyExists": "Grupė su tokiu pavadinimu jau egzistuoja",

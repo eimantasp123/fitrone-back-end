@@ -4,7 +4,10 @@
     "weekPlanUpdated": "Week plan updated successfully.",
     "menuDeleted": "Menu deleted successfully.",
     "menuPublished": "Menu published successfully.",
-    "menuUnpublished": "Menu unpublished successfully."
+    "menuUnpublished": "Menu unpublished successfully.",
+    "clientAssigned": "Client assigned successfully.",
+    "clientsAssigned": "Clients assigned successfully.",
+    "groupAssigned": "Group assigned successfully."
   },
 
   "validationErrors": {

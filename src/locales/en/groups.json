@@ -3,6 +3,7 @@
   "groupDeletedSuccessfully": "Group deleted successfully",
   "groupUpdatedSuccessfully": "Group updated successfully",
   "membersAttachedSuccessfully": "Members attached successfully",
+  "customerRemovedSuccessfully": "Customer removed successfully",
 
   "validationErrors": {
     "groupAlreadyExists": "Group with this title already exists",

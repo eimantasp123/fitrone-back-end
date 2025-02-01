@@ -2,25 +2,61 @@ const Group = require("../models/Group");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const Customer = require("../models/Customer");
-const {
-  ConversationPage,
-} = require("twilio/lib/rest/conversations/v1/conversation");
+
+/**
+ * Middleware to check if the group exists
+ */
+exports.checkIfGroupExists = catchAsync(async (req, res, next) => {
+  const { groupId } = req.params;
+  // Find the group by ID
+  const group = await Group.findOne({ _id: groupId, createdBy: req.user._id });
+
+  // If group does not exist, return an error
+  if (!group) {
+    return next(
+      new AppError(req.t("groups:validationErrors.groupNotFound"), 404),
+    );
+  }
+
+  next();
+});
+
+/**
+ * Middleware to check if the group exists with same title
+ */
+exports.checkIfGroupExistsWithTitle = catchAsync(async (req, res, next) => {
+  const { title } = req.body;
+  const { groupId } = req.params;
+
+  // Find group with same title and createdBy
+  const query = {
+    title: title,
+    createdBy: req.user._id,
+  };
+
+  // If groupId is present, exclude the group with that ID
+  if (groupId) {
+    query._id = { $ne: groupId };
+  }
+
+  // Find the group with the query
+  const groupWithSameTitle = await Group.findOne(query);
+
+  // If group with same title and createdBy exists, return an error
+  if (groupWithSameTitle) {
+    return next(
+      new AppError(req.t("groups:validationErrors.groupAlreadyExists"), 400),
+    );
+  }
+
+  next();
+});
 
 /**
  * Function to create a new group
  */
 exports.createGroup = catchAsync(async (req, res, next) => {
   const { title } = req.body;
-
-  // Check if group with this title already exists
-  const group = await Group.findOne({ title: title, createdBy: req.user._id });
-
-  // If group with this title already exists, return an error
-  if (group) {
-    return next(
-      new AppError(req.t("groups:validationErrors.groupAlreadyExists"), 400),
-    );
-  }
 
   // Create a new group
   await Group.create({
@@ -40,14 +76,38 @@ exports.createGroup = catchAsync(async (req, res, next) => {
  */
 exports.getAllGroups = catchAsync(async (req, res, next) => {
   // Find all groups created by the user
-  const groups = await Group.find({ createdBy: req.user._id }).populate({
-    path: "members",
-    select: "firstName lastName email",
-  });
+  const groups = await Group.find({ createdBy: req.user._id })
+    .select("title createdAt")
+    .sort("-createdAt")
+    .lean();
 
   res.status(200).json({
     status: "success",
     data: groups,
+  });
+});
+
+/**
+ * Function to get current group by id with members
+ */
+exports.getGroup = catchAsync(async (req, res, next) => {
+  const { groupId } = req.params;
+
+  // Find the group with the ID
+  const group = await Group.findOne({
+    _id: groupId,
+    createdBy: req.user._id,
+  })
+    .select("-__v -createdBy")
+    .populate({
+      path: "members",
+      select: "-__v -groupId -supplier -createdAt -updatedAt",
+    });
+
+  // Send response
+  res.status(200).json({
+    status: "success",
+    data: group,
   });
 });
 
@@ -57,15 +117,8 @@ exports.getAllGroups = catchAsync(async (req, res, next) => {
 exports.deleteGroup = catchAsync(async (req, res, next) => {
   const { groupId } = req.params;
 
-  // Find the group by ID
-  const group = await Group.findOne({ _id: groupId, createdBy: req.user._id });
-
-  // If group does not exist, return an error
-  if (!group) {
-    return next(
-      new AppError(req.t("groups:validationErrors.groupNotFound"), 404),
-    );
-  }
+  // Remove groupId from all customers
+  await Customer.updateMany({ groupId: groupId }, { $set: { groupId: null } });
 
   // Delete the group
   await Group.deleteOne({ _id: groupId });
@@ -84,32 +137,6 @@ exports.updateGroup = catchAsync(async (req, res, next) => {
   const { groupId } = req.params;
   const { title } = req.body;
 
-  // Find the group by ID
-  const group = await Group.findOne({
-    _id: groupId,
-    createdBy: req.user._id,
-  });
-
-  // If group does not exist, return an error
-  if (!group) {
-    return next(
-      new AppError(req.t("groups:validationErrors.groupNotFound"), 404),
-    );
-  }
-
-  // Find group with same title and createdBy
-  const groupWithSameTitle = await Group.findOne({
-    title: title,
-    createdBy: req.user._id,
-  });
-
-  // If group with same title and createdBy exists, return an error
-  if (groupWithSameTitle) {
-    return next(
-      new AppError(req.t("groups:validationErrors.groupAlreadyExists"), 400),
-    );
-  }
-
   // Update the group title
   await Group.updateOne({ _id: groupId }, { title: title });
 
@@ -126,19 +153,6 @@ exports.updateGroup = catchAsync(async (req, res, next) => {
 exports.attachMembersToGroup = catchAsync(async (req, res, next) => {
   const { groupId } = req.params;
   const { customers } = req.body;
-
-  // Find the group by ID
-  const group = await Group.findOne({
-    _id: groupId,
-    createdBy: req.user._id,
-  });
-
-  // If group does not exist, return an error
-  if (!group) {
-    return next(
-      new AppError(req.t("groups:validationErrors.groupNotFound"), 404),
-    );
-  }
 
   // Find all customers from the customers array that are not active or have a groupId
   const conflictCustomers = await Customer.find({
@@ -185,15 +199,18 @@ exports.attachMembersToGroup = catchAsync(async (req, res, next) => {
     });
   }
 
-  // Update all customers with the groupId
-  group.members.push(
-    ...customers.filter(
-      (customer) => !group.members.includes(customer.toString()),
-    ),
-  );
+  console.log("customers", customers);
 
-  // Save the group
-  await group.save();
+  // Update all customers with the groupId
+  await Group.updateOne(
+    {
+      _id: groupId,
+      createdBy: req.user._id,
+    },
+    {
+      $addToSet: { members: { $each: customers } },
+    },
+  );
 
   // Add groupId to all customers
   await Customer.updateMany(
@@ -205,5 +222,27 @@ exports.attachMembersToGroup = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     message: req.t("groups:membersAttachedSuccessfully"),
+  });
+});
+
+/**
+ * Function to remove customer from group
+ */
+exports.removeCustomerFromGroup = catchAsync(async (req, res, next) => {
+  const { groupId, customerId } = req.params;
+
+  // Remove groupId from the customer
+  await Customer.updateOne({ _id: customerId }, { groupId: null });
+
+  // Remove customer from the group
+  await Group.updateOne(
+    { _id: groupId, createdBy: req.user._id },
+    { $pull: { members: customerId } },
+  );
+
+  // Send response
+  res.status(200).json({
+    status: "success",
+    message: req.t("groups:customerRemovedSuccessfully"),
   });
 });

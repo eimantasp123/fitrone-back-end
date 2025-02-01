@@ -8,6 +8,7 @@ const {
   transformToUppercaseFirstLetter,
 } = require("../utils/generalHelpers");
 const { sendMessageToClients } = require("../utils/websocket");
+const Group = require("../models/Group");
 
 /**
  * Function to craeat a new customer manually
@@ -325,7 +326,20 @@ exports.deleteCustomer = catchAsync(async (req, res, next) => {
     );
   }
 
+  // Delete the customer
   await customer.deleteOne();
+
+  // Delete the customer from the group
+  await Group.updateOne(
+    {
+      members: customerId,
+    },
+    {
+      $pull: {
+        members: customerId,
+      },
+    },
+  );
 
   res.status(200).json({
     status: "success",
@@ -375,7 +389,12 @@ exports.getAllCustomers = catchAsync(async (req, res, next) => {
       .skip(skip)
       .limit(parseInt(limit))
       .sort({ createdAt: -1 })
-      .select(" -__v -createdAt -updatedAt"),
+      .select(" -__v -createdAt -updatedAt")
+      .populate({
+        path: "groupId",
+        select: "title",
+      })
+      .lean(),
   ]);
 
   // Send the response
@@ -417,10 +436,25 @@ exports.changeCustomerStatus = catchAsync(async (req, res, next) => {
     return next(
       new AppError(req.t("customers:validationErrors.customerStatusSame"), 400),
     );
-  } else {
-    customer.status = status;
-    await customer.save();
   }
+
+  // If status is inactive, remove the customer from the group
+  if (status === "inactive") {
+    await Group.updateOne(
+      {
+        members: customerId,
+      },
+      {
+        $pull: {
+          members: customerId,
+        },
+      },
+    );
+    customer.groupId = null;
+  }
+
+  customer.status = status;
+  await customer.save();
 
   res.status(200).json({
     status: "success",
