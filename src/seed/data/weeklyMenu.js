@@ -7,7 +7,6 @@ export const menuData = [
   {
     title: "healthy choices menu 2",
     description: "focuses on nutritious meals to support a healthy lifestyle",
-    status: "active",
     restrictions: ["glutenFree", "dairyFree"],
   },
   {
@@ -19,14 +18,12 @@ export const menuData = [
     title: "protein-packed menu",
     description:
       "great for fitness enthusiasts looking to up their protein intake",
-    status: "active",
     preferences: ["vegetarian", "vegan"],
     restrictions: ["glutenFree", "dairyFree"],
   },
   {
     title: "low-carb menu",
     description: "ideal for those following a low-carb diet",
-    status: "active",
     preferences: ["vegetarian", "vegan"],
     restrictions: ["glutenFree", "dairyFree"],
   },
@@ -41,7 +38,6 @@ export const menuData = [
   {
     title: "plant-based menu",
     description: "perfect for a plant-based lifestyle",
-    status: "active",
   },
   {
     title: "family-friendly menu",
@@ -59,13 +55,11 @@ export const menuData = [
   {
     title: "keto-friendly menu",
     description: "tailored for those on a keto diet",
-    status: "active",
     preferences: ["vegetarian", "vegan"],
   },
   {
     title: "flexitarian menu",
     description: "balanced meals with a mix of plant and animal proteins",
-    status: "active",
   },
   {
     title: "high-protein vegetarian menu",
@@ -75,7 +69,6 @@ export const menuData = [
   {
     title: "pescatarian week menu",
     description: "perfect for a pescatarian lifestyle",
-    status: "active",
     preferences: ["vegetarian", "vegan"],
   },
   {
@@ -94,7 +87,6 @@ export const menuData = [
   {
     title: "budget-friendly menu",
     description: "delicious meals that are easy on your wallet",
-    status: "active",
   },
   {
     title: "seasonal flavors menu",
@@ -112,7 +104,6 @@ export const menuData = [
   {
     title: "high-energy menu",
     description: "meals designed to fuel your active lifestyle",
-    status: "active",
     preferences: ["vegetarian", "vegan"],
   },
   {
@@ -123,77 +114,63 @@ export const menuData = [
   {
     title: "weekend feast menu",
     description: "indulge in hearty meals for the weekend",
-    archived: true,
     preferences: ["vegetarian", "vegan"],
   },
   {
     title: "workday lunch menu",
     description: "quick and satisfying lunches for busy workdays",
-    archived: true,
   },
   {
     title: "chef's special menu",
     description: "unique recipes curated by professional chefs",
-    archived: true,
     preferences: ["vegetarian", "vegan"],
     restrictions: ["glutenFree", "dairyFree"],
   },
   {
     title: "vegetable lovers menu",
     description: "celebrating a variety of fresh vegetables",
-    archived: true,
   },
   {
     title: "fruit-forward menu",
     description: "meals and desserts with a fruity twist",
-    archived: true,
   },
   {
     title: "slow-cooker menu",
     description: "easy slow-cooked meals for busy days",
-    archived: true,
     preferences: ["vegetarian", "vegan"],
   },
   {
     title: "one-pot wonders menu",
     description: "delicious meals made in just one pot",
-    archived: true,
   },
   {
     title: "fusion flavors menu",
     description: "a creative mix of different culinary traditions",
-    archived: true,
     restrictions: ["glutenFree", "dairyFree"],
   },
   {
     title: "sustainable cooking menu",
     description: "eco-friendly meals using sustainable ingredients",
-    archived: true,
     restrictions: ["glutenFree", "dairyFree"],
   },
   {
     title: "meal-prep menu",
     description: "meals designed for easy prepping ahead of time",
-    archived: true,
   },
   {
     title: "quick breakfast menu",
     description: "easy and healthy breakfast options",
-    archived: true,
   },
   {
     title: "celebration menu",
     description: "festive meals for special occasions",
-    archived: true,
   },
   {
     title: "fitness-focused menu",
     description: "perfect for staying on track with your fitness goals",
-    archived: true,
   },
   {
     title: "heart-healthy menu",
     description: "meals crafted to promote heart health",
-    archived: true,
   },
 ];

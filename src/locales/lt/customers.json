@@ -5,6 +5,7 @@
   "formConfirmedSuccessfully": "Forma sėkmingai patvirtinta",
   "customerDeleted": "Klientas sėkmingai ištrintas",
   "customerStatusUpdated": "Kliento statusas sėkmingai atnaujintas",
+  "customerNutritionCalculated": "Medžiagų kiekis sėkmingai apskaičiuotas",
 
   "customerConfirmationEmail": {
     "subject": "Užpildykite savo maitinimo plano formą",
@@ -23,6 +24,11 @@
     "verificationFailed": "Patvirtinimas nepavyko",
     "tokenIsRequired": "Reikalingas tokenas",
     "invalidToken": "Neteisingas arba pasibaigęs tokenas",
-    "customerStatusSame": "Kliento statusas jau toks pat"
+    "customerStatusSame": "Kliento statusas jau toks pat",
+    "nutritionCalculationFailed": "Mitybos skaičiavimas nepavyko"
+  },
+
+  "errors": {
+    "couldNotCalculateNutritionIntake": "Nepavyko apskaičiuoti rekomenduojamo maistinių medžiagų kieko. Bandykite dar kartą."
   }
 }

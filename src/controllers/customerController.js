@@ -9,6 +9,7 @@ const {
 } = require("../utils/generalHelpers");
 const { sendMessageToClients } = require("../utils/websocket");
 const Group = require("../models/Group");
+const { calculateDailyNutritionIntake } = require("../utils/healthyHelper");
 
 /**
  * Function to craeat a new customer manually
@@ -459,5 +460,62 @@ exports.changeCustomerStatus = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     message: req.t("customers:customerStatusUpdated"),
+  });
+});
+
+/**
+ * Function to calculate the recommended nutrition for a customer
+ */
+exports.calculateRecommendedNutrition = catchAsync(async (req, res, next) => {
+  const { id: customerId } = req.params;
+
+  // Check if customer ID is provided
+  if (!customerId) {
+    return next(
+      new AppError(req.t("customers:validationErrors.customerIdRequired"), 400),
+    );
+  }
+
+  // Find the customer by ID
+  const customer = await Customer.findById(customerId);
+
+  // If customer does not exist, return an error
+  if (!customer) {
+    return next(
+      new AppError(req.t("customers:validationErrors.customerNotFound"), 404),
+    );
+  }
+
+  // Calculate the recommended nutrition
+  const recommendedNutrition = await calculateDailyNutritionIntake(
+    {
+      gender: customer.gender,
+      age: customer.age,
+      height: customer.height,
+      weight: customer.weight,
+      fitnessGoal: customer.fitnessGoal,
+      physicalActivityLevel: customer.physicalActivityLevel,
+      preference: customer?.preferences[0] ?? null,
+    },
+    req,
+    next,
+  );
+
+  if (!recommendedNutrition) {
+    return next(
+      new AppError(
+        req.t("customers:validationErrors.nutritionCalculationFailed"),
+        400,
+      ),
+    );
+  }
+
+  customer.recommendedNutrition = recommendedNutrition;
+  await customer.save();
+
+  res.status(200).json({
+    status: "success",
+    message: req.t("customers:customerNutritionCalculated"),
+    data: customer.recommendedNutrition,
   });
 });

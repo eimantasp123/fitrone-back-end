@@ -5,6 +5,7 @@
   "formConfirmedSuccessfully": "Form confirmed successfully",
   "customerDeleted": "Customer deleted successfully",
   "customerStatusUpdated": "Customer status updated successfully",
+  "customerNutritionCalculated": "Nutrition intake calculated successfully",
 
   "customerConfirmationEmail": {
     "subject": "Fill out your meal plan form",
@@ -23,6 +24,11 @@
     "verificationFailed": "Verification failed",
     "tokenIsRequired": "Token is required",
     "invalidToken": "Invalid or expired token",
-    "customerStatusSame": "Customer status is already the same"
+    "customerStatusSame": "Customer status is already the same",
+    "nutritionCalculationFailed": "Nutrition calculation failed"
+  },
+
+  "errors": {
+    "couldNotCalculateNutritionIntake": "The recommended daily allowance could not be calculated. Please try again."
   }
 }
