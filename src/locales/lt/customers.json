@@ -1,9 +1,34 @@
 {
+  "customerCreated": "Klientas sėkmingai sukurtas",
+  "customerUpdated": "Klientas sėkmingai atnaujintas",
+  "formSendSuccessfully": "Forma sėkmingai išsiųsta",
+  "formConfirmedSuccessfully": "Forma sėkmingai patvirtinta",
+  "customerDeleted": "Klientas sėkmingai ištrintas",
+  "customerStatusUpdated": "Kliento statusas sėkmingai atnaujintas",
+  "customerNutritionCalculated": "Medžiagų kiekis sėkmingai apskaičiuotas",
+
   "customerConfirmationEmail": {
     "subject": "Užpildykite savo maitinimo plano formą",
     "emailTitle": "Sveiki, {{customerName}}!",
     "paragraph1": "Šis el. laiškas Jums atsiųstas {{supplierName}} vardu. Žemiau rasite mygtuką, kurį paspaudus būsite nukreipti į specialų puslapį, kuriame turėsite užpildyti svarbią informaciją apie save.",
     "paragraph2": "Ši informacija reikalinga gamintojui, kad jis galėtų tiksliai parinkti Jums tinkamiausią mitybos planą, atlikti individualizuotą analizę bei pateikti Jums geriausius sprendimus, siekiant užsibrėžtų rezultatų.",
     "buttonText": "Užpildyti formą"
+  },
+
+  "validationErrors": {
+    "emailAndFirstNameRequired": "El. paštas ir vardas yra privalomi",
+    "customerAlreadyExists": "Klientas su šiuo el. paštu jau egzistuoja",
+    "customerNotFound": "Klientas nerastas",
+    "customerIdRequired": "Kliento ID yra privalomas",
+    "customerFormAlreadySubmitted": "Kliento forma jau pateikta",
+    "verificationFailed": "Patvirtinimas nepavyko",
+    "tokenIsRequired": "Reikalingas tokenas",
+    "invalidToken": "Neteisingas arba pasibaigęs tokenas",
+    "customerStatusSame": "Kliento statusas jau toks pat",
+    "nutritionCalculationFailed": "Mitybos skaičiavimas nepavyko"
+  },
+
+  "errors": {
+    "couldNotCalculateNutritionIntake": "Nepavyko apskaičiuoti rekomenduojamo maistinių medžiagų kieko. Bandykite dar kartą."
   }
 }

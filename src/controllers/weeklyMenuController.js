@@ -1,6 +1,7 @@
 const { roundTo } = require("../helper/roundeNumber");
 const Meal = require("../models/Meal");
 const WeeklyMenu = require("../models/WeeklyMenu");
+const WeekPlan = require("../models/WeekPlan");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 
@@ -105,6 +106,17 @@ exports.deleteWeeklyMenu = catchAsync(async (req, res, next) => {
 
   // Delete the weekly menu
   await weeklyMenu.deleteOne();
+
+  // Delete the weekly menu from week plans
+  await WeekPlan.updateMany(
+    {
+      user: req.user._id,
+      "assignMenu.menu": weeklyMenu._id,
+    },
+    {
+      $pull: { assignMenu: { menu: weeklyMenu._id } },
+    },
+  );
 
   // Send the response
   res.status(200).json({
@@ -270,7 +282,8 @@ exports.getAllWeeklyMenus = catchAsync(async (req, res, next) => {
       .sort({ createdAt: -1 })
       .select(
         "title description preferences restrictions archived status nutrition createdAt updatedAt",
-      ),
+      )
+      .lean(),
   ]);
 
   // Send the response

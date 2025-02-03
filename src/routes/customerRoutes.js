@@ -8,6 +8,8 @@ const {
   deleteCustomer,
   updateCustomer,
   getAllCustomers,
+  changeCustomerStatus,
+  calculateRecommendedNutrition,
 } = require("../controllers/customerController");
 const router = express.Router();
 
@@ -34,5 +36,11 @@ router.put("/:id", updateCustomer);
 
 // Get all customers
 router.get("/", getAllCustomers);
+
+// Change customer status
+router.patch("/:id/change-status", changeCustomerStatus);
+
+// Calculate nutrition for a customer
+router.post("/:id/calculate-nutrition", calculateRecommendedNutrition);
 
 module.exports = router;

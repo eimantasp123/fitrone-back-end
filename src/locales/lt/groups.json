@@ -1,0 +1,22 @@
+{
+  "groupCreatedSuccessfully": "Grupė sėkmingai sukurta",
+  "groupDeletedSuccessfully": "Grupė sėkmingai ištrinta",
+  "groupUpdatedSuccessfully": "Grupė sėkmingai atnaujinta",
+  "membersAttachedSuccessfully": "Nariai sėkmingai pridėti",
+  "customerRemovedSuccessfully": "Klientas sėkmingai pašalintas",
+
+  "validationErrors": {
+    "groupAlreadyExists": "Grupė su tokiu pavadinimu jau egzistuoja",
+    "groupNotFound": "Grupė nerasta",
+    "notActiveCustomers": "Negalima pridėti neaktyvių klientų. Pasirinkite tik aktyvius klientus.",
+    "customerConflictMessage_one": "{{count}} klientas negali būti pridėtas prie grupės dėl konfliktų.",
+    "customerConflictMessage_two": "{{count}} klientai negali būti pridėti prie grupės dėl konfliktų.",
+    "customerConflictMessage_few": "{{count}} klientai negali būti pridėti prie grupės dėl konfliktų.",
+    "customerConflictMessage_other": "{{count}} klientai negali būti pridėti prie grupės dėl konfliktų.",
+    "details": {
+      "alreadyInCurrentGroup": "{{name}} jau yra šioje grupėje.",
+      "alreadyInOtherGroup": "{{name}} jau priskirtas kitai grupei.",
+      "inactive": "{{name}} yra 'neaktyvus' ir negali būti pridėtas prie grupės."
+    }
+  }
+}

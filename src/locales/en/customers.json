@@ -1,9 +1,34 @@
 {
+  "customerCreated": "Customer created successfully",
+  "customerUpdated": "Customer updated successfully",
+  "formSendSuccessfully": "Form sent successfully",
+  "formConfirmedSuccessfully": "Form confirmed successfully",
+  "customerDeleted": "Customer deleted successfully",
+  "customerStatusUpdated": "Customer status updated successfully",
+  "customerNutritionCalculated": "Nutrition intake calculated successfully",
+
   "customerConfirmationEmail": {
     "subject": "Fill out your meal plan form",
     "emailTitle": "Hello, {{customerName}}!",
     "paragraph1": "This email has been sent to you on behalf of {{supplierName}}. Below you will find a button, which when clicked, will redirect you to a special page where you will need to fill out important information about yourself.",
     "paragraph2": "This information is required by the supplier to accurately select the most suitable nutrition plan for you, perform personalized analysis, and provide you with the best solutions to achieve your desired results.",
     "buttonText": "Complete the Form"
+  },
+
+  "validationErrors": {
+    "emailAndFirstNameRequired": "Email and first name are required",
+    "customerAlreadyExists": "Customer with this email already exists",
+    "customerNotFound": "Customer not found",
+    "customerIdRequired": "Customer ID is required",
+    "customerFormAlreadySubmitted": "Customer form has already been submitted",
+    "verificationFailed": "Verification failed",
+    "tokenIsRequired": "Token is required",
+    "invalidToken": "Invalid or expired token",
+    "customerStatusSame": "Customer status is already the same",
+    "nutritionCalculationFailed": "Nutrition calculation failed"
+  },
+
+  "errors": {
+    "couldNotCalculateNutritionIntake": "The recommended daily allowance could not be calculated. Please try again."
   }
 }

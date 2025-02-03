@@ -4,7 +4,10 @@
     "weekPlanUpdated": "Savaitės planas sėkmingai atnaujintas.",
     "menuDeleted": "Meniu sėkmingai ištrintas.",
     "menuPublished": "Meniu sėkmingai publikuotas.",
-    "menuUnpublished": "Meniu sėkmingai išpublikuotas."
+    "menuUnpublished": "Meniu sėkmingai išpublikuotas.",
+    "clientAssigned": "Klientas sėkmingai priskirtas.",
+    "clientsAssigned": "Klientai sėkmingai priskirti.",
+    "groupAssigned": "Grupė sėkmingai priskirta."
   },
 
   "validationErrors": {

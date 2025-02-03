@@ -81,8 +81,24 @@ const customerSchema = new mongoose.Schema(
     },
     foodAllergies: { type: String },
     address: { type: String },
+    recommendedNutrition: {
+      calories: { type: Number },
+      protein: { type: Number },
+      carbs: { type: Number },
+      fat: { type: Number },
+    },
     latitude: { type: String },
     longitude: { type: String },
+    groupId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Group",
+      default: null,
+    },
+    assignedWeekPlan: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "WeekPlan",
+      default: null,
+    },
   },
   {
     timestamps: true,

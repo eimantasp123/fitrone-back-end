@@ -1,182 +1,121 @@
-// Calculate daily calories intake based on user's input
-const calculateDailyCaloriesIntake = ({
-  gender,
-  age,
-  height,
-  weight,
-  fitnessGoal,
-  physicalActivityLevel,
-}) => {
-  let BMR;
+const { roundTo } = require("../helper/roundeNumber");
+const openai = require("openai");
+const z = require("zod");
+const { zodResponseFormat } = require("openai/helpers/zod");
+const AppError = require("./appError");
 
-  if (gender === "male") {
-    BMR = 10 * weight + 6.25 * height - 5 * age + 5;
-  } else {
-    BMR = 10 * weight + 6.25 * height - 5 * age - 161;
-  }
-  const activityLevel = {
-    sedentary: 1.2,
-    lightlyActive: 1.375,
-    moderatelyActive: 1.55,
-    veryActive: 1.725,
-  };
+/**
+ * OpenAI API key
+ */
+const openAi = new openai(process.env.OPENAI_API_KEY);
 
-  const dailyCaloriesIntake = BMR * activityLevel[physicalActivityLevel];
+/**
+ * Nutrition information schema
+ */
+const nutritions = z.object({
+  protein: z.number(),
+  fat: z.number(),
+  carbs: z.number(),
+});
 
-  let adjustedCalorieIntake;
+/**
+ * Get ingredient information from the FatSecret API
+ */
 
-  switch (fitnessGoal) {
-    case "weightMaintenance":
-      adjustedCalorieIntake = dailyCaloriesIntake;
-      break;
-    case "weightLoss":
-      adjustedCalorieIntake = dailyCaloriesIntake * 0.8;
-      break;
-    case "weightGain":
-      adjustedCalorieIntake = dailyCaloriesIntake * 1.15;
-      break;
-    case "weightLossAndMuscleGain":
-      adjustedCalorieIntake = dailyCaloriesIntake * 0.9;
-      break;
-    default:
-      adjustedCalorieIntake = dailyCaloriesIntake;
-  }
-
-  let proteingGramsPerKg, fatPercentage;
-
-  switch (fitnessGoal) {
-    case "weightMaintenance":
-      proteingGramsPerKg = 2;
-      fatPercentage = 0.25;
-      break;
-    case "weightLoss":
-      proteingGramsPerKg = 2;
-      fatPercentage = 0.25;
-      break;
-    case "weightGain":
-      proteingGramsPerKg = 2.2;
-      fatPercentage = 0.22;
-      break;
-    case "weightLossAndMuscleGain":
-      proteingGramsPerKg = 2.2;
-      fatPercentage = 0.2;
-      break;
-    default:
-      throw new Error("Invalid fitness goal");
-  }
-
-  // Calculate macronutrients
-  const protein = weight * proteingGramsPerKg;
-  const proteinCalories = protein * 4;
-
-  // Calculate fat
-  const fatCalories = adjustedCalorieIntake * fatPercentage;
-  const fat = fatCalories / 9;
-
-  // Calculate carbs
-  const carbsCalories = adjustedCalorieIntake - proteinCalories - fatCalories;
-  const carbs = carbsCalories / 4;
-
-  return {
-    kcal: Math.round(adjustedCalorieIntake),
-    carbs: Math.round(carbs),
-    fat: Math.round(fat),
-    protein: Math.round(protein),
-  };
-};
-
-// Calculate macronutrient targerts for each meal
-const calculateMealMacronutrients = (
-  calories,
-  protein,
-  fat,
-  carbs,
-  mainMeals,
-  snacks,
+const calculateDailyNutritionIntake = async (
+  {
+    gender,
+    age,
+    height,
+    weight,
+    fitnessGoal,
+    physicalActivityLevel,
+    preference,
+  },
+  req,
+  next,
 ) => {
-  let snacksPercentage;
-
-  // If no snacks then all calories are for main meals
-  if (snacks === 0) {
-    snacksPercentage = 0;
-
-    // If more snacks than main meals then main meals get 75% of calories
-  } else if (snacks > mainMeals && mainMeals <= 2) {
-    snacksPercentage = snacks * 0.17;
-    //
-  } else if (snacks > mainMeals && mainMeals > 2) {
-    snacksPercentage = snacks * 0.15;
-
-    // If more main meals than snacks then snacks get 50%
-  } else if (mainMeals > snacks && snacks <= 2) {
-    snacksPercentage = snacks * 0.1;
-
-    // If equal number of main meals and snacks then main meals get 60%
-  } else {
-    snacksPercentage = 0.4;
+  // Check if required parameters are provided
+  if (
+    !gender ||
+    !age ||
+    !height ||
+    !weight ||
+    !fitnessGoal ||
+    !physicalActivityLevel
+  ) {
+    throw new Error("Missing required parameters for nutrition calculation.");
   }
 
-  let mainMealsPercentage = 1 - snacksPercentage;
+  const prompt = `
+   You are a professional nutritionist and fitness expert. Based on the given user profile, determine the recommended daily intake of **protein (grams), fat (grams), and carbohydrates (grams).** DO NOT calculate calories; just return macronutrient values.
 
-  mainMealsPercentage.toFixed(2);
-  snacksPercentage.toFixed(2);
+  **User Profile:**
+  - Gender: ${gender}
+  - Age: ${age}
+  - Height: ${height} cm
+  - Weight: ${weight} kg
+  - Fitness Goal: ${fitnessGoal}
+  - Physical Activity Level: ${physicalActivityLevel}
+  - Dietary Preference: ${preference || "None"}
 
-  // 2. Split macronutrients between main meals and snacks
-  const mainMealsCalories = calories * mainMealsPercentage;
-  const snacksCalories = calories * snacksPercentage;
+  **Instructions:**
+  - Base protein needs on **scientific formulas** considering muscle maintenance and growth.
+  - Adjust **fat intake based on fitness goal** (e.g., high-fat for keto, moderate for weight loss).
+  - Adjust **carb intake based on fitness goal** (e.g., low-carb for keto, high-carb for endurance).
+      `;
 
-  const mainMealsProtein = protein * mainMealsPercentage;
-  const snacksProtein = protein * snacksPercentage;
-
-  const mainMealsFat = fat * mainMealsPercentage;
-  const snacksFat = fat * snacksPercentage;
-
-  const mainMealsCarbs = carbs * mainMealsPercentage;
-  const snacksCarbs = carbs * snacksPercentage;
-
-  // 3. Calculate macronutrients for each meal
-
-  const mainMealsCaloriesPerMeal = mainMealsCalories / mainMeals;
-  const snacksCaloriesPerMeal = snacksCalories / snacks;
-
-  const mainMealsProteinPerMeal = mainMealsProtein / mainMeals;
-  const snacksProteinPerMeal = snacksProtein / snacks;
-
-  const mainMealsFatPerMeal = mainMealsFat / mainMeals;
-  const snacksFatPerMeal = snacksFat / snacks;
-
-  const mainMealsCarbsPerMeal = mainMealsCarbs / mainMeals;
-  const snacksCarbsPerMeal = snacksCarbs / snacks;
-
-  // 4. Return macronutrients for each meal in an object
-
-  const mainMealsArray = [];
-  const snacksArray = [];
-
-  for (let i = 0; i < mainMeals; i++) {
-    mainMealsArray.push({
-      calories: mainMealsCaloriesPerMeal.toFixed(0),
-      protein: mainMealsProteinPerMeal.toFixed(0),
-      fat: mainMealsFatPerMeal.toFixed(0),
-      carbs: mainMealsCarbsPerMeal.toFixed(0),
+  try {
+    // Request to openai to get the nutrition information
+    const completion = await openAi.beta.chat.completions.parse({
+      model: "gpt-4o-2024-08-06",
+      messages: [
+        {
+          role: "system",
+          content: "You are a fitness and nutrition expert.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      max_tokens: 500,
+      temperature: 0.3,
+      response_format: zodResponseFormat(nutritions, "nutritions"),
     });
-  }
 
-  if (snacks !== 0) {
-    for (let i = 0; i < snacks; i++) {
-      snacksArray.push({
-        calories: snacksCaloriesPerMeal.toFixed(0),
-        protein: snacksProteinPerMeal.toFixed(0),
-        fat: snacksFatPerMeal.toFixed(0),
-        carbs: snacksCarbsPerMeal.toFixed(0),
-      });
+    // Refactor the response object to get the nutrition information
+    const response = completion.choices[0].message.parsed;
+
+    if (!response) {
+      return next(
+        new AppError(
+          req.t("customers:errors.couldNotCalculateNutritionIntake"),
+          400,
+        ),
+      );
     }
-  }
 
-  return {
-    mainMeals: mainMealsArray,
-    snacks: snacksArray,
-  };
+    // Manually calculate total calories
+    const calories = roundTo(
+      response.protein * 4 + response.fat * 9 + response.carbs * 4,
+      0,
+    );
+
+    return {
+      calories,
+      protein: roundTo(response.protein, 0),
+      fat: roundTo(response.fat, 0),
+      carbs: roundTo(response.carbs, 0),
+    };
+  } catch (error) {
+    return next(
+      new AppError(
+        req.t("customers:errors.couldNotCalculateNutritionIntake"),
+        400,
+      ),
+    );
+  }
 };
 
-module.exports = { calculateDailyCaloriesIntake, calculateMealMacronutrients };
+module.exports = { calculateDailyNutritionIntake };

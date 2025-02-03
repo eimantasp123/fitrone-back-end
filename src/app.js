@@ -35,6 +35,7 @@ const weekPlanRoutes = require("./routes/weekPlanRoutes");
 const weeklyMenuRoutes = require("./routes/weeklyMenuRoutes");
 const webhookRoutes = require("./utils/webhookRoutes");
 const customerRoutes = require("./routes/customerRoutes");
+const groupsRoutes = require("./routes/groupsRoutes");
 const { initWebSocketServer } = require("./utils/websocket");
 
 // Initialize i18next for localization
@@ -53,6 +54,7 @@ i18next
       "weeklyMenu",
       "weekPlan",
       "customers",
+      "groups",
     ],
     backend: {
       loadPath: path.join(__dirname, "/locales/{{lng}}/{{ns}}.json"),
@@ -140,6 +142,7 @@ app.use("/api/v1/meals", mealsRoutes);
 app.use("/api/v1/ingredients", ingredientsRoutes);
 app.use("/api/v1/subscription", subscriptionRoutes);
 app.use("/api/v1/customers", customerRoutes);
+app.use("/api/v1/groups", groupsRoutes);
 app.use("/api/v1/support", supportRoutes);
 app.use("/api/v1/feedback", feedbackRoutes);
 //
@@ -168,46 +171,52 @@ server.listen(PORT, "0.0.0.0", () => {
 });
 
 // Cleanup expired two-factor codes and reset password tokens every hour
-cron.schedule("0 0 * * * *", async () => {
-  try {
-    // Remove two-factor codes and expires for users with expired codes
-    await User.updateMany(
-      { twoFactorExpires: { $lt: new Date() } },
-      { $unset: { twoFactorCode: null, twoFactorExpires: null } },
-    );
-    // Remove reset password tokens and expires for users with expired tokens
-    await User.updateMany(
-      { resetPasswordExpires: { $lt: new Date() } },
-      {
-        $unset: {
-          resetPasswordToken: null,
-          resetPasswordExpires: null,
+cron.schedule(
+  "0 0 * * * *",
+  async () => {
+    try {
+      // Remove two-factor codes and expires for users with expired codes
+      await User.updateMany(
+        { twoFactorExpires: { $lt: new Date() } },
+        { $unset: { twoFactorCode: null, twoFactorExpires: null } },
+      );
+      // Remove reset password tokens and expires for users with expired tokens
+      await User.updateMany(
+        { resetPasswordExpires: { $lt: new Date() } },
+        {
+          $unset: {
+            resetPasswordToken: null,
+            resetPasswordExpires: null,
+          },
         },
-      },
-    );
-    // Remove email verification codes and expires for users with expired codes
-    await User.updateMany(
-      { emailVerificationExpires: { $lt: new Date() } },
-      {
-        $unset: {
-          emailVerificationCode: null,
-          emailVerificationExpires: null,
+      );
+      // Remove email verification codes and expires for users with expired codes
+      await User.updateMany(
+        { emailVerificationExpires: { $lt: new Date() } },
+        {
+          $unset: {
+            emailVerificationCode: null,
+            emailVerificationExpires: null,
+          },
         },
-      },
-    );
-    // Remove token from customers
-    await Customer.updateMany(
-      { confirmFormTokenExpires: { $lt: new Date() } },
-      {
-        $unset: {
-          confirmFormToken: null,
-          tokenExpconfirmFormTokenExpiresires: null,
+      );
+      // Remove token from customers
+      await Customer.updateMany(
+        { confirmFormTokenExpires: { $lt: new Date() } },
+        {
+          $unset: {
+            confirmFormToken: null,
+            tokenExpconfirmFormTokenExpiresires: null,
+          },
         },
-      },
-    );
-  } catch (error) {
-    console.error("Error during cleanup:", error);
-  }
-});
+      );
+    } catch (error) {
+      console.error("Error during cleanup:", error);
+    }
+  },
+  {
+    timezone: "UTC",
+  },
+);
 
 module.exports = app;

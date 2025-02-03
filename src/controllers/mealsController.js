@@ -430,17 +430,10 @@ exports.getMeals = catchAsync(async (req, res, next) => {
     Meal.find(dbQuery)
       .skip(skip)
       .limit(parseInt(limit))
-      .sort({ createdAt: -1 }),
+      .sort({ createdAt: -1 })
+      .select("-user -__v -updatedAt")
+      .lean(),
   ]);
-
-  // Format response object
-  const formattedMeals = meals.map((meal) => {
-    const formattedMeal = meal.toObject();
-    delete formattedMeal.user;
-    delete formattedMeal.__v;
-    delete formattedMeal.updatedAt;
-    return formattedMeal;
-  });
 
   // Send the response
   res.status(200).json({
@@ -449,7 +442,7 @@ exports.getMeals = catchAsync(async (req, res, next) => {
     total,
     currentPage: parseInt(page),
     totalPages: Math.ceil(totalForFetch / limit),
-    data: formattedMeals,
+    data: meals,
   });
 });
 

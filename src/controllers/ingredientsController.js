@@ -7,7 +7,6 @@ const { default: mongoose } = require("mongoose");
 const Ingredient = require("../models/Ingredient");
 const UpdateService = require("../utils/updateService");
 const { roundTo } = require("../helper/roundeNumber");
-const { sendMessageToClients } = require("../utils/websocket");
 const DeleteService = require("../utils/deleteService");
 
 /**

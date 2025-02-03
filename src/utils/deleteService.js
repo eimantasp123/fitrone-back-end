@@ -2,7 +2,6 @@ const { roundTo } = require("../helper/roundeNumber");
 const Ingredient = require("../models/Ingredient");
 const Meal = require("../models/Meal");
 const WeeklyMenu = require("../models/WeeklyMenu");
-const WeekPlan = require("../models/WeekPlan");
 const AppError = require("./appError");
 const { sendMessageToClients } = require("./websocket");
 
@@ -66,6 +65,25 @@ const DeleteService = {
     // Send message to clients if meals were updated
     if (Array.isArray(mealsToUpdate) && mealsToUpdate.length > 0) {
       sendMessageToClients(req.user._id, "ingredient_deleted_from_meals");
+    }
+
+    // Check if the ingredient is used in weekly menus
+    const weeklyMenuUpdated = await WeeklyMenu.find({
+      user: req.user._id,
+      days: {
+        $elemMatch: {
+          meals: {
+            $elemMatch: {
+              meal: { $in: mealsToUpdate.map((meal) => meal._id) },
+            },
+          },
+        },
+      },
+    });
+
+    // Send message to clients if weekly menus were updated
+    if (weeklyMenuUpdated.length !== 0) {
+      sendMessageToClients(req.user._id, "meals_updated_in_weekly_menu_by_id");
     }
   },
 

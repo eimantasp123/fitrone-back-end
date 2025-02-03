@@ -1,0 +1,22 @@
+{
+  "groupCreatedSuccessfully": "Group created successfully",
+  "groupDeletedSuccessfully": "Group deleted successfully",
+  "groupUpdatedSuccessfully": "Group updated successfully",
+  "membersAttachedSuccessfully": "Members attached successfully",
+  "customerRemovedSuccessfully": "Customer removed successfully",
+
+  "validationErrors": {
+    "groupAlreadyExists": "Group with this title already exists",
+    "groupNotFound": "Group not found",
+    "notActiveCustomers": "Cannot attach inactive customers. Select only active customers.",
+    "customerConflictMessage_one": "{{count}} customer could not be added to the group due to conflicts.",
+    "customerConflictMessage_two": "{{count}} customers could not be added to the group due to conflicts.",
+    "customerConflictMessage_few": "{{count}} customers could not be added to the group due to conflicts.",
+    "customerConflictMessage_other": "{{count}} customers could not be added to the group due to conflicts.",
+    "details": {
+      "alreadyInCurrentGroup": "{{name}} is already in the current group.",
+      "alreadyInOtherGroup": "{{name}} is already assigned to another group.",
+      "inactive": "{{name}} is 'inactive' and cannot be added to the group."
+    }
+  }
+}
