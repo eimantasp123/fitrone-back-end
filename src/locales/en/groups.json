@@ -2,7 +2,10 @@
   "groupCreatedSuccessfully": "Group created successfully",
   "groupDeletedSuccessfully": "Group deleted successfully",
   "groupUpdatedSuccessfully": "Group updated successfully",
-  "membersAttachedSuccessfully": "Members attached successfully",
+  "membersAttachedSuccessfully_one": "{{count}} member attached successfully",
+  "membersAttachedSuccessfully_two": "{{count}} members attached successfully",
+  "membersAttachedSuccessfully_few": "{{count}} members attached successfully",
+  "membersAttachedSuccessfully_other": "{{count}} members attached successfully",
   "customerRemovedSuccessfully": "Customer removed successfully",
 
   "validationErrors": {

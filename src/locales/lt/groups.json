@@ -2,7 +2,10 @@
   "groupCreatedSuccessfully": "Grupė sėkmingai sukurta",
   "groupDeletedSuccessfully": "Grupė sėkmingai ištrinta",
   "groupUpdatedSuccessfully": "Grupė sėkmingai atnaujinta",
-  "membersAttachedSuccessfully": "Nariai sėkmingai pridėti",
+  "membersAttachedSuccessfully_one": "{{count}} narys sėkmingai pridėtas",
+  "membersAttachedSuccessfully_two": "{{count}} nariai sėkmingai pridėti",
+  "membersAttachedSuccessfully_few": "{{count}} nariai sėkmingai pridėti",
+  "membersAttachedSuccessfully_other": "{{count}} nariai sėkmingai pridėti",
   "customerRemovedSuccessfully": "Klientas sėkmingai pašalintas",
 
   "validationErrors": {

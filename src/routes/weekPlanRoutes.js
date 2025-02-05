@@ -6,11 +6,15 @@ const router = express.Router();
 const {
   setUserTimezone,
   assignMenu,
-  assignClient,
+  assignClients,
   assignGroup,
   getWeekPlanByDateAndCreate,
   deleteAssignedMenu,
   managePublishMenu,
+  checkWeekPlanAndMenuAssigned,
+  removeClient,
+  removeGroup,
+  getWeekPlanAssignedMenuDetails,
 } = require("../controllers/weekPlanController");
 
 // Apply authentication middleware to all routes below this line
@@ -46,9 +50,22 @@ router.delete("/delete-menu", deleteAssignedMenu);
 router.patch("/manage-publish-menu", managePublishMenu);
 
 // Assign client to week plan
-router.patch("/:id/assign-client", assignClient);
+router.patch(
+  "/:id/assign-clients",
+  checkWeekPlanAndMenuAssigned,
+  assignClients,
+);
+
+// Remove client from week plan
+router.patch("/:id/remove-client", checkWeekPlanAndMenuAssigned, removeClient);
 
 // Assign group to week plan
-router.patch("/:id/assign-group", assignGroup);
+router.patch("/:id/assign-group", checkWeekPlanAndMenuAssigned, assignGroup);
+
+// Remove group from week plan
+router.patch("/:id/remove-group", checkWeekPlanAndMenuAssigned, removeGroup);
+
+// Get week plan menu details
+router.get("/:id/menu-details/:menuId", getWeekPlanAssignedMenuDetails);
 
 module.exports = router;

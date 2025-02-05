@@ -2,6 +2,7 @@ const Group = require("../models/Group");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const Customer = require("../models/Customer");
+const { transformToUppercaseFirstLetter } = require("../utils/generalHelpers");
 
 /**
  * Middleware to check if the group exists
@@ -83,6 +84,7 @@ exports.getAllGroups = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: "success",
+    results: groups.length,
     data: groups,
   });
 });
@@ -169,7 +171,7 @@ exports.attachMembersToGroup = catchAsync(async (req, res, next) => {
   if (conflictCustomers.length > 0) {
     // Generate conflict details
     const conflictDetails = conflictCustomers.map((customer) => {
-      const name = `${customer.firstName} ${customer.lastName}`;
+      const name = `${transformToUppercaseFirstLetter(customer.firstName)} ${transformToUppercaseFirstLetter(customer.lastName)}`;
       if (
         customer.groupId &&
         customer.groupId.toString() === groupId.toString()
@@ -199,8 +201,6 @@ exports.attachMembersToGroup = catchAsync(async (req, res, next) => {
     });
   }
 
-  console.log("customers", customers);
-
   // Update all customers with the groupId
   await Group.updateOne(
     {
@@ -221,7 +221,9 @@ exports.attachMembersToGroup = catchAsync(async (req, res, next) => {
   // Send response
   res.status(200).json({
     status: "success",
-    message: req.t("groups:membersAttachedSuccessfully"),
+    message: req.t("groups:membersAttachedSuccessfully", {
+      count: customers.length,
+    }),
   });
 });
 

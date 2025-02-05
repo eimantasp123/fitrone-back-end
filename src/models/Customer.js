@@ -94,11 +94,6 @@ const customerSchema = new mongoose.Schema(
       ref: "Group",
       default: null,
     },
-    assignedWeekPlan: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "WeekPlan",
-      default: null,
-    },
   },
   {
     timestamps: true,

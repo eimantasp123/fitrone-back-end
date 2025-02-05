@@ -7,7 +7,9 @@
     "menuUnpublished": "Menu unpublished successfully.",
     "clientAssigned": "Client assigned successfully.",
     "clientsAssigned": "Clients assigned successfully.",
-    "groupAssigned": "Group assigned successfully."
+    "groupAssigned": "Group assigned successfully.",
+    "clientRemoved": "Client removed successfully.",
+    "groupRemoved": "Group removed successfully."
   },
 
   "validationErrors": {
@@ -19,6 +21,19 @@
     "invalidObjectId": "Invalid object id.",
     "menuNotAssigned": "Menu is not assigned.",
     "menuPublishedAndCanNotBeDeleted": "Menu is published and can not be deleted.",
-    "weekPlanMenuPublishFieldsAreRequired": "Week plan menu publish fields are required ( year, week, menu ID and publish type )."
+    "weekPlanMenuPublishFieldsAreRequired": "Week plan menu publish fields are required ( year, week, menu ID and publish type ).",
+    "clientsRequired": "Clients are required.",
+    "clientRequired": "Client is required.",
+    "invalidClients": "Invalid clients.",
+    "invalidClient": "Invalid client.",
+    "invalidGroup": "Invalid group.",
+    "clientsAlreadyAssigned": "Clients are already assigned. {{clients}} ",
+    "clientAssigned": "{{client}} is already assigned to menu '{{menu}}'.",
+    "clientAssignedToGroup": "{{client}} is already assigned with group '{{group}}'.",
+    "groupAlreadyAssigned": "Group already assigned to '{{group}}'.",
+    "clientNotAssigned": "Client is not assigned.",
+    "groupNotAssigned": "Group is not assigned.",
+    "groupAlreadyAssignedOnCurrentMenu": "Group already assigned on current menu.",
+    "weekPlanNotFoundOrMenuIsNotAssigned": "Week plan not found or menu is not assigned."
   }
 }

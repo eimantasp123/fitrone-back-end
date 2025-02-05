@@ -7,7 +7,9 @@
     "menuUnpublished": "Meniu sėkmingai išpublikuotas.",
     "clientAssigned": "Klientas sėkmingai priskirtas.",
     "clientsAssigned": "Klientai sėkmingai priskirti.",
-    "groupAssigned": "Grupė sėkmingai priskirta."
+    "groupAssigned": "Grupė sėkmingai priskirta.",
+    "clientRemoved": "Klientas sėkmingai pašalintas.",
+    "groupRemoved": "Grupė sėkmingai pašalinta."
   },
 
   "validationErrors": {
@@ -19,6 +21,19 @@
     "invalidObjectId": "Invalid object id.",
     "menuNotAssigned": "Meniu nėra priskirtas.",
     "menuPublishedAndCanNotBeDeleted": "Meniu yra publikuotas ir negali būti ištrintas.",
-    "weekPlanMenuPublishFieldsAreRequired": "Savaitės plano meniu publikavimo laukai yra privalomi (metai, savaitė, meniu ID ir publikavimo tipas)."
+    "weekPlanMenuPublishFieldsAreRequired": "Savaitės plano meniu publikavimo laukai yra privalomi (metai, savaitė, meniu ID ir publikavimo tipas).",
+    "clientsRequired": "Klientai yra privalomi.",
+    "clientRequired": "Klientas yra privalomas.",
+    "invalidClients": "Netinkami klientai.",
+    "invalidClient": "Netinkamas klientas.",
+    "invalidGroup": "Netinkama grupė.",
+    "clientsAlreadyAssigned": "Klientai jau priskirti. {{clients}} ",
+    "clientAssigned": "{{client}} jau yra priskirtas meniu '{{menu}}'.",
+    "clientAssignedToGroup": "{{client}} jau yra priskirtas su grupe '{{group}}'.",
+    "groupAlreadyAssigned": "Grupė jau priskirta prie '{{group}}'.",
+    "clientNotAssigned": "Klientas nėra priskirtas.",
+    "groupNotAssigned": "Grupė nėra priskirta.",
+    "groupAlreadyAssignedOnCurrentMenu": "Grupė jau priskirta šiam meniu.",
+    "weekPlanNotFoundOrMenuIsNotAssigned": "Savaitės planas nerastas arba meniu nėra priskirtas."
   }
 }
