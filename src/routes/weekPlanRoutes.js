@@ -1,7 +1,6 @@
 const express = require("express");
 const authMiddleware = require("../middlewares/authMiddleware");
 const authController = require("../controllers/authController");
-const checkPlanFeatures = require("../middlewares/checkPlanFeatures");
 const router = express.Router();
 const {
   setUserTimezone,
@@ -16,6 +15,7 @@ const {
   removeGroup,
   getWeekPlanAssignedMenuDetails,
 } = require("../controllers/weekPlanController");
+const checkWeekPlanMenu = require("../middlewares/checkWeekPlanMenu");
 
 // Apply authentication middleware to all routes below this line
 router.use(authMiddleware);
@@ -38,10 +38,7 @@ router.patch("/set-timezone", setUserTimezone);
 router.get("/", getWeekPlanByDateAndCreate);
 
 // Assign menu to week plan
-router.patch(
-  "/:id/assign-menu", // checkPlanFeatures("weekPlans", "meal_week_types_limit"),
-  assignMenu,
-);
+router.patch("/:id/assign-menu", checkWeekPlanMenu, assignMenu);
 
 // Delete assigned menu from week plan
 router.delete("/delete-menu", deleteAssignedMenu);

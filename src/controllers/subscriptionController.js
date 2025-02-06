@@ -14,12 +14,12 @@ exports.createCustomerPortal = catchAsync(async (req, res, next) => {
 
   // Create a Stripe customer if it doesn't exist
   if (!user.stripeCustomerId) {
+    console.log("Creating stripe customer");
     const customerId = await createStripeCustomerIfNotExists(user);
     user.stripeCustomerId = customerId;
     stripeCustomerId = customerId;
     await user.save();
   }
-
   // Create a customer portal session
   const session = await stripe.billingPortal.sessions.create({
     customer: stripeCustomerId,

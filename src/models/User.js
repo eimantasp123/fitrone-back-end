@@ -108,8 +108,7 @@ const userSchema = new mongoose.Schema({
     messageRead: { type: Boolean, default: false },
     ingredients: { type: Number, default: null },
     meals: { type: Number, default: null },
-    mealWeekTypes: { type: Number, default: null },
-    clients: { type: Number, default: null },
+    weeklyMenus: { type: Number, default: null },
   },
 });
 

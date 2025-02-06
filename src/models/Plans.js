@@ -30,12 +30,17 @@ const plansSchema = new mongoose.Schema({
       required: true,
       default: -1,
     },
-    weekly_plan_limit: {
+    clients_limit: {
       type: Number,
       required: true,
       default: -1,
     },
-    clients_limit: {
+    groups_limit: {
+      type: Number,
+      required: true,
+      default: -1,
+    },
+    week_plan_menu_limit: {
       type: Number,
       required: true,
       default: -1,
@@ -45,22 +50,7 @@ const plansSchema = new mongoose.Schema({
       required: true,
       default: false,
     },
-    business_page: {
-      type: Boolean,
-      required: true,
-      default: false,
-    },
     client_request_form: {
-      type: Boolean,
-      required: true,
-      default: false,
-    },
-    order_management: {
-      type: Boolean,
-      required: true,
-      default: false,
-    },
-    weekly_reports: {
       type: Boolean,
       required: true,
       default: false,

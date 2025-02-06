@@ -31,13 +31,16 @@
     "weekly_menus_limit": "Jūs pasiekėte savo savaitinių meniu limitą {{userLimit}} jūsų '{{userPlanName}}' plane. Atnaujinkite planą, kad galėtumėte valdyti daugiau savaitinių meniu!",
     "weekly_menus_limit_warning": "Jūs artėjate prie savo savaitinių meniu limito {{userLimit}} jūsų '{{userPlanName}}' plane. Jums liko {{remaining}} savaitiniai meniu iki pasiekiant ribą. Atnaujinkite planą, kad galėtumėte valdyti daugiau savaitės meniu!",
 
-    "meal_week_types_limit": "Jūs pasiekėte savo savaitinių patiekalų tipų limitą {{userLimit}} jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte sukurti daugiau tipų!",
     "clients_limit": "Jūs pasiekėte savo klientų limitą {{userLimit}} jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte pridėti daugiau klientų!",
-    "use_ai_search": "AI ingredientų paieška nėra prieinama jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte naudotis šia funkcija.",
-    "business_page": "Verslo puslapio funkcija nėra prieinama jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte sukurti verslo puslapį.",
-    "individual_request_form": "Individualios užklausos formos funkcija nėra prieinama jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte naudotis šia funkcija.",
-    "order_processing_simulations": "Užsakymų apdorojimo simuliacijos nėra prieinamos jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte naudotis šia funkcija.",
-    "weekly_reports": "Savaitinės ataskaitos nėra prieinamos jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte generuoti savaitines ataskaitas."
+    "clients_limit_warning": "Jūs artėjate prie savo klientų limito {{userLimit}} jūsų {{userPlanName}} plane. Jums liko {{remaining}} klientai iki pasiekiant ribą. Atnaujinkite planą, kad galėtumėte pridėti daugiau!",
+
+    "groups_limit": "Jūs pasiekėte savo grupių limitą {{userLimit}} jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte pridėti daugiau grupių!",
+    "groups_limit_warning": "Jūs artėjate prie savo grupių limito {{userLimit}} jūsų {{userPlanName}} plane. Jums liko {{remaining}} grupės iki pasiekiant ribą. Atnaujinkite planą, kad galėtumėte pridėti daugiau!",
+
+    "week_plan_menu_limit": "Jūs pasiekėte savo savaitinio plano meniu limitą {{userLimit}} jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte pridėti daugiau savaitinių planų meniu!",
+    "week_plan_menu_limit_warning": "Jūs artėjate prie savaitinio plano meniu limito {{userLimit}} jūsų {{userPlanName}} plane. Jums liko {{remaining}} savaitiniai planų meniu iki pasiekiant ribą. Atnaujinkite planą, kad galėtumėte pridėti daugiau!",
+
+    "use_ai_search": "AI ingredientų paieška nėra prieinama jūsų {{userPlanName}} plane. Atnaujinkite planą, kad galėtumėte naudotis šia funkcija."
   },
   "weekPlanMessages": {
     "titleStartDateEndDateRequired": "Pavadinimas, pradžios data ir pabaigos data yra privalomi",

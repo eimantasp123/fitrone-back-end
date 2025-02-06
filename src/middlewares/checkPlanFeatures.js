@@ -1,8 +1,9 @@
+const Customer = require("../models/Customer");
+const Group = require("../models/Group");
 const Ingredient = require("../models/Ingredient");
 const Meal = require("../models/Meal");
 const Plans = require("../models/Plans"); // Import Plan model
 const WeeklyMenu = require("../models/WeeklyMenu");
-const WeekPlan = require("../models/WeekPlan");
 const AppError = require("../utils/appError"); // Error handler
 
 // Middleware to check if the user has reached the limit for a specific feature
@@ -31,17 +32,16 @@ const checkPlanFeatures = (resourceType, featureKey) => {
           currentCount = await getUserActiveResources(user._id, Meal);
           break;
 
+        case "customers":
+          currentCount = await Customer.countDocuments({ supplier: user._id });
+          break;
+
         case "weeklyMenus":
           currentCount = await getUserActiveResources(user._id, WeeklyMenu);
           break;
 
-        case "weekPlans":
-          currentCount = await getUserActiveResources(user._id, WeekPlan);
-          break;
-
-        case "clients":
-          // Replace with your Client model logic
-          currentCount = await Client.countDocuments({ userId: user._id });
+        case "groups":
+          currentCount = await Group.countDocuments({ createdBy: user._id });
           break;
 
         default:
@@ -50,7 +50,9 @@ const checkPlanFeatures = (resourceType, featureKey) => {
 
       // Fetch the limit for the specified feature
       const userLimit = userPlan.features[featureKey];
-      console.log("userLimit:", userLimit);
+
+      // Calculate the remaining slots
+      const remainingSlots = userLimit - currentCount;
 
       // Handle "unlimited" case (-1)
       if (userLimit !== -1 && currentCount >= userLimit) {
@@ -64,20 +66,17 @@ const checkPlanFeatures = (resourceType, featureKey) => {
       }
 
       // Optionally warn users when they're close to their limit
-      if (userLimit !== -1 && userLimit - (currentCount + 1) === 3) {
-        console.log("Warning: User is close to the limit", userLimit);
-        console.log("currentCount:", currentCount);
-
+      if (userLimit !== -1 && remainingSlots - 1 <= 3) {
         req.warning = req.t(`featuresMessages.${featureKey}_warning`, {
           userLimit,
           userPlanName,
-          remaining: userLimit - currentCount - 1,
+          remaining: remainingSlots - 1,
         });
       }
 
-      next();
+      return next();
     } catch (err) {
-      next(err);
+      return next(err);
     }
   };
 };

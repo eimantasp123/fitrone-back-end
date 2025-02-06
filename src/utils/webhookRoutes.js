@@ -6,6 +6,7 @@ const { downgradeOrUpgradePlanHandler } = require("../helper/downgradeHelpers");
 const { mapPriceIdToPlan } = require("./generalHelpers");
 const Meal = require("../models/Meal");
 const Ingredient = require("../models/Ingredient");
+const WeeklyMenu = require("../models/WeeklyMenu");
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 const router = express.Router();
 
@@ -148,6 +149,9 @@ async function handleSubscriptionDeletion(subscription) {
 
   // Archive all the user meals
   await Meal.updateMany({ user: user._id }, { $set: { archived: true } });
+
+  // Archive all the user weekly menus
+  await WeeklyMenu.updateMany({ user: user._id }, { $set: { archived: true } });
 
   // Update the user subscription status
   user.archivedData = null;

@@ -11,6 +11,7 @@ const {
   removeCustomerFromGroup,
   getGroup,
 } = require("../controllers/groupsController");
+const checkPlanFeatures = require("../middlewares/checkPlanFeatures");
 const router = express.Router();
 
 // Apply authentication middleware to all routes below this line
@@ -20,7 +21,12 @@ router.use(authMiddleware);
 router.param("groupId", checkIfGroupExists);
 
 // Create a new customer manually
-router.post("/", checkIfGroupExistsWithTitle, createGroup);
+router.post(
+  "/",
+  checkPlanFeatures("groups", "groups_limit"),
+  checkIfGroupExistsWithTitle,
+  createGroup,
+);
 
 // Get all groups created by the user
 router.get("/", getAllGroups);

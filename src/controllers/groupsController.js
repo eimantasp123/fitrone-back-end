@@ -65,11 +65,19 @@ exports.createGroup = catchAsync(async (req, res, next) => {
     createdBy: req.user._id,
   });
 
-  // Send response
-  res.status(200).json({
+  // Response body
+  const responseBody = {
     status: "success",
     message: req.t("groups:groupCreatedSuccessfully"),
-  });
+  };
+
+  // If there is a warning, add it to the response body
+  if (req.warning) {
+    responseBody.warning = req.warning;
+  }
+
+  // Send response
+  res.status(200).json(responseBody);
 });
 
 /**

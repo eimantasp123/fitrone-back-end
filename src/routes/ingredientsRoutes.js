@@ -49,7 +49,7 @@ router.get("/search", getIngredientSearch);
 // Get ingredient info from AI
 router.post(
   "/search-ai",
-  restrictTo({ plans: ["premium"] }),
+  restrictTo({ plans: ["pro", "premium"] }),
   getIngredientInfo,
 );
 

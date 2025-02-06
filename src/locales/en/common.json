@@ -31,13 +31,16 @@
     "weekly_menus_limit": "You have reached your weekly menus limit of {{userLimit}} for your '{{userPlanName}}' plan. Upgrade to manage more weekly menus!",
     "weekly_menus_limit_warning": "You are near your weekly menus limit of {{userLimit}} for your '{{userPlanName}}' plan. You have {{remaining}} weekly menus left before reaching the limit. Upgrade to manage more!",
 
-    "meal_week_types_limit": "You have reached your meal week types limit of {{userLimit}} for your {{userPlanName}} plan. Upgrade to create more meal week types!",
     "clients_limit": "You have reached your clients limit of {{userLimit}} for your {{userPlanName}} plan. Upgrade to add more clients!",
-    "use_ai_search": "AI ingredient search is not available in your {{userPlanName}} plan. Upgrade your plan to access this feature.",
-    "business_page": "The business page feature is not available in your {{userPlanName}} plan. Upgrade your plan to create a business page.",
-    "individual_request_form": "The individual request form feature is not available in your {{userPlanName}} plan. Upgrade your plan to access this feature.",
-    "order_processing_simulations": "Order processing simulations are not available in your {{userPlanName}} plan. Upgrade your plan to access this feature.",
-    "weekly_reports": "Weekly reports are not available in your {{userPlanName}} plan. Upgrade your plan to generate weekly reports."
+    "clients_limit_warning": "You are near your clients limit of {{userLimit}} for your {{userPlanName}} plan. You have {{remaining}} clients left before reaching the limit. Upgrade to add more!",
+
+    "groups_limit": "You have reached your groups limit of {{userLimit}} for your {{userPlanName}} plan. Upgrade to add more groups!",
+    "groups_limit_warning": "You are near your groups limit of {{userLimit}} for your {{userPlanName}} plan. You have {{remaining}} groups left before reaching the limit. Upgrade to add more!",
+
+    "week_plan_menu_limit": "You have reached your week plan menu limit of {{userLimit}} for your {{userPlanName}} plan. Upgrade to add more week plan menus!",
+    "week_plan_menu_limit_warning": "You are near your week plan menu limit of {{userLimit}} for your {{userPlanName}} plan. You have {{remaining}} week plan menus left before reaching the limit. Upgrade to add more!",
+
+    "use_ai_search": "AI ingredient search is not available in your {{userPlanName}} plan. Upgrade your plan to access this feature."
   },
 
   "weekPlanMessages": {

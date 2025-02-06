@@ -1,7 +1,8 @@
 const Plans = require("../models/Plans");
-const mapPriceIdToPlan = require("../utils/generalHelpers");
 const Meal = require("../models/Meal");
 const Ingredient = require("../models/Ingredient");
+const { mapPriceIdToPlan } = require("../utils/generalHelpers");
+const WeeklyMenu = require("../models/WeeklyMenu");
 
 /**
  * Downgrade the user plan functionality based on the plan features
@@ -16,11 +17,16 @@ exports.downgradeOrUpgradePlanHandler = async (user, planId) => {
     // Extract the plans from the database
     const plans = await Plans.find();
 
+    console.log("running downgradeOrUpgradePlanHandler");
+
     // Find the current and new plan
     const userPlan = plans.find((plan) => plan.plan === user.plan);
     const newPlan = plans.find(
       (plan) => plan.plan === mapPriceIdToPlan(planId),
     );
+
+    console.log("userPlan", userPlan);
+    console.log("newPlan", newPlan);
 
     // Ensure both plans exist
     if (!userPlan || !newPlan) {
@@ -38,6 +44,11 @@ exports.downgradeOrUpgradePlanHandler = async (user, planId) => {
         resourceType: "meals",
         model: Meal,
         limitKey: "meals_limit",
+      },
+      {
+        resourceType: "weeklyMenus",
+        model: WeeklyMenu,
+        limitKey: "weekly_menus_limit",
       },
     ];
 

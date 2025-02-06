@@ -107,7 +107,7 @@ customerSchema.methods.createConfirmFormToken = function () {
     .createHash("sha256")
     .update(confirmFormToken)
     .digest("hex");
-  this.confirmFormTokenExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+  this.confirmFormTokenExpires = Date.now() + 1000 * 60 * 60 * 24; // 24 hours
   return confirmFormToken;
 };
 

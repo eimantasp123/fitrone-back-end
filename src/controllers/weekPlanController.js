@@ -107,6 +107,8 @@ exports.assignMenu = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const { menus } = req.body;
 
+  console.log("req.body", req.body.menus);
+
   // Check if id is valid
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return next(
@@ -190,11 +192,27 @@ exports.assignMenu = catchAsync(async (req, res, next) => {
   // Save week plan
   await weekPlan.save();
 
-  // Send response
-  res.status(200).json({
+  // Response body
+  const responseBody = {
     status: "success",
     message: req.t("weekPlan:messages.weekPlanUpdated"),
-  });
+  };
+
+  console.log("req", req.warning);
+  // Add warning if any warning is set
+  if (req.warning) {
+    console.log("req.warning", req.warning);
+    responseBody.warning = req.warning;
+  }
+
+  // Add warning if any warning is set for multiple menus
+  if (req.warning_multiple) {
+    console.log("req.warning_multiple", req.warning_multiple);
+    responseBody.warning_multiple = req.warning_multiple;
+  }
+
+  // Send response
+  res.status(200).json(responseBody);
 });
 
 /**
@@ -446,6 +464,8 @@ exports.assignClients = catchAsync(async (req, res, next) => {
     }
   });
 
+  console.log("clientsDB", clientsDB);
+
   // If clients are already assigned to week plan menu, return error
   if (assignedClientsResponse.length > 0) {
     console.log("assignedClientsResponse", assignedClientsResponse);
@@ -474,13 +494,15 @@ exports.assignClients = catchAsync(async (req, res, next) => {
       if (
         menu.assignedGroups.length > 0 &&
         menu.assignedGroups.some((group) =>
-          group.members.some((member) => member.equals(client._id)),
+          group.members.some((_id) => _id.equals(client._id)),
         )
       ) {
         alreadyAssignedGroupMembers.push({
           firstName: client.firstName,
           lastName: client.lastName,
-          group: menu.assignedGroups[0].title,
+          group: menu.assignedGroups.find((group) =>
+            group.members.some((_id) => _id.equals(client._id)),
+          ).title,
           menu: menu.menu.title,
         });
       }

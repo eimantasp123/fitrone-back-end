@@ -3,7 +3,6 @@ require("dotenv").config(); // Load environment variables
 // Require dependencies
 const express = require("express");
 const cors = require("cors");
-const cron = require("node-cron");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
@@ -23,8 +22,6 @@ const authRoutes = require("./routes/authRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 const feedbackRoutes = require("./routes/feedbackRoutes");
 const mealsRoutes = require("./routes/mealsRoutes");
-const User = require("./models/User");
-const Customer = require("./models/Customer");
 const AppError = require("./utils/appError");
 const globalErrorHandler = require("./controllers/errorController");
 const supportRoutes = require("./routes/supportRoutes");
@@ -148,6 +145,10 @@ app.use("/api/v1/feedback", feedbackRoutes);
 //
 app.use("/api/v1/meal-plan", mealPlanRoutes);
 
+// Cron jobs
+require("./crons/updateWeekPlanAndSetToExpired");
+require("./crons/cleanupDatabase");
+
 // Error handling for invalid routes
 app.all("*", (req, res, next) => {
   next(
@@ -169,54 +170,5 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server is running on http://0.0.0.0:${PORT}`);
 });
-
-// Cleanup expired two-factor codes and reset password tokens every hour
-cron.schedule(
-  "0 0 * * * *",
-  async () => {
-    try {
-      // Remove two-factor codes and expires for users with expired codes
-      await User.updateMany(
-        { twoFactorExpires: { $lt: new Date() } },
-        { $unset: { twoFactorCode: null, twoFactorExpires: null } },
-      );
-      // Remove reset password tokens and expires for users with expired tokens
-      await User.updateMany(
-        { resetPasswordExpires: { $lt: new Date() } },
-        {
-          $unset: {
-            resetPasswordToken: null,
-            resetPasswordExpires: null,
-          },
-        },
-      );
-      // Remove email verification codes and expires for users with expired codes
-      await User.updateMany(
-        { emailVerificationExpires: { $lt: new Date() } },
-        {
-          $unset: {
-            emailVerificationCode: null,
-            emailVerificationExpires: null,
-          },
-        },
-      );
-      // Remove token from customers
-      await Customer.updateMany(
-        { confirmFormTokenExpires: { $lt: new Date() } },
-        {
-          $unset: {
-            confirmFormToken: null,
-            tokenExpconfirmFormTokenExpiresires: null,
-          },
-        },
-      );
-    } catch (error) {
-      console.error("Error during cleanup:", error);
-    }
-  },
-  {
-    timezone: "UTC",
-  },
-);
 
 module.exports = app;

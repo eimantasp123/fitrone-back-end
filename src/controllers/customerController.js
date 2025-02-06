@@ -58,10 +58,18 @@ exports.createCustomerManually = catchAsync(async (req, res, next) => {
     ...validateDate,
   });
 
-  res.status(201).json({
+  // Response message
+  const responseData = {
     status: "success",
     message: req.t("customers:customerCreated"),
-  });
+  };
+
+  // If there is a warning, add it to the response
+  if (req.warning) {
+    responseData.warning = req.warning;
+  }
+
+  res.status(201).json(responseData);
 });
 
 /**
@@ -174,10 +182,18 @@ exports.sendFormToCustomer = catchAsync(async (req, res, next) => {
     process.env.EMAIL_SQS_SEND_FORM_TO_CUSTOMER_URL,
   );
 
-  res.status(200).json({
+  // Response message
+  const responseData = {
     status: "success",
     message: req.t("customers:formSendSuccessfully"),
-  });
+  };
+
+  // If there is a warning, add it to the response
+  if (req.warning) {
+    responseData.warning = req.warning;
+  }
+
+  res.status(201).json(responseData);
 });
 
 /**
