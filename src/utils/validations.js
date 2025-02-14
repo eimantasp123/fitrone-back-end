@@ -1,4 +1,5 @@
 const yup = require("yup");
+const { addIssueToContext } = require("zod");
 // Validation Schema
 const updateCustomerSchema = yup.object({
   firstName: yup.string().required("First name is required"),
@@ -14,6 +15,7 @@ const updateCustomerSchema = yup.object({
     .number()
     .required("Weight is required")
     .positive("Invalid weight"),
+  additionalInfo: yup.string().nullable(), // Optional field
   weightGoal: yup.number().nullable(), // Optional field
   gender: yup.string().required("Gender is required"),
   foodAllergies: yup.string().nullable(), // Optional field

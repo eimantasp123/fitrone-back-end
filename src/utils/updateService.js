@@ -1,6 +1,7 @@
 const { roundTo } = require("../helper/roundeNumber");
 const Ingredient = require("../models/Ingredient");
 const Meal = require("../models/Meal");
+const WeekPlan = require("../models/WeekPlan");
 const AppError = require("./appError");
 const { sendMessageToClients } = require("./websocket");
 

@@ -1,10 +1,11 @@
 {
   "informationUpdated": "Information updated successfully.",
-  "supportMessageSent": "Your  request has been sent to the support team. You will be contacted soon.",
+  "supportMessageSent": "Your request has been sent to the support team. You will be contacted soon.",
   "feedbackMessageSent": "Thank you for your feedback!",
 
   "error": {
     "missingMessageOrSubject": "Please provide message and subject.",
+    "missingMessageOrSystemProblem": "Please provide message or select system problem.",
     "missingCommentAndRating": "Please provide a comment and rating.",
     "tokenNotExists": "The user belonging to this token does no longer exist.",
     "changePasswordLoginAgain": "User recently changed password! Please log in again.",

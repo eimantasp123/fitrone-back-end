@@ -33,7 +33,10 @@ const checkPlanFeatures = (resourceType, featureKey) => {
           break;
 
         case "customers":
-          currentCount = await Customer.countDocuments({ supplier: user._id });
+          currentCount = await Customer.countDocuments({
+            supplier: user._id,
+            deletedAt: null,
+          });
           break;
 
         case "weeklyMenus":
@@ -83,7 +86,7 @@ const checkPlanFeatures = (resourceType, featureKey) => {
 
 // Helper function to check the number of active resources for a user
 const getUserActiveResources = async (userId, model) => {
-  const data = await model.find({ user: userId });
+  const data = await model.find({ user: userId, deletedAt: null });
   if (data && data.length > 0) {
     return data.filter((d) => !d.archived).length;
   } else {

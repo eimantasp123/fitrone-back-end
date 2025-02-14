@@ -6,13 +6,11 @@ const {
   setUserTimezone,
   assignMenu,
   assignClients,
-  assignGroup,
   getWeekPlanByDateAndCreate,
   deleteAssignedMenu,
   managePublishMenu,
   checkWeekPlanAndMenuAssigned,
   removeClient,
-  removeGroup,
   getWeekPlanAssignedMenuDetails,
 } = require("../controllers/weekPlanController");
 const checkWeekPlanMenu = require("../middlewares/checkWeekPlanMenu");
@@ -57,10 +55,10 @@ router.patch(
 router.patch("/:id/remove-client", checkWeekPlanAndMenuAssigned, removeClient);
 
 // Assign group to week plan
-router.patch("/:id/assign-group", checkWeekPlanAndMenuAssigned, assignGroup);
+// router.patch("/:id/assign-group", checkWeekPlanAndMenuAssigned, assignGroup);
 
 // Remove group from week plan
-router.patch("/:id/remove-group", checkWeekPlanAndMenuAssigned, removeGroup);
+// router.patch("/:id/remove-group", checkWeekPlanAndMenuAssigned, removeGroup);
 
 // Get week plan menu details
 router.get("/:id/menu-details/:menuId", getWeekPlanAssignedMenuDetails);

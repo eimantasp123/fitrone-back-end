@@ -6,6 +6,7 @@
   "customerDeleted": "Klientas sėkmingai ištrintas",
   "customerStatusUpdated": "Kliento statusas sėkmingai atnaujintas",
   "customerNutritionCalculated": "Medžiagų kiekis sėkmingai apskaičiuotas",
+  "customerMenuQuantityUpdated": "Kliento meniu kiekis sėkmingai atnaujintas",
 
   "customerConfirmationEmail": {
     "subject": "Užpildykite savo maitinimo plano formą",
@@ -25,7 +26,10 @@
     "tokenIsRequired": "Reikalingas tokenas",
     "invalidToken": "Neteisingas arba pasibaigęs tokenas",
     "customerStatusSame": "Kliento statusas jau toks pat",
-    "nutritionCalculationFailed": "Mitybos skaičiavimas nepavyko"
+    "nutritionCalculationFailed": "Mitybos skaičiavimas nepavyko",
+    "customerFormNotSubmitted": "Kliento forma dar nebuvo pateikta, todėl negalima apskaičiuoti mitybos medžiagų kiekio nes trūksta informacijos.",
+    "customerAttachedToGroup": "Klientas priskirtas grupei ir negalima pakeisti meniu kiekio",
+    "customerAttachedToActiveWeekPlan": "Klientas priskirtas aktyviam savaitės planui, todėl negalima atlikti šio veiksmo"
   },
 
   "errors": {

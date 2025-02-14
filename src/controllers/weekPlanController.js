@@ -65,7 +65,6 @@ exports.getWeekPlanByDateAndCreate = catchAsync(async (req, res, next) => {
       path: "assignMenu.assignedClients",
       select: "firstName lastName email",
     },
-    { path: "assignMenu.assignedGroups", select: "title members" },
   ]);
 
   // If week plan is not found and timezone is set, create a new week plan
@@ -394,16 +393,10 @@ exports.getWeekPlanAssignedMenuDetails = catchAsync(async (req, res, next) => {
       "assignMenu.menu": menuId,
     },
     { "assignMenu.$": 1 },
-  ).populate([
-    {
-      path: "assignMenu.assignedGroups",
-      select: "title createdAt",
-    },
-    {
-      path: "assignMenu.assignedClients",
-      select: "firstName lastName email",
-    },
-  ]);
+  ).populate({
+    path: "assignMenu.assignedClients",
+    select: "firstName lastName email",
+  });
 
   if (!weekPlan) {
     return next(
@@ -452,29 +445,34 @@ exports.assignClients = catchAsync(async (req, res, next) => {
 
   // Check if clients are already assigned to week plan menu
   const assignedClientsResponse = [];
-  clientsDB.map((client) => {
-    for (const menu of weekPlan.assignMenu) {
-      if (menu.assignedClients.some((id) => id.equals(client._id))) {
-        assignedClientsResponse.push({
-          firstName: client.firstName,
-          lastName: client.lastName,
-          menu: menu.menu.title,
-        });
-      }
+  //
+  clientsDB.forEach((client) => {
+    let assignedCount = 0;
+
+    weekPlan.assignMenu.forEach((menu) => {
+      // Count how many times the client is already assigned
+      assignedCount += menu.assignedClients.filter((_id) =>
+        _id.equals(client._id),
+      ).length;
+    });
+
+    // If customer has already been assigned to the max quantity, prevent further assignments
+    if (assignedCount >= client.weeklyMenuQuantity) {
+      assignedClientsResponse.push({
+        firstName: client.firstName,
+        lastName: client.lastName,
+        menuQuantity: client.weeklyMenuQuantity,
+      });
     }
   });
 
-  console.log("clientsDB", clientsDB);
-
   // If clients are already assigned to week plan menu, return error
   if (assignedClientsResponse.length > 0) {
-    console.log("assignedClientsResponse", assignedClientsResponse);
-
     const message = assignedClientsResponse
       .map((client) => {
         return req.t("weekPlan:validationErrors.clientAssigned", {
           client: `${transformToUppercaseFirstLetter(client.firstName)} ${transformToUppercaseFirstLetter(client.lastName)}`,
-          menu: client.menu,
+          menuQuantity: client.menuQuantity,
         });
       })
       .join(" ");
@@ -488,54 +486,53 @@ exports.assignClients = catchAsync(async (req, res, next) => {
   }
 
   // Check if clients are assigned to week plan menu or other menus with group assigned
-  const alreadyAssignedGroupMembers = [];
-  clientsDB.map((client) => {
-    for (const menu of weekPlan.assignMenu) {
-      if (
-        menu.assignedGroups.length > 0 &&
-        menu.assignedGroups.some((group) =>
-          group.members.some((_id) => _id.equals(client._id)),
-        )
-      ) {
-        alreadyAssignedGroupMembers.push({
-          firstName: client.firstName,
-          lastName: client.lastName,
-          group: menu.assignedGroups.find((group) =>
-            group.members.some((_id) => _id.equals(client._id)),
-          ).title,
-          menu: menu.menu.title,
-        });
-      }
-    }
-  });
+  // const alreadyAssignedGroupMembers = [];
+  // clientsDB.map((client) => {
+  //   for (const menu of weekPlan.assignMenu) {
+  //     if (
+  //       menu.assignedGroups.length > 0 &&
+  //       menu.assignedGroups.some((group) =>
+  //         group.members.some((_id) => _id.equals(client._id)),
+  //       )
+  //     ) {
+  //       alreadyAssignedGroupMembers.push({
+  //         firstName: client.firstName,
+  //         lastName: client.lastName,
+  //         group: menu.assignedGroups.find((group) =>
+  //           group.members.some((_id) => _id.equals(client._id)),
+  //         ).title,
+  //         menu: menu.menu.title,
+  //       });
+  //     }
+  //   }
+  // });
 
   // If clients are already assigned to week plan menu, return error
-  if (alreadyAssignedGroupMembers.length > 0) {
-    console.log("alreadyAssignedGroupMembers", alreadyAssignedGroupMembers);
+  // if (alreadyAssignedGroupMembers.length > 0) {
+  //   console.log("alreadyAssignedGroupMembers", alreadyAssignedGroupMembers);
 
-    const message = alreadyAssignedGroupMembers
-      .map((client) => {
-        return req.t("weekPlan:validationErrors.clientAssignedToGroup", {
-          client: `${transformToUppercaseFirstLetter(client.firstName)} ${transformToUppercaseFirstLetter(client.lastName)}`,
-          group: client.group,
-        });
-      })
-      .join(" ");
+  //   const message = alreadyAssignedGroupMembers
+  //     .map((client) => {
+  //       return req.t("weekPlan:validationErrors.clientAssignedToGroup", {
+  //         client: `${transformToUppercaseFirstLetter(client.firstName)} ${transformToUppercaseFirstLetter(client.lastName)}`,
+  //         group: client.group,
+  //       });
+  //     })
+  //     .join(" ");
 
-    console.log("message", message);
+  //   console.log("message", message);
 
-    return res.status(200).json({
-      status: "warning",
-      message: req.t("weekPlan:validationErrors.clientsAlreadyAssigned", {
-        clients: message,
-      }),
-    });
-  }
+  //   return res.status(200).json({
+  //     status: "warning",
+  //     message: req.t("weekPlan:validationErrors.clientsAlreadyAssigned", {
+  //       clients: message,
+  //     }),
+  //   });
+  // }
 
   // Assign clients to week plan
   weekPlan.assignMenu.forEach((menu) => {
     if (menu.menu._id.toString() === weeklyMenu._id.toString()) {
-      console.log("push client to menu", weeklyMenu._id);
       menu.assignedClients.push(...clients);
     }
   });
@@ -578,26 +575,28 @@ exports.removeClient = catchAsync(async (req, res, next) => {
     );
   }
 
-  // Check if client is assigned to week plan menu
-  const clientNotAssigned = weekPlan.assignMenu.find((menu) =>
-    menu.assignedClients.some((id) => id.equals(client._id)),
-  );
+  let found = false;
 
-  if (!clientNotAssigned) {
+  // Iterate through week plan menus
+  weekPlan.assignMenu.forEach((menu) => {
+    if (menu.menu._id.toString() === weeklyMenu._id.toString()) {
+      const index = menu.assignedClients.findIndex((_id) =>
+        _id.equals(client._id),
+      );
+      if (index !== -1) {
+        menu.assignedClients.splice(index, 1);
+        found = true;
+      }
+    }
+  });
+
+  if (!found) {
     return next(
       new AppError(req.t("weekPlan:validationErrors.clientNotAssigned"), 400),
     );
   }
 
-  // Remove client from week plan
-  weekPlan.assignMenu.forEach((menu) => {
-    if (menu.menu._id.toString() === weeklyMenu._id.toString()) {
-      menu.assignedClients = menu.assignedClients.filter(
-        (id) => !id.equals(client._id),
-      );
-    }
-  });
-
+  // Save week plan
   await weekPlan.save();
 
   // Send response
@@ -610,136 +609,136 @@ exports.removeClient = catchAsync(async (req, res, next) => {
 /**
  * Assign group to week plan menu
  */
-exports.assignGroup = catchAsync(async (req, res, next) => {
-  const { weekPlan, weeklyMenu, group } = req;
+// exports.assignGroup = catchAsync(async (req, res, next) => {
+//   const { weekPlan, weeklyMenu, group } = req;
 
-  // Check if group is already assigned to current week plan menu
-  const groupAlreadyAssignedOnCurrentMenu = weekPlan.assignMenu.find(
-    (menu) =>
-      menu.menu._id.equals(weeklyMenu._id) &&
-      menu.assignedGroups.some((_id) => _id.equals(group._id)),
-  );
+//   // Check if group is already assigned to current week plan menu
+//   const groupAlreadyAssignedOnCurrentMenu = weekPlan.assignMenu.find(
+//     (menu) =>
+//       menu.menu._id.equals(weeklyMenu._id) &&
+//       menu.assignedGroups.some((_id) => _id.equals(group._id)),
+//   );
 
-  if (groupAlreadyAssignedOnCurrentMenu) {
-    return next(
-      new AppError(
-        req.t("weekPlan:validationErrors.groupAlreadyAssignedOnCurrentMenu"),
-        400,
-      ),
-    );
-  }
+//   if (groupAlreadyAssignedOnCurrentMenu) {
+//     return next(
+//       new AppError(
+//         req.t("weekPlan:validationErrors.groupAlreadyAssignedOnCurrentMenu"),
+//         400,
+//       ),
+//     );
+//   }
 
-  // Check if group is already assigned to other week plan menu
-  const assignedGroup = weekPlan.assignMenu.find((menu) =>
-    menu.assignedGroups.some((_id) => _id.equals(group._id)),
-  );
+//   // Check if group is already assigned to other week plan menu
+//   const assignedGroup = weekPlan.assignMenu.find((menu) =>
+//     menu.assignedGroups.some((_id) => _id.equals(group._id)),
+//   );
 
-  if (assignedGroup) {
-    return next(
-      new AppError(
-        req.t("weekPlan:validationErrors.groupAlreadyAssigned", {
-          group: assignedGroup.menu.title,
-        }),
-        400,
-      ),
-    );
-  }
+//   if (assignedGroup) {
+//     return next(
+//       new AppError(
+//         req.t("weekPlan:validationErrors.groupAlreadyAssigned", {
+//           group: assignedGroup.menu.title,
+//         }),
+//         400,
+//       ),
+//     );
+//   }
 
-  // Check if clients are already assigned to week plan menu
-  const clientAlreadyAssigned = [];
-  group.members.forEach((member) => {
-    for (const menu of weekPlan.assignMenu) {
-      if (
-        menu.assignedClients.some((client) => client._id.equals(member._id))
-      ) {
-        clientAlreadyAssigned.push({
-          firstName: member.firstName,
-          lastName: member.lastName,
-          menu: menu.menu.title,
-        });
-      }
-    }
-  });
+//   // Check if clients are already assigned to week plan menu
+//   const clientAlreadyAssigned = [];
+//   group.members.forEach((member) => {
+//     for (const menu of weekPlan.assignMenu) {
+//       if (
+//         menu.assignedClients.some((client) => client._id.equals(member._id))
+//       ) {
+//         clientAlreadyAssigned.push({
+//           firstName: member.firstName,
+//           lastName: member.lastName,
+//           menu: menu.menu.title,
+//         });
+//       }
+//     }
+//   });
 
-  // If clients are already assigned to week plan menu, return error
-  if (clientAlreadyAssigned.length > 0) {
-    console.log("clientAlreadyAssigned", clientAlreadyAssigned);
-    const message = clientAlreadyAssigned
-      .map((client) => {
-        return req.t("weekPlan:validationErrors.clientAssigned", {
-          client: `${transformToUppercaseFirstLetter(client.firstName)} ${transformToUppercaseFirstLetter(client.lastName)}`,
-          menu: client.menu,
-        });
-      })
-      .join(" ");
+//   // If clients are already assigned to week plan menu, return error
+//   if (clientAlreadyAssigned.length > 0) {
+//     console.log("clientAlreadyAssigned", clientAlreadyAssigned);
+//     const message = clientAlreadyAssigned
+//       .map((client) => {
+//         return req.t("weekPlan:validationErrors.clientAssigned", {
+//           client: `${transformToUppercaseFirstLetter(client.firstName)} ${transformToUppercaseFirstLetter(client.lastName)}`,
+//           menu: client.menu,
+//         });
+//       })
+//       .join(" ");
 
-    console.log("message", message);
+//     console.log("message", message);
 
-    return res.status(200).json({
-      status: "warning",
-      message: req.t("weekPlan:validationErrors.clientsAlreadyAssigned", {
-        clients: message,
-      }),
-    });
-  }
+//     return res.status(200).json({
+//       status: "warning",
+//       message: req.t("weekPlan:validationErrors.clientsAlreadyAssigned", {
+//         clients: message,
+//       }),
+//     });
+//   }
 
-  // Assign group to week plan
-  weekPlan.assignMenu.forEach((menu) => {
-    if (menu.menu._id.toString() === weeklyMenu._id.toString()) {
-      menu.assignedGroups.push(group._id);
-    }
-  });
+//   // Assign group to week plan
+//   weekPlan.assignMenu.forEach((menu) => {
+//     if (menu.menu._id.toString() === weeklyMenu._id.toString()) {
+//       menu.assignedGroups.push(group._id);
+//     }
+//   });
 
-  await weekPlan.save();
+//   await weekPlan.save();
 
-  // Send response
-  res.status(200).json({
-    status: "success",
-    message: req.t("weekPlan:messages.groupAssigned"),
-  });
-});
+//   // Send response
+//   res.status(200).json({
+//     status: "success",
+//     message: req.t("weekPlan:messages.groupAssigned"),
+//   });
+// });
 
 /**
  * Remove group from week plan menu
  */
-exports.removeGroup = catchAsync(async (req, res, next) => {
-  const { weekPlan, weeklyMenu, group } = req;
+// exports.removeGroup = catchAsync(async (req, res, next) => {
+//   const { weekPlan, weeklyMenu, group } = req;
 
-  // Check if group is assigned to week plan menu
-  const groupNotAssigned = weekPlan.assignMenu.find((menu) =>
-    menu.assignedGroups.some((_id) => _id.equals(group._id)),
-  );
+//   // Check if group is assigned to week plan menu
+//   const groupNotAssigned = weekPlan.assignMenu.find((menu) =>
+//     menu.assignedGroups.some((_id) => _id.equals(group._id)),
+//   );
 
-  if (!groupNotAssigned) {
-    return next(
-      new AppError(req.t("weekPlan:validationErrors.groupNotAssigned"), 400),
-    );
-  }
+//   if (!groupNotAssigned) {
+//     return next(
+//       new AppError(req.t("weekPlan:validationErrors.groupNotAssigned"), 400),
+//     );
+//   }
 
-  // Remove group from week plan
-  weekPlan.assignMenu.forEach((menu) => {
-    if (menu.menu._id.toString() === weeklyMenu._id.toString()) {
-      menu.assignedGroups = menu.assignedGroups.filter(
-        (id) => !id.equals(group._id),
-      );
-    }
-  });
+//   // Remove group from week plan
+//   weekPlan.assignMenu.forEach((menu) => {
+//     if (menu.menu._id.toString() === weeklyMenu._id.toString()) {
+//       menu.assignedGroups = menu.assignedGroups.filter(
+//         (id) => !id.equals(group._id),
+//       );
+//     }
+//   });
 
-  await weekPlan.save();
+//   await weekPlan.save();
 
-  // Send response
-  res.status(200).json({
-    status: "success",
-    message: req.t("weekPlan:messages.groupRemoved"),
-  });
-});
+//   // Send response
+//   res.status(200).json({
+//     status: "success",
+//     message: req.t("weekPlan:messages.groupRemoved"),
+//   });
+// });
 
 /**
  * Middleware to check if week plan menu is assigned
  */
 exports.checkWeekPlanAndMenuAssigned = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-  const { menuId, groupId } = req.body;
+  const { menuId } = req.body;
 
   // Check if week plan id is valid
   const weekPlan = await WeekPlan.findOne({
@@ -749,11 +748,6 @@ exports.checkWeekPlanAndMenuAssigned = catchAsync(async (req, res, next) => {
   }).populate([
     { path: "assignMenu.menu", select: "title" },
     { path: "assignMenu.assignedClients", select: "firstName lastName email" },
-    {
-      path: "assignMenu.assignedGroups",
-      select: "title members",
-      populate: { path: "members", select: "firstName lastName email" },
-    },
   ]);
 
   if (!weekPlan) {
@@ -786,26 +780,33 @@ exports.checkWeekPlanAndMenuAssigned = catchAsync(async (req, res, next) => {
     );
   }
 
-  // If group is provided, check if group exists and is not already assigned
-  if (groupId) {
-    // Find does group exists
-    const group = await Group.findOne({
-      createdBy: req.user._id,
-      _id: groupId,
-    }).populate({
-      path: "members",
-      select: "firstName lastName email",
+  if (menuNotExists.published) {
+    return res.status(200).json({
+      status: "warning",
+      message: req.t("weekPlan:validationErrors.menuPublished"),
     });
-
-    // Check if group exists
-    if (!group) {
-      return next(
-        new AppError(req.t("weekPlan:validationErrors.invalidGroup"), 400),
-      );
-    }
-
-    req.group = group;
   }
+
+  // If group is provided, check if group exists and is not already assigned
+  // if (groupId) {
+  //   // Find does group exists
+  //   const group = await Group.findOne({
+  //     createdBy: req.user._id,
+  //     _id: groupId,
+  //   }).populate({
+  //     path: "members",
+  //     select: "firstName lastName email",
+  //   });
+
+  //   // Check if group exists
+  //   if (!group) {
+  //     return next(
+  //       new AppError(req.t("weekPlan:validationErrors.invalidGroup"), 400),
+  //     );
+  //   }
+
+  //   req.group = group;
+  // }
 
   req.weekPlan = weekPlan;
   req.weeklyMenu = weeklyMenu;

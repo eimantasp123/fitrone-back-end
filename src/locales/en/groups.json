@@ -11,6 +11,8 @@
   "validationErrors": {
     "groupAlreadyExists": "Group with this title already exists",
     "groupNotFound": "Group not found",
+    "customerAttachedToWeekPlan": "Customer is attached to an active week plan and cannot be added to the group",
+    "groupAttachedToWeekPlan": "Group is attached to an active week plan and cannot be deleted",
     "notActiveCustomers": "Cannot attach inactive customers. Select only active customers.",
     "customerConflictMessage_one": "{{count}} customer could not be added to the group due to conflicts.",
     "customerConflictMessage_two": "{{count}} customers could not be added to the group due to conflicts.",
@@ -19,7 +21,9 @@
     "details": {
       "alreadyInCurrentGroup": "{{name}} is already in the current group.",
       "alreadyInOtherGroup": "{{name}} is already assigned to another group.",
-      "inactive": "{{name}} is 'inactive' and cannot be added to the group."
+      "inactive": "{{name}} is 'inactive' and cannot be added to the group.",
+      "weeklyMenuQuantity": "{{name}} has a set menu quantity of more than 1 and therefore cannot be added to the group.",
+      "customerAttachedToWeekPlan": "{{name}} is attached to an active week plan menu '{{weekPlan}}' which is in week '{{week}}' and cannot be added to the group."
     }
   }
 }

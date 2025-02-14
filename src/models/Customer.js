@@ -20,6 +20,8 @@ const customerSchema = new mongoose.Schema(
     gender: { type: String, enum: ["male", "female", "transgender", "other"] },
     height: { type: Number },
     weight: { type: Number },
+    additionalInfo: { type: String, default: "", trim: true, lowercase: true },
+    weeklyMenuQuantity: { type: Number, default: 1 },
     fitnessGoal: {
       type: String,
       enum: [
@@ -89,11 +91,12 @@ const customerSchema = new mongoose.Schema(
     },
     latitude: { type: String },
     longitude: { type: String },
-    groupId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Group",
-      default: null,
-    },
+    // groupId: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "Group",
+    //   default: null,
+    // },
+    deletedAt: { type: Date, default: null },
   },
   {
     timestamps: true,
@@ -120,6 +123,9 @@ customerSchema.statics.findByToken = async function (token) {
   });
   return customer;
 };
+
+// Indexes
+customerSchema.index({ supplier: 1 });
 
 const Customer = mongoose.model("Customer", customerSchema);
 module.exports = Customer;

@@ -8,6 +8,12 @@ const groupSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
+    description: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      default: "",
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -24,6 +30,9 @@ const groupSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
+// Indexes
+groupSchema.index({ createdBy: 1, _id: 1 });
 
 const Group = mongoose.model("Group", groupSchema);
 module.exports = Group;

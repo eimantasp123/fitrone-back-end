@@ -2,6 +2,7 @@ const { roundTo } = require("../helper/roundeNumber");
 const Ingredient = require("../models/Ingredient");
 const Meal = require("../models/Meal");
 const WeeklyMenu = require("../models/WeeklyMenu");
+const WeekPlan = require("../models/WeekPlan");
 const AppError = require("./appError");
 const { sendMessageToClients } = require("./websocket");
 
@@ -15,7 +16,7 @@ const DeleteService = {
    */
   async deleteIngredient(ingredientId, req, next) {
     // Find and delete the ingredient
-    const ingredient = await Ingredient.findOneAndDelete({
+    const ingredient = await Ingredient.findOne({
       _id: ingredientId,
       user: req.user._id,
     });
@@ -23,6 +24,9 @@ const DeleteService = {
     if (!ingredient) {
       return next(new AppError(req.t("meals:error.ingredientNotFound"), 404));
     }
+
+    ingredient.deletedAt = new Date();
+    await ingredient.save();
 
     // Find all meals that used the deleted ingredient and update them
     DeleteService.deleteIngredientsFromMeals(ingredientId, req);

@@ -407,21 +407,10 @@ exports.getMeals = catchAsync(async (req, res, next) => {
   const dbQuery = { user: req.user._id, archived: false };
 
   // Add filters if provided
-  if (category) {
-    dbQuery.category = category;
-  }
-
-  if (preference) {
-    dbQuery.preferences = preference;
-  }
-
-  if (restriction) {
-    dbQuery.restrictions = restriction;
-  }
-
-  if (query && query.length > 0) {
-    dbQuery.title = { $regex: query, $options: "i" };
-  }
+  if (category) dbQuery.category = category;
+  if (preference) dbQuery.preferences = preference;
+  if (restriction) dbQuery.restrictions = restriction;
+  if (query && query.length > 0) dbQuery.title = { $regex: query };
 
   // Count the total number of meals and fetch the meals with pagination
   const [total, totalForFetch, meals] = await Promise.all([
@@ -462,21 +451,10 @@ exports.searchMeals = catchAsync(async (req, res, next) => {
   const DbQuery = { user: req.user._id, archived: false };
 
   // Add filters if provided
-  if (category) {
-    DbQuery.category = category;
-  }
-
-  if (preference) {
-    DbQuery.preferences = preference;
-  }
-
-  if (restriction) {
-    DbQuery.restrictions = restriction;
-  }
-
-  if (searchQuery && searchQuery.length > 0) {
-    DbQuery.title = { $regex: searchQuery, $options: "i" };
-  }
+  if (category) DbQuery.category = category;
+  if (preference) DbQuery.preferences = preference;
+  if (restriction) DbQuery.restrictions = restriction;
+  if (searchQuery && searchQuery.length > 0) DbQuery.$text = { $search: query };
 
   // Fetch filtered meals with pagination
   const meals = await Meal.find(DbQuery)

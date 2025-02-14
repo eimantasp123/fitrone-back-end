@@ -8,8 +8,11 @@ const {
   transformToUppercaseFirstLetter,
 } = require("../utils/generalHelpers");
 const { sendMessageToClients } = require("../utils/websocket");
-const Group = require("../models/Group");
+// const Group = require("../models/Group");
 const { calculateDailyNutritionIntake } = require("../utils/healthyHelper");
+// const DeleteService = require("../utils/deleteService");
+// const UpdateService = require("../utils/updateService");
+const WeekPlan = require("../models/WeekPlan");
 
 /**
  * Function to craeat a new customer manually
@@ -343,20 +346,24 @@ exports.deleteCustomer = catchAsync(async (req, res, next) => {
     );
   }
 
+  // Check if customer is attached to any active week plan
+  const activeWeekPlan = await WeekPlan.findOne({
+    user: req.user._id,
+    status: "active",
+    "assignMenu.assignedClients": customerId,
+  });
+
+  if (activeWeekPlan) {
+    return res.status(200).json({
+      status: "warning",
+      message: req.t(
+        "customers:validationErrors.customerAttachedToActiveWeekPlan",
+      ),
+    });
+  }
+
   // Delete the customer
   await customer.deleteOne();
-
-  // Delete the customer from the group
-  await Group.updateOne(
-    {
-      members: customerId,
-    },
-    {
-      $pull: {
-        members: customerId,
-      },
-    },
-  );
 
   res.status(200).json({
     status: "success",
@@ -379,18 +386,9 @@ exports.getAllCustomers = catchAsync(async (req, res, next) => {
   };
 
   // Add preferences, restrictions, and search query to the dbQuery
-  if (preference && preference.length > 0) {
-    dbQuery.preferences = preference;
-  }
-
-  if (status && status.length > 0) {
-    dbQuery.status = status;
-  }
-
-  if (gender && gender.length > 0) {
-    dbQuery.gender = gender;
-  }
-
+  if (preference && preference.length > 0) dbQuery.preferences = preference;
+  if (status && status.length > 0) dbQuery.status = status;
+  if (gender && gender.length > 0) dbQuery.gender = gender;
   if (query && query.length > 0) {
     dbQuery.$or = [
       { firstName: { $regex: query, $options: "i" } },
@@ -407,10 +405,6 @@ exports.getAllCustomers = catchAsync(async (req, res, next) => {
       .limit(parseInt(limit))
       .sort({ createdAt: -1 })
       .select(" -__v -createdAt -updatedAt")
-      .populate({
-        path: "groupId",
-        select: "title",
-      })
       .lean(),
   ]);
 
@@ -457,17 +451,21 @@ exports.changeCustomerStatus = catchAsync(async (req, res, next) => {
 
   // If status is inactive, remove the customer from the group
   if (status === "inactive") {
-    await Group.updateOne(
-      {
-        members: customerId,
-      },
-      {
-        $pull: {
-          members: customerId,
-        },
-      },
-    );
-    customer.groupId = null;
+    // Check if the customer is attached on active week plan
+    const activeWeekPlan = await WeekPlan.findOne({
+      user: req.user._id,
+      status: "active",
+      "assignMenu.assignedClients": customerId,
+    });
+
+    if (activeWeekPlan) {
+      return res.status(200).json({
+        status: "warning",
+        message: req.t(
+          "customers:validationErrors.customerAttachedToActiveWeekPlan",
+        ),
+      });
+    }
   }
 
   customer.status = status;
@@ -476,6 +474,56 @@ exports.changeCustomerStatus = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     message: req.t("customers:customerStatusUpdated"),
+  });
+});
+
+/**
+ * Function to change customer menu quantity
+ */
+exports.changeCustomerMenuQuantity = catchAsync(async (req, res, next) => {
+  const { id: customerId } = req.params;
+  const { menuQuantity } = req.body;
+
+  // Check if customer ID is provided
+  if (!customerId) {
+    return next(
+      new AppError(req.t("customers:validationErrors.customerIdRequired"), 400),
+    );
+  }
+
+  // Find the customer by ID
+  const customer = await Customer.findById(customerId);
+
+  // If customer does not exist, return an error
+  if (!customer) {
+    return next(
+      new AppError(req.t("customers:validationErrors.customerNotFound"), 404),
+    );
+  }
+
+  // Check if customer is attached to any active week plan if yes than throw error and inform supplier that customer is attached to active week plan
+  const activeWeekPlan = await WeekPlan.findOne({
+    user: req.user._id,
+    status: "active",
+    "assignMenu.assignedClients": customerId,
+  });
+
+  if (activeWeekPlan) {
+    return res.status(200).json({
+      status: "warning",
+      message: req.t(
+        "customers:validationErrors.customerAttachedToActiveWeekPlan",
+      ),
+    });
+  }
+
+  // if customer is not attached to any active week plan than change the menu quantity
+  customer.weeklyMenuQuantity = menuQuantity;
+  await customer.save();
+
+  res.status(200).json({
+    status: "success",
+    message: req.t("customers:customerMenuQuantityUpdated"),
   });
 });
 
@@ -499,6 +547,16 @@ exports.calculateRecommendedNutrition = catchAsync(async (req, res, next) => {
   if (!customer) {
     return next(
       new AppError(req.t("customers:validationErrors.customerNotFound"), 404),
+    );
+  }
+
+  // Check customer status
+  if (customer.status === "pending") {
+    return next(
+      new AppError(
+        req.t("customers:validationErrors.customerFormNotSubmitted"),
+        400,
+      ),
     );
   }
 

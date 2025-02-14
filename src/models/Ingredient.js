@@ -49,9 +49,16 @@ const ingredientSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true },
 );
+
+// Indexes
+ingredientSchema.index({ user: 1, _id: 1 });
 
 const Ingredient = mongoose.model("Ingredient", ingredientSchema);
 

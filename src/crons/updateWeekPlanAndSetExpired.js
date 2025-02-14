@@ -5,7 +5,11 @@ const WeeklyMenu = require("../models/WeeklyMenu.js");
 const cron = require("node-cron");
 
 // Cron Job - Runs Every Monday at 14:00 UTC
-cron.schedule("0 14 * * 1", async () => {
+cron.schedule("0 14 * * 1", () => updateWeekPlanAndSetExpired());
+
+// cron.schedule("*/5 * * * * *", async () => updateWeekPlanAndSetExpired());
+
+const updateWeekPlanAndSetExpired = async () => {
   // Get the current year and week number in UTC time
   const now = new Date();
   const currentYear = getYear(now);
@@ -19,6 +23,7 @@ cron.schedule("0 14 * * 1", async () => {
 
   try {
     // Expire Week Plans from the last 4 weeks only
+    console.log("Expire Week Plans from the last 4 weeks only");
     await WeekPlan.updateMany(
       {
         $or: [
@@ -32,6 +37,8 @@ cron.schedule("0 14 * * 1", async () => {
       },
       { $set: { status: "expired", isSnapshot: true } },
     );
+
+    console.log("Remove expired weeks from WeeklyMenu");
 
     // Remove expired weeks from WeeklyMenu
     await WeeklyMenu.updateMany(
@@ -64,12 +71,16 @@ cron.schedule("0 14 * * 1", async () => {
       },
     );
 
+    console.log("Set inactive for menus with empty activeWeeks");
+
     // Set `inactive` for menus with empty `activeWeeks`
     await WeeklyMenu.updateMany(
       { activeWeeks: { $size: 0 } }, // If `activeWeeks` array is now empty
       { $set: { status: "inactive" } },
     );
+
+    console.log("WeekPlan expiration completed");
   } catch (error) {
     console.error("Error during cleanup for weekPlan expiration:", error);
   }
-});
+};

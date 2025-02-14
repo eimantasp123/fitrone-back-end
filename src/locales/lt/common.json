@@ -5,6 +5,7 @@
 
   "error": {
     "missingMessageOrSubject": "Prašome pateikti žinutę ir temą",
+    "missingMessageOrSystemProblem": "Prašome pateikti žinutę arba pasirinkti sistemos problemą",
     "missingCommentAndRating": "Prašome įvertinti ir palikti komentarą",
     "tokenNotExists": "Šiam žetonui priklausantis vartotojas daugiau neegzistuoja.",
     "changePasswordLoginAgain": "Vartotojas neseniai pakeitė slaptažodį! Prašome prisijungti iš naujo.",

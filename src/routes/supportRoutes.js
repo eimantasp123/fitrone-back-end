@@ -12,4 +12,7 @@ router.use(authMiddleware);
 // Route to submit a support request
 router.post("/", supportController.support);
 
+// Route to submit a support request for system problems
+router.post("/system-problem", supportController.systemSupport);
+
 module.exports = router;

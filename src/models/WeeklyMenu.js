@@ -111,12 +111,17 @@ const WeeklyMenuSchema = new mongoose.Schema(
         ],
       },
     ],
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true },
 );
 
-// Define a compound index to ensure unique titles per user
+// Indexes
 WeeklyMenuSchema.index({ title: 1, user: 1 }, { unique: true });
+WeeklyMenuSchema.index({ user: 1, _id: 1 });
 
 // Automatically exclude __v and user when converting to JSON
 WeeklyMenuSchema.set("toJSON", {

@@ -11,6 +11,8 @@
   "validationErrors": {
     "groupAlreadyExists": "Grupė su tokiu pavadinimu jau egzistuoja",
     "groupNotFound": "Grupė nerasta",
+    "customerAttachedToWeekPlan": "Klientas priskirtas aktyviam savaitės planui ir negali būti pridėtas prie grupės",
+    "groupAttachedToWeekPlan": "Grupė priskirta aktyviam savaitės planui ir negali būti ištrinta",
     "notActiveCustomers": "Negalima pridėti neaktyvių klientų. Pasirinkite tik aktyvius klientus.",
     "customerConflictMessage_one": "{{count}} klientas negali būti pridėtas prie grupės dėl konfliktų.",
     "customerConflictMessage_two": "{{count}} klientai negali būti pridėti prie grupės dėl konfliktų.",
@@ -19,7 +21,9 @@
     "details": {
       "alreadyInCurrentGroup": "{{name}} jau yra šioje grupėje.",
       "alreadyInOtherGroup": "{{name}} jau priskirtas kitai grupei.",
-      "inactive": "{{name}} yra 'neaktyvus' ir negali būti pridėtas prie grupės."
+      "inactive": "{{name}} yra 'neaktyvus' ir negali būti pridėtas prie grupės.",
+      "weeklyMenuQuantity": "{{name}} nustatytas meniu kiekis yra daugiau nei 1 todėl negali būti pridėtas prie grupės.",
+      "customerAttachedToWeekPlan": "{{name}} priskirtas aktyviam savaitės plano meniu '{{weekPlan}}' kuris yra '{{week}}' savaitėje ir negali būti pridėtas prie grupės."
     }
   }
 }

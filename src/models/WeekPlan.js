@@ -25,12 +25,12 @@ const weekPlanSchema = new mongoose.Schema(
           type: Boolean,
           default: false,
         },
-        assignedGroups: [
-          {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Group",
-          },
-        ],
+        // assignedGroups: [
+        //   {
+        //     type: mongoose.Schema.Types.ObjectId,
+        //     ref: "Group",
+        //   },
+        // ],
         assignedClients: [
           {
             type: mongoose.Schema.Types.ObjectId,
@@ -51,6 +51,9 @@ const weekPlanSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+// Indexes
+weekPlanSchema.index({ user: 1, _id: 1 });
 
 const WeekPlan = mongoose.model("WeekPlan", weekPlanSchema);
 module.exports = WeekPlan;

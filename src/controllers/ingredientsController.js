@@ -126,6 +126,7 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
   const ingredients = await Ingredient.find({
     user: req.user._id,
     [`title.${lang}`]: title.toLowerCase(),
+    deletedAt: null,
   });
 
   const ingredientMatches = ingredients.filter(
@@ -203,6 +204,7 @@ exports.getIngredients = catchAsync(async (req, res, next) => {
   const dbQuery = {
     user: req.user._id,
     archived: { $ne: true },
+    deletedAt: null,
   };
 
   // Check if the query parameter is provided
@@ -236,6 +238,7 @@ exports.getIngredients = catchAsync(async (req, res, next) => {
   const total = await Ingredient.countDocuments({
     user: req.user._id,
     archived: { $ne: true },
+    deletedAt: null,
   });
 
   // Send the response
@@ -295,6 +298,7 @@ exports.updateIngredient = catchAsync(async (req, res, next) => {
     user: req.user._id,
     [`title.${lang}`]: title.toLowerCase(),
     _id: { $ne: ingredientId },
+    deletedAt: null,
   });
 
   // Check if the ingredient title already exists in the user ingredient document
@@ -350,6 +354,7 @@ exports.getIngredientSearch = catchAsync(async (req, res, next) => {
     user: req.user._id,
     [`title.${lang}`]: { $regex: regex }, // Dynamically match language-specific title
     archived: { $ne: true },
+    deletedAt: null,
   });
 
   // Map the results to the desired format
@@ -400,6 +405,7 @@ exports.getIngredientNutrition = catchAsync(async (req, res, next) => {
   const ingredient = await Ingredient.findOne({
     _id: ingredientId,
     user: req.user._id,
+    deletedAt: null,
   });
 
   // Check if the ingredient exists

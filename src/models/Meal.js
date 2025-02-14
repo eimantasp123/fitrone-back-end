@@ -118,11 +118,28 @@ const mealSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
   },
 );
+
+// Indexes
+mealSchema.index({
+  user: 1,
+  archived: 1,
+  createdAt: -1,
+});
+mealSchema.index({ category: 1 });
+mealSchema.index({ restrictions: 1 });
+mealSchema.index({ preferences: 1 });
+
+// Text index for searching by title
+mealSchema.index({ title: "text" });
 
 const Meal = mongoose.model("Meal", mealSchema);
 

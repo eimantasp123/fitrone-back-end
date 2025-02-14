@@ -10,6 +10,7 @@ const {
   getAllCustomers,
   changeCustomerStatus,
   calculateRecommendedNutrition,
+  changeCustomerMenuQuantity,
 } = require("../controllers/customerController");
 const checkPlanFeatures = require("../middlewares/checkPlanFeatures");
 const { restrictTo } = require("../controllers/authController");
@@ -54,6 +55,9 @@ router.get("/", getAllCustomers);
 
 // Change customer status
 router.patch("/:id/change-status", changeCustomerStatus);
+
+// Change customer menu quantity
+router.patch("/:id/change-menu-quantity", changeCustomerMenuQuantity);
 
 // Calculate nutrition for a customer
 router.post("/:id/calculate-nutrition", calculateRecommendedNutrition);

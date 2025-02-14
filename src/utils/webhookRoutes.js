@@ -145,13 +145,22 @@ async function handleSubscriptionDeletion(subscription) {
   }
 
   // Archive all the user ingredients
-  await Ingredient.updateMany({ user: user._id }, { $set: { archived: true } });
+  await Ingredient.updateMany(
+    { user: user._id, deletedAt: null },
+    { $set: { archived: true } },
+  );
 
   // Archive all the user meals
-  await Meal.updateMany({ user: user._id }, { $set: { archived: true } });
+  await Meal.updateMany(
+    { user: user._id, deletedAt: null },
+    { $set: { archived: true } },
+  );
 
   // Archive all the user weekly menus
-  await WeeklyMenu.updateMany({ user: user._id }, { $set: { archived: true } });
+  await WeeklyMenu.updateMany(
+    { user: user._id, deletedAt: null },
+    { $set: { archived: true } },
+  );
 
   // Update the user subscription status
   user.archivedData = null;

@@ -138,7 +138,7 @@ exports.downgradeOrUpgradePlanHandler = async (user, planId) => {
  *  Fetch active and archived resources
  */
 async function getResources(model, userId) {
-  const resources = await model.find({ user: userId });
+  const resources = await model.find({ user: userId, deletedAt: null });
   return {
     activeResources: resources.filter((res) => !res.archived),
     archivedResources: resources.filter((res) => res.archived),
@@ -170,7 +170,7 @@ async function unarchiveResources(model, resourceIds) {
  */
 async function unarchiveAllResources(model, userId) {
   await model.updateMany(
-    { user: userId, archived: true },
+    { user: userId, archived: true, deletedAt: null },
     { $set: { archived: false } },
   );
 }

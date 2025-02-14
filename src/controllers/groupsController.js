@@ -3,6 +3,7 @@ const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const Customer = require("../models/Customer");
 const { transformToUppercaseFirstLetter } = require("../utils/generalHelpers");
+const WeekPlan = require("../models/WeekPlan");
 
 /**
  * Middleware to check if the group exists
@@ -57,11 +58,12 @@ exports.checkIfGroupExistsWithTitle = catchAsync(async (req, res, next) => {
  * Function to create a new group
  */
 exports.createGroup = catchAsync(async (req, res, next) => {
-  const { title } = req.body;
+  const { title, description } = req.body;
 
   // Create a new group
   await Group.create({
     title: title,
+    description: description || "",
     createdBy: req.user._id,
   });
 
@@ -86,7 +88,7 @@ exports.createGroup = catchAsync(async (req, res, next) => {
 exports.getAllGroups = catchAsync(async (req, res, next) => {
   // Find all groups created by the user
   const groups = await Group.find({ createdBy: req.user._id })
-    .select("title createdAt")
+    .select("title createdAt description")
     .sort("-createdAt")
     .lean();
 
@@ -127,6 +129,22 @@ exports.getGroup = catchAsync(async (req, res, next) => {
 exports.deleteGroup = catchAsync(async (req, res, next) => {
   const { groupId } = req.params;
 
+  // Check does group is attached to any active week plan
+  const weekPlans = await WeekPlan.find({
+    user: req.user._id,
+    status: "active",
+    "assignMenu.assignedGroups": groupId,
+  });
+
+  if (weekPlans.length > 0) {
+    return next(
+      new AppError(
+        req.t("groups:validationErrors.groupAttachedToWeekPlan"),
+        400,
+      ),
+    );
+  }
+
   // Remove groupId from all customers
   await Customer.updateMany({ groupId: groupId }, { $set: { groupId: null } });
 
@@ -145,10 +163,13 @@ exports.deleteGroup = catchAsync(async (req, res, next) => {
  */
 exports.updateGroup = catchAsync(async (req, res, next) => {
   const { groupId } = req.params;
-  const { title } = req.body;
+  const { title, description } = req.body;
 
   // Update the group title
-  await Group.updateOne({ _id: groupId }, { title: title });
+  await Group.updateOne(
+    { _id: groupId },
+    { title: title, description: description || "" },
+  );
 
   // Send response
   res.status(200).json({
@@ -172,8 +193,9 @@ exports.attachMembersToGroup = catchAsync(async (req, res, next) => {
       { groupId: groupId },
       { groupId: { $ne: null } },
       { status: { $ne: "active" } },
+      { weeklyMenuQuantity: { $gt: 1 } },
     ],
-  }).select("firstName lastName groupId status");
+  }).select("firstName lastName groupId status weeklyMenuQuantity");
 
   // If there are any conflict customers, return a warning
   if (conflictCustomers.length > 0) {
@@ -198,6 +220,11 @@ exports.attachMembersToGroup = catchAsync(async (req, res, next) => {
           name,
         });
       }
+      if (customer.weeklyMenuQuantity > 1) {
+        return req.t("groups:validationErrors.details.weeklyMenuQuantity", {
+          name,
+        });
+      }
     });
 
     return res.status(200).json({
@@ -206,6 +233,60 @@ exports.attachMembersToGroup = catchAsync(async (req, res, next) => {
         count: conflictCustomers.length,
       }),
       details: conflictDetails,
+    });
+  }
+
+  // Check if some customers are already attached to active week plan if yes then return warning message with details
+  const weekPlans = await WeekPlan.find({
+    user: req.user._id,
+    status: "active",
+    "assignMenu.assignedClients": { $in: customers },
+  }).populate({
+    path: "assignMenu.menu",
+    select: "title",
+  });
+
+  if (weekPlans.length > 0) {
+    let details = [];
+
+    await Promise.all(
+      weekPlans.map(async (weekPlan) => {
+        await Promise.all(
+          weekPlan.assignMenu.map(async (menu) => {
+            await Promise.all(
+              menu.assignedClients.map(async (client) => {
+                // Check if client is included in the customers array
+                if (customers.includes(client.toString())) {
+                  console.log("client included", client);
+
+                  // Fetch customer details
+                  const customer = await Customer.findOne({ _id: client });
+                  if (!customer) return;
+
+                  // Push message to details array
+                  details.push(
+                    req.t(
+                      "groups:validationErrors.details.customerAttachedToWeekPlan",
+                      {
+                        name: `${transformToUppercaseFirstLetter(customer.firstName)} ${transformToUppercaseFirstLetter(customer.lastName)}`,
+                        weekPlan: menu.menu.title,
+                        week: weekPlan.weekNumber,
+                      },
+                    ),
+                  );
+                }
+              }),
+            );
+          }),
+        );
+      }),
+    );
+
+    // Send response with warning message and details
+    return res.status(200).json({
+      status: "warning",
+      message: req.t("groups:validationErrors.customerAttachedToWeekPlan"),
+      details,
     });
   }
 
