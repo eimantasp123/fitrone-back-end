@@ -29,7 +29,7 @@
     "nutritionCalculationFailed": "Nutrition calculation failed",
     "customerFormNotSubmitted": "Customer form has not been submitted yet, so nutrition intake cannot be calculated due to missing information.",
     "customerAttachedToGroup": "Customer is attached to a group and menu quantity cannot be changed",
-    "customerAttachedToActiveWeekPlan": "Customer is attached to an active week plan therefore you cannot perform this action"
+    "customerAttachedToActiveWeeklyPlan": "Customer is attached to an active weekly plan therefore you cannot perform this action"
   },
 
   "errors": {

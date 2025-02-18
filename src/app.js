@@ -25,10 +25,9 @@ const mealsRoutes = require("./routes/mealsRoutes");
 const AppError = require("./utils/appError");
 const globalErrorHandler = require("./controllers/errorController");
 const supportRoutes = require("./routes/supportRoutes");
-const mealPlanRoutes = require("./routes/mealPlanRoutes");
 const subscriptionRoutes = require("./routes/subscriptionRoutes");
 const ingredientsRoutes = require("./routes/ingredientsRoutes");
-const weekPlanRoutes = require("./routes/weekPlanRoutes");
+const weekPlanRoutes = require("./routes/weeklyPlanRoutes");
 const weeklyMenuRoutes = require("./routes/weeklyMenuRoutes");
 const webhookRoutes = require("./utils/webhookRoutes");
 const customerRoutes = require("./routes/customerRoutes");
@@ -50,7 +49,7 @@ i18next
       "profile",
       "meals",
       "weeklyMenu",
-      "weekPlan",
+      "weeklyPlan",
       "customers",
       "groups",
     ],
@@ -134,7 +133,7 @@ app.use(cookieParser());
 // Routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/profile", profileRoutes);
-app.use("/api/v1/week-plan", weekPlanRoutes);
+app.use("/api/v1/weekly-plan", weekPlanRoutes);
 app.use("/api/v1/weekly-menu", weeklyMenuRoutes);
 app.use("/api/v1/meals", mealsRoutes);
 app.use("/api/v1/ingredients", ingredientsRoutes);
@@ -144,13 +143,10 @@ app.use("/api/v1/customers", customerRoutes);
 app.use("/api/v1/orders", ordersRoutes);
 app.use("/api/v1/support", supportRoutes);
 app.use("/api/v1/feedback", feedbackRoutes);
-//
-app.use("/api/v1/meal-plan", mealPlanRoutes);
 
 // Cron jobs
-require("./crons/updateWeekPlanAndSetExpired");
+require("./crons/updateWeeklyPlanAndSetExpired");
 require("./crons/cleanupDatabase");
-require("./crons/updateWeekPlanAndRemoveCustomersOrGroups");
 
 // Error handling for invalid routes
 app.all("*", (req, res, next) => {

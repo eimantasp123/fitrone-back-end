@@ -8,13 +8,18 @@ const {
   deleteCustomer,
   updateCustomer,
   getAllCustomers,
-  changeCustomerStatus,
+  changeCustomerStatusToInactive,
+  changeCustomerStatusToActive,
   calculateRecommendedNutrition,
   changeCustomerMenuQuantity,
+  checkDoesCustomerExistInWeeklyPlan,
 } = require("../controllers/customerController");
 const checkPlanFeatures = require("../middlewares/checkPlanFeatures");
 const { restrictTo } = require("../controllers/authController");
 const router = express.Router();
+
+// Confirm customer form
+router.post("/confirm-form/:token", confirmCustomerForm);
 
 // Apply authentication middleware to all routes below this line
 router.use(authMiddleware);
@@ -41,9 +46,6 @@ router.post(
   resendFormToCustomer,
 );
 
-// Confirm customer form
-router.post("/confirm-form/:token", confirmCustomerForm);
-
 // Delete a customer
 router.delete("/:id", deleteCustomer);
 
@@ -53,8 +55,20 @@ router.put("/:id", updateCustomer);
 // Get all customers
 router.get("/", getAllCustomers);
 
-// Change customer status
-router.patch("/:id/change-status", changeCustomerStatus);
+// Change customer status to inactive
+router.patch(
+  "/:id/change-status/inactive",
+  checkDoesCustomerExistInWeeklyPlan,
+  changeCustomerStatusToInactive,
+);
+
+// Change customer status to active
+router.patch(
+  "/:id/change-status/active",
+  checkPlanFeatures("customers", "clients_limit"),
+  checkDoesCustomerExistInWeeklyPlan,
+  changeCustomerStatusToActive,
+);
 
 // Change customer menu quantity
 router.patch("/:id/change-menu-quantity", changeCustomerMenuQuantity);

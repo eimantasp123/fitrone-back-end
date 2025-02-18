@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const weekPlanSchema = new mongoose.Schema(
+const weeklyPlanSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
@@ -21,16 +21,14 @@ const weekPlanSchema = new mongoose.Schema(
           type: mongoose.Schema.Types.ObjectId,
           ref: "WeeklyMenu",
         },
+        menuSnapshot: {
+          type: Object,
+          default: null,
+        },
         published: {
           type: Boolean,
           default: false,
         },
-        // assignedGroups: [
-        //   {
-        //     type: mongoose.Schema.Types.ObjectId,
-        //     ref: "Group",
-        //   },
-        // ],
         assignedClients: [
           {
             type: mongoose.Schema.Types.ObjectId,
@@ -53,7 +51,7 @@ const weekPlanSchema = new mongoose.Schema(
 );
 
 // Indexes
-weekPlanSchema.index({ user: 1, _id: 1 });
+weeklyPlanSchema.index({ user: 1, _id: 1 });
 
-const WeekPlan = mongoose.model("WeekPlan", weekPlanSchema);
-module.exports = WeekPlan;
+const WeeklyPlan = mongoose.model("WeeklyPlan", weeklyPlanSchema);
+module.exports = WeeklyPlan;

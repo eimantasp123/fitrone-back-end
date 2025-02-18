@@ -13,7 +13,7 @@
   "errors": {
     "titleAlreadyExists": "A weekly menu with this name has already been created.",
     "weeklyMenuNotFound": "Weekly menu not found.",
-    "weeklyMenuActive": "Weekly menu is active and cannot perform this action.",
+    "weeklyMenuActive": "Weekly menu is active therefore this action cannot be performed.",
     "mealNotFoundInDay": "Meal not found in this day.",
     "someMealNotFound": "Some meals were not found.",
     "dayNotFound": "Day not found."

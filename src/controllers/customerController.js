@@ -8,11 +8,8 @@ const {
   transformToUppercaseFirstLetter,
 } = require("../utils/generalHelpers");
 const { sendMessageToClients } = require("../utils/websocket");
-// const Group = require("../models/Group");
 const { calculateDailyNutritionIntake } = require("../utils/healthyHelper");
-// const DeleteService = require("../utils/deleteService");
-// const UpdateService = require("../utils/updateService");
-const WeekPlan = require("../models/WeekPlan");
+const WeeklyPlan = require("../models/WeeklyPlan");
 
 /**
  * Function to craeat a new customer manually
@@ -29,9 +26,10 @@ exports.createCustomerManually = catchAsync(async (req, res, next) => {
   }
 
   // Check if customer with this email already exists
-  let customer = await Customer.findOne({
+  const customer = await Customer.findOne({
     supplier: req.user._id,
     email: req.body.email,
+    deletedAt: null,
   });
 
   if (customer) {
@@ -94,8 +92,12 @@ exports.updateCustomer = catchAsync(async (req, res, next) => {
   }
 
   // Find customer and update provided details
-  const customer = await Customer.findByIdAndUpdate(
-    customerId,
+  const customer = await Customer.findOneAndUpdate(
+    {
+      _id: customerId,
+      supplier: req.user._id,
+      deletedAt: null,
+    },
     {
       $set: validateDate,
     },
@@ -137,13 +139,14 @@ exports.sendFormToCustomer = catchAsync(async (req, res, next) => {
   }
 
   // Check if customer with this email already exists
-  let customer = await Customer.findOne({
+  const customerAlreadyValid = await Customer.findOne({
     supplier: req.user._id,
     email,
+    deletedAt: null,
   });
 
   // If customer already exists, return an error
-  if (customer) {
+  if (customerAlreadyValid) {
     return next(
       new AppError(
         req.t("customers:validationErrors.customerAlreadyExists"),
@@ -153,7 +156,7 @@ exports.sendFormToCustomer = catchAsync(async (req, res, next) => {
   }
 
   // Create a new customer
-  customer = await Customer.create({
+  const customer = await Customer.create({
     supplier: req.user._id,
     email,
     firstName,
@@ -180,6 +183,7 @@ exports.sendFormToCustomer = catchAsync(async (req, res, next) => {
     },
   };
 
+  // Send message to the queue
   await sendMessageToQueue(
     messageBody,
     process.env.EMAIL_SQS_SEND_FORM_TO_CUSTOMER_URL,
@@ -213,7 +217,11 @@ exports.resendFormToCustomer = catchAsync(async (req, res, next) => {
   }
 
   // Find the customer by ID
-  const customer = await Customer.findById(customerId);
+  const customer = await Customer.findOne({
+    _id: customerId,
+    supplier: req.user._id,
+    deletedAt: null,
+  });
 
   // If customer does not exist, return an error
   if (!customer) {
@@ -252,11 +260,13 @@ exports.resendFormToCustomer = catchAsync(async (req, res, next) => {
     },
   };
 
+  // Send message to the queue
   await sendMessageToQueue(
     messageBody,
     process.env.EMAIL_SQS_SEND_FORM_TO_CUSTOMER_URL,
   );
 
+  // Response message
   res.status(200).json({
     status: "success",
     message: req.t("customers:formSendSuccessfully"),
@@ -267,6 +277,7 @@ exports.resendFormToCustomer = catchAsync(async (req, res, next) => {
  * Function to confirm form completion
  */
 exports.confirmCustomerForm = catchAsync(async (req, res, next) => {
+  console.log("confirmCustomerForm");
   const { token } = req.params;
   const { recaptchaToken } = req.query;
 
@@ -286,7 +297,7 @@ exports.confirmCustomerForm = catchAsync(async (req, res, next) => {
   }
 
   // Find the customer by token
-  let customer = await Customer.findByToken(token);
+  const customer = await Customer.findByToken(token);
 
   // If customer does not exist, return an error
   if (!customer) {
@@ -337,7 +348,11 @@ exports.deleteCustomer = catchAsync(async (req, res, next) => {
   }
 
   // Find the customer by ID
-  const customer = await Customer.findById(customerId);
+  const customer = await Customer.findOne({
+    _id: customerId,
+    supplier: req.user._id,
+    deletedAt: null,
+  });
 
   // If customer does not exist, return an error
   if (!customer) {
@@ -347,23 +362,24 @@ exports.deleteCustomer = catchAsync(async (req, res, next) => {
   }
 
   // Check if customer is attached to any active week plan
-  const activeWeekPlan = await WeekPlan.findOne({
+  const activeWeeklyPlan = await WeeklyPlan.findOne({
     user: req.user._id,
     status: "active",
     "assignMenu.assignedClients": customerId,
   });
 
-  if (activeWeekPlan) {
+  if (activeWeeklyPlan) {
     return res.status(200).json({
       status: "warning",
       message: req.t(
-        "customers:validationErrors.customerAttachedToActiveWeekPlan",
+        "customers:validationErrors.customerAttachedToActiveWeeklyPlan",
       ),
     });
   }
 
   // Delete the customer
-  await customer.deleteOne();
+  customer.deletedAt = new Date();
+  await customer.save();
 
   res.status(200).json({
     status: "success",
@@ -383,6 +399,7 @@ exports.getAllCustomers = catchAsync(async (req, res, next) => {
   // Query options
   const dbQuery = {
     supplier: req.user._id,
+    deletedAt: null,
   };
 
   // Add preferences, restrictions, and search query to the dbQuery
@@ -398,7 +415,7 @@ exports.getAllCustomers = catchAsync(async (req, res, next) => {
 
   // Get the total number of documents and the documents for the current page
   const [total, totalForFetch, customers] = await Promise.all([
-    Customer.countDocuments({ supplier: req.user._id }),
+    Customer.countDocuments({ supplier: req.user._id, deletedAt: null }),
     Customer.countDocuments(dbQuery),
     Customer.find(dbQuery)
       .skip(skip)
@@ -420,55 +437,33 @@ exports.getAllCustomers = catchAsync(async (req, res, next) => {
 });
 
 /**
- * Function to change customer status
+ * Function to change customer status to active
  */
-exports.changeCustomerStatus = catchAsync(async (req, res, next) => {
-  const { id: customerId } = req.params;
-  const { status } = req.body;
+exports.changeCustomerStatusToActive = catchAsync(async (req, res, next) => {
+  const { customer } = req;
 
-  // Check if customer ID is provided
-  if (!customerId) {
-    return next(
-      new AppError(req.t("customers:validationErrors.customerIdRequired"), 400),
-    );
+  customer.status = "active";
+  await customer.save();
+
+  const messageBody = {
+    status: "success",
+    message: req.t("customers:customerStatusUpdated"),
+  };
+
+  if (req.warning) {
+    messageBody.warning = req.warning;
   }
 
-  // Find the customer by ID
-  const customer = await Customer.findById(customerId);
+  res.status(200).json(messageBody);
+});
 
-  // If customer does not exist, return an error
-  if (!customer) {
-    return next(
-      new AppError(req.t("customers:validationErrors.customerNotFound"), 404),
-    );
-  }
+/**
+ * Function to change customer status to inactive
+ */
+exports.changeCustomerStatusToInactive = catchAsync(async (req, res, next) => {
+  const { customer } = req;
 
-  if (status === customer.status) {
-    return next(
-      new AppError(req.t("customers:validationErrors.customerStatusSame"), 400),
-    );
-  }
-
-  // If status is inactive, remove the customer from the group
-  if (status === "inactive") {
-    // Check if the customer is attached on active week plan
-    const activeWeekPlan = await WeekPlan.findOne({
-      user: req.user._id,
-      status: "active",
-      "assignMenu.assignedClients": customerId,
-    });
-
-    if (activeWeekPlan) {
-      return res.status(200).json({
-        status: "warning",
-        message: req.t(
-          "customers:validationErrors.customerAttachedToActiveWeekPlan",
-        ),
-      });
-    }
-  }
-
-  customer.status = status;
+  customer.status = "inactive";
   await customer.save();
 
   res.status(200).json({
@@ -476,6 +471,48 @@ exports.changeCustomerStatus = catchAsync(async (req, res, next) => {
     message: req.t("customers:customerStatusUpdated"),
   });
 });
+
+/**
+ * Middleware to check if customer is attached to any active weekly plan
+ */
+exports.checkDoesCustomerExistInWeeklyPlan = catchAsync(
+  async (req, res, next) => {
+    const { id: customerId } = req.params;
+
+    // Find the customer by ID
+    const customer = await Customer.findOne({
+      _id: customerId,
+      supplier: req.user._id,
+      deletedAt: null,
+    });
+
+    // If customer does not exist, return an error
+    if (!customer) {
+      return next(
+        new AppError(req.t("customers:validationErrors.customerNotFound"), 404),
+      );
+    }
+
+    // Check if the customer is attached on active week plan
+    const activeWeeklyPlan = await WeeklyPlan.findOne({
+      user: req.user._id,
+      status: "active",
+      "assignMenu.assignedClients": customerId,
+    });
+
+    if (activeWeeklyPlan) {
+      return res.status(200).json({
+        status: "warning",
+        message: req.t(
+          "customers:validationErrors.customerAttachedToActiveWeeklyPlan",
+        ),
+      });
+    }
+
+    req.customer = customer;
+    next();
+  },
+);
 
 /**
  * Function to change customer menu quantity
@@ -492,7 +529,11 @@ exports.changeCustomerMenuQuantity = catchAsync(async (req, res, next) => {
   }
 
   // Find the customer by ID
-  const customer = await Customer.findById(customerId);
+  const customer = await Customer.findOne({
+    _id: customerId,
+    supplier: req.user._id,
+    deletedAt: null,
+  });
 
   // If customer does not exist, return an error
   if (!customer) {
@@ -502,17 +543,17 @@ exports.changeCustomerMenuQuantity = catchAsync(async (req, res, next) => {
   }
 
   // Check if customer is attached to any active week plan if yes than throw error and inform supplier that customer is attached to active week plan
-  const activeWeekPlan = await WeekPlan.findOne({
+  const activeWeeklyPlan = await WeeklyPlan.findOne({
     user: req.user._id,
     status: "active",
     "assignMenu.assignedClients": customerId,
   });
 
-  if (activeWeekPlan) {
+  if (activeWeeklyPlan) {
     return res.status(200).json({
       status: "warning",
       message: req.t(
-        "customers:validationErrors.customerAttachedToActiveWeekPlan",
+        "customers:validationErrors.customerAttachedToActiveWeeklyPlan",
       ),
     });
   }

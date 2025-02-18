@@ -58,7 +58,8 @@ const ingredientSchema = new mongoose.Schema(
 );
 
 // Indexes
-ingredientSchema.index({ user: 1, _id: 1 });
+ingredientSchema.index({ user: 1, _id: 1, deletedAt: 1 });
+ingredientSchema.index({ user: 1, deletedAt: 1 });
 
 const Ingredient = mongoose.model("Ingredient", ingredientSchema);
 

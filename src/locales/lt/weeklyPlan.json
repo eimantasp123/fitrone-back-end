@@ -1,7 +1,7 @@
 {
   "messages": {
     "timezoneSetSuccess": "Laiko juosta sėkmingai nustatyta.",
-    "weekPlanUpdated": "Savaitės planas sėkmingai atnaujintas.",
+    "weeklyPlanUpdated": "Savaitės planas sėkmingai atnaujintas.",
     "menuDeleted": "Meniu sėkmingai ištrintas.",
     "menuPublished": "Meniu sėkmingai publikuotas.",
     "menuUnpublished": "Meniu sėkmingai išpublikuotas.",
@@ -17,12 +17,12 @@
     "timezoneNotYetSet": "Laiko juosta dar nėra nustatyta. Prašome pirmiausia nustatyti laiko juostą.",
     "timezoneRequired": "Laiko juosta yra privaloma.",
     "assignMenuRequired": "Priskirti meniu yra privaloma.",
-    "weekPlanNotFound": "Savaitės planas nerastas.",
+    "weeklyPlanNotFound": "Savaitės planas nerastas.",
     "invalidObjectId": "Invalid object id.",
     "menuNotAssigned": "Meniu nėra priskirtas.",
     "menuAlreadyAssigned": "Meniu jau priskirtas.",
     "menuPublishedAndCanNotBeDeleted": "Meniu yra publikuotas ir negali būti ištrintas.",
-    "weekPlanMenuPublishFieldsAreRequired": "Savaitės plano meniu publikavimo laukai yra privalomi (metai, savaitė, meniu ID ir publikavimo tipas).",
+    "weeklyPlanMenuPublishFieldsAreRequired": "Savaitės plano meniu publikavimo laukai yra privalomi (metai, savaitė, meniu ID ir publikavimo tipas).",
     "clientsRequired": "Klientai yra privalomi.",
     "menuRequired": "Meniu yra privalomas.",
     "menuPublished": "Meniu yra publikuotas ir šis veiksmas neleidžiamas.",
@@ -37,6 +37,6 @@
     "clientNotAssigned": "Klientas nėra priskirtas.",
     "groupNotAssigned": "Grupė nėra priskirta.",
     "groupAlreadyAssignedOnCurrentMenu": "Grupė jau priskirta šiam meniu.",
-    "weekPlanNotFoundOrMenuIsNotAssigned": "Savaitės planas nerastas arba meniu nėra priskirtas."
+    "weeklyPlanNotFoundOrMenuIsNotAssigned": "Savaitės planas nerastas arba meniu nėra priskirtas."
   }
 }

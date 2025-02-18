@@ -8,8 +8,6 @@ const {
   getMeals,
   deleteMeal,
   updateMeal,
-  getMealById,
-  searchMeals,
 } = require("../controllers/mealsController");
 
 const router = express.Router();
@@ -29,10 +27,6 @@ router.use(
   }),
 );
 
-/**
- * Routes for meals
- */
-
 // Route to add a new meal
 router.post(
   "/",
@@ -40,9 +34,6 @@ router.post(
   upload.single("image"),
   addMeal,
 );
-
-// Search meals
-router.get("/search", searchMeals);
 
 // Route to get all meals
 router.get("/", getMeals);

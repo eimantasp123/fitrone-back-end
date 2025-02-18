@@ -13,7 +13,7 @@
   "errors": {
     "titleAlreadyExists": "Savaitinis meniu su tokiu pavadinimu jau yra sukurtas.",
     "weeklyMenuNotFound": "Savaitinis meniu nerastas.",
-    "weeklyMenuActive": "Savaitinis meniu yra aktyvus ir negali atlikti šios veiksmo.",
+    "weeklyMenuActive": "Savaitinis meniu yra aktyvus, todėl negalima atlikti šio veiksmo.",
     "mealNotFoundInDay": "Patiekalas nerastas šioje dienoje.",
     "someMealNotFound": "Kai kurie patiekalai nerasti.",
     "dayNotFound": "Diena nerasta."

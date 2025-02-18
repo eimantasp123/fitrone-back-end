@@ -26,16 +26,15 @@ router.use(
   }),
 );
 
-/**
- * Routes for weekly menu creation and management
- */
-
 // Create a new weekly menu
 router.post(
   "/",
   checkPlanFeatures("weeklyMenus", "weekly_menus_limit"),
   createWeeklyMenu,
 );
+
+// Get all weekly menus
+router.get("/", getAllWeeklyMenus);
 
 // Update the bio of a weekly menu
 router.patch("/:id", updateWeeklyMenuBio);
@@ -55,9 +54,6 @@ router.patch(
 
 // Get a weekly menu by ID
 router.get("/:id", getWeeklyMenuById);
-
-// Get all weekly menus
-router.get("/", getAllWeeklyMenus);
 
 // Add a meal to a weekly menu
 router.post("/:id/meal", addMealsToWeeklyMenu);

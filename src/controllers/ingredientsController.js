@@ -7,7 +7,6 @@ const { default: mongoose } = require("mongoose");
 const Ingredient = require("../models/Ingredient");
 const UpdateService = require("../utils/updateService");
 const { roundTo } = require("../helper/roundeNumber");
-const DeleteService = require("../utils/deleteService");
 
 /**
  * OpenAI API key
@@ -209,7 +208,7 @@ exports.getIngredients = catchAsync(async (req, res, next) => {
 
   // Check if the query parameter is provided
   if (query && query.length > 0) {
-    dbQuery[`title.${lang}`] = { $regex: new RegExp(query, "i") };
+    dbQuery[`title.${lang}`] = { $regex: query.toLowerCase() };
   }
 
   // page and limit
@@ -268,11 +267,21 @@ exports.deleteIngredient = catchAsync(async (req, res, next) => {
     return next(new AppError(req.t("meals:error.ingredientIdRequired"), 400));
   }
 
-  // Use the UpdateService to handle the ingredient deletion and cascading logic
-  await DeleteService.deleteIngredient(ingredientId, req, next);
+  // Find and delete the ingredient
+  const ingredient = await Ingredient.findOne({
+    _id: ingredientId,
+    user: req.user._id,
+  });
 
-  // Send the response
-  res.status(200).json({
+  if (!ingredient) {
+    return next(new AppError(req.t("meals:error.ingredientNotFound"), 404));
+  }
+
+  // Soft delete the ingredient
+  ingredient.deletedAt = new Date();
+  await ingredient.save();
+
+  return res.status(200).json({
     status: "success",
     message: req.t("meals:ingredientDeletedSuccessfully"),
   });
@@ -344,15 +353,10 @@ exports.getIngredientSearch = catchAsync(async (req, res, next) => {
   if (!query) {
     return next(new AppError(req.t("meals:error.queryRequired"), 400));
   }
-
-  // Escape the query to prevent regex injection
-  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const regex = new RegExp(escapedQuery, "i");
-
   // Query the `Ingredient` collection for matching titles
   const ingredients = await Ingredient.find({
     user: req.user._id,
-    [`title.${lang}`]: { $regex: regex }, // Dynamically match language-specific title
+    [`title.${lang}`]: { $regex: query.toLowerCase() },
     archived: { $ne: true },
     deletedAt: null,
   });
@@ -405,7 +409,6 @@ exports.getIngredientNutrition = catchAsync(async (req, res, next) => {
   const ingredient = await Ingredient.findOne({
     _id: ingredientId,
     user: req.user._id,
-    deletedAt: null,
   });
 
   // Check if the ingredient exists

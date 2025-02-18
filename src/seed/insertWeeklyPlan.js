@@ -2,7 +2,7 @@ require("dotenv").config(); // Load environment variables
 
 const connectDB = require("../config/dbConfig");
 const WeeklyMenu = require("../models/WeeklyMenu");
-const WeekPlan = require("../models/WeekPlan");
+const WeeklyPlan = require("../models/WeeklyPlan");
 const {
   addWeeks,
   startOfISOWeek,
@@ -37,13 +37,13 @@ const generateWeekAndYear = (startDate, endDate) => {
 // Utility function for delay
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const seedWeekPlans = async () => {
+const seedWeeklyPlans = async () => {
   try {
     await connectDB();
 
     const userId = process.env.TEST_USER_ID; // The user's ID
 
-    await WeekPlan.deleteMany({ user: userId });
+    await WeeklyPlan.deleteMany({ user: userId });
 
     // Fetch all weekly menus created by the user
     const weeklyMenus = await WeeklyMenu.find({ user: userId });
@@ -56,7 +56,7 @@ const seedWeekPlans = async () => {
 
     console.log(`Found ${weeklyMenus.length} weekly menus for user ${userId}.`);
 
-    const weekAndYear = generateWeekAndYear("2025-01-15", "2025-02-15");
+    const weekAndYear = generateWeekAndYear("2025-02-08", "2025-03-15");
 
     for (const item of weekAndYear) {
       const randomMenu = weeklyMenus
@@ -86,7 +86,7 @@ const seedWeekPlans = async () => {
         assignMenu,
       };
 
-      await WeekPlan.create(weekPlan);
+      await WeeklyPlan.create(weekPlan);
       console.log(`Week plan created for ${item.year} - ${item.week}.`);
 
       await delay(200); // Delay for 1 second
@@ -98,6 +98,6 @@ const seedWeekPlans = async () => {
   }
 };
 
-seedWeekPlans();
+seedWeeklyPlans();
 
-exports.module = seedWeekPlans;
+exports.module = seedWeeklyPlans;

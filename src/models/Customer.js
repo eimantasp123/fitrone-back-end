@@ -91,11 +91,6 @@ const customerSchema = new mongoose.Schema(
     },
     latitude: { type: String },
     longitude: { type: String },
-    // groupId: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "Group",
-    //   default: null,
-    // },
     deletedAt: { type: Date, default: null },
   },
   {
@@ -110,7 +105,7 @@ customerSchema.methods.createConfirmFormToken = function () {
     .createHash("sha256")
     .update(confirmFormToken)
     .digest("hex");
-  this.confirmFormTokenExpires = Date.now() + 1000 * 60 * 60 * 24; // 24 hours
+  this.confirmFormTokenExpires = Date.now() + 1000 * 60 * 60 * 36; // 24 hours
   return confirmFormToken;
 };
 
@@ -125,7 +120,9 @@ customerSchema.statics.findByToken = async function (token) {
 };
 
 // Indexes
-customerSchema.index({ supplier: 1 });
+customerSchema.index({ supplier: 1, deletedAt: 1 });
+customerSchema.index({ _id: 1, supplier: 1, deletedAt: 1 });
+customerSchema.index({ supplier: 1, email: 1, deletedAt: 1 });
 
 const Customer = mongoose.model("Customer", customerSchema);
 module.exports = Customer;

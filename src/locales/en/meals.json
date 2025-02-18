@@ -24,6 +24,7 @@
     "ingredientIdRequired": "Ingredient ID is required",
     "ingredientNotFound": "Ingredient not found",
     "mealUpdateError": "Error updating meal",
-    "invalidIngredientId": "Invalid ingredient ID"
+    "invalidIngredientId": "Invalid ingredient ID",
+    "ingredientUsedInActiveWeeklyMenu": "Ingredient is used in active weekly menu and cannot be deleted"
   }
 }

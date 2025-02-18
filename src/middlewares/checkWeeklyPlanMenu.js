@@ -1,15 +1,15 @@
 const Plans = require("../models/Plans"); // Import Plan model
-const WeekPlan = require("../models/WeekPlan");
+const WeeklyPlan = require("../models/WeeklyPlan");
 const AppError = require("../utils/appError"); // Error handler
 const catchAsync = require("../utils/catchAsync");
 
 // Middleware to check if the user has reached the limit for a specific feature
-const checkWeekPlanMenu = catchAsync(async (req, res, next) => {
-  const { id: weekPlanId } = req.params; // Get the week plan ID from the request params
+const checkWeeklyPlanMenu = catchAsync(async (req, res, next) => {
+  const { id: weeklyPlanId } = req.params; // Get the week plan ID from the request params
   const { menus } = req.body; // Get the menus array from the request body
   const user = req.user; // Assuming user is attached to the request object
   const userPlanName = user.plan; // Get the user's current plan
-  const featureKey = "week_plan_menu_limit"; // Feature key
+  const featureKey = "weekly_plan_menu_limit"; // Feature key
 
   // Fetch the user's plan details
   const userPlan = await Plans.findOne({ plan: userPlanName });
@@ -21,38 +21,41 @@ const checkWeekPlanMenu = catchAsync(async (req, res, next) => {
   const userLimit = userPlan.features[featureKey];
 
   // Find the current week plan
-  const weekPlan = await WeekPlan.findOne({
+  const weeklyPlan = await WeeklyPlan.findOne({
     user: user._id,
     status: "active",
-    _id: weekPlanId,
+    _id: weeklyPlanId,
   });
 
   // If week plan is not found, return error
-  if (!weekPlan) {
+  if (!weeklyPlan) {
     return next(
-      new AppError(req.t("weekPlan:validationErrors.weekPlanNotFound"), 400),
+      new AppError(
+        req.t("weeklyPlan:validationErrors.weeklyPlanNotFound"),
+        400,
+      ),
     );
   }
 
   if (!menus || !Array.isArray(menus) || menus.length === 0) {
     return next(
-      new AppError(req.t("weekPlan:validationErrors.menuRequired"), 400),
+      new AppError(req.t("weeklyPlan:validationErrors.menuRequired"), 400),
     );
   }
 
   // Get assigned week plan menus count
-  const currentCount = weekPlan.assignMenu.length;
+  const currentCount = weeklyPlan.assignMenu.length;
 
   // Filter out the menus that are already assigned to the week plan
   let pureMenus = menus.filter(
-    (menu) => !weekPlan.assignMenu.some((m) => m.menu.equals(menu)),
+    (menu) => !weeklyPlan.assignMenu.some((m) => m.menu.equals(menu)),
   );
 
   // If all the menus are already assigned, return an error
   if (pureMenus.length === 0) {
     return res.status(400).json({
       status: "duplicate_menu",
-      message: req.t("weekPlan:validationErrors.menuAlreadyAssigned"),
+      message: req.t("weeklyPlan:validationErrors.menuAlreadyAssigned"),
     });
   }
 
@@ -93,4 +96,4 @@ const checkWeekPlanMenu = catchAsync(async (req, res, next) => {
   next();
 });
 
-module.exports = checkWeekPlanMenu;
+module.exports = checkWeeklyPlanMenu;

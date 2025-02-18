@@ -12,9 +12,6 @@ const {
 } = require("../utils/s3helpers");
 const Ingredient = require("../models/Ingredient");
 const { roundTo } = require("../helper/roundeNumber");
-const { sendMessageToClients } = require("../utils/websocket");
-const DeleteService = require("../utils/deleteService");
-const WeeklyMenu = require("../models/WeeklyMenu");
 
 /**
  * Multer middleware for file upload
@@ -97,7 +94,9 @@ exports.addMeal = catchAsync(async (req, res, next) => {
   const existingMeal = await Meal.findOne({
     user: req.user._id,
     title: title,
+    deletedAt: null,
   });
+
   if (existingMeal) {
     return next(new AppError(req.t("meals:error.titleMustBeUnique"), 400));
   }
@@ -131,7 +130,7 @@ exports.addMeal = catchAsync(async (req, res, next) => {
   }
 
   // Build the meal object based on the request data
-  const newMeal = await Meal.create({
+  await Meal.create({
     user: req.user._id,
     title,
     description: description || "",
@@ -143,16 +142,9 @@ exports.addMeal = catchAsync(async (req, res, next) => {
     category,
   });
 
-  // Format response object
-  const formattedMeal = newMeal.toObject();
-  delete formattedMeal.user;
-  delete formattedMeal.__v;
-  delete formattedMeal.updatedAt;
-
   const responseData = {
     status: "success",
     message: req.t("meals:mealAddedSuccessfully"),
-    data: formattedMeal,
   };
 
   if (req.warning) {
@@ -199,6 +191,7 @@ exports.updateMeal = catchAsync(async (req, res, next) => {
     user: req.user._id,
     title: title,
     _id: { $ne: id },
+    deletedAt: null,
   });
 
   // If the meal already exists, send an error response
@@ -319,22 +312,13 @@ exports.updateMeal = catchAsync(async (req, res, next) => {
   meal.restrictions = restrictions;
 
   // Update the meal fields
-  const updatedMeal = await meal.save();
-
-  // Format response object
-  const formattedMeal = updatedMeal.toObject();
-  delete formattedMeal.user;
-  delete formattedMeal.__v;
-  delete formattedMeal.updatedAt;
-
-  // Send  message to websocket clients
-  sendMessageToClients(req.user._id, "meals_updated_in_weekly_menu_by_id");
+  await meal.save();
 
   // Send the response
   res.status(200).json({
     status: "success",
+    action: "update",
     message: req.t("meals:mealUpdatedSuccessfully"),
-    data: formattedMeal,
   });
 });
 
@@ -374,10 +358,8 @@ exports.deleteMeal = catchAsync(async (req, res, next) => {
   }
 
   // Delete the meal
-  await mealToDelete.deleteOne();
-
-  // Delete meal from week plans
-  DeleteService.deleteMealFromWeeklyMenu(id, req);
+  mealToDelete.deletedAt = new Date();
+  await mealToDelete.save();
 
   // Send the response
   res.status(200).json({
@@ -404,17 +386,22 @@ exports.getMeals = catchAsync(async (req, res, next) => {
   const skip = (page - 1) * limit;
 
   // Query the database for all meals for the user
-  const dbQuery = { user: req.user._id, archived: false };
+  const dbQuery = { user: req.user._id, archived: false, deletedAt: null };
 
   // Add filters if provided
   if (category) dbQuery.category = category;
   if (preference) dbQuery.preferences = preference;
   if (restriction) dbQuery.restrictions = restriction;
-  if (query && query.length > 0) dbQuery.title = { $regex: query };
+  if (query && query.length > 0)
+    dbQuery.title = { $regex: query.toLowerCase() };
 
   // Count the total number of meals and fetch the meals with pagination
   const [total, totalForFetch, meals] = await Promise.all([
-    Meal.countDocuments({ user: req.user._id, archived: false }),
+    Meal.countDocuments({
+      user: req.user._id,
+      archived: false,
+      deletedAt: null,
+    }),
     Meal.countDocuments(dbQuery),
     Meal.find(dbQuery)
       .skip(skip)
@@ -431,40 +418,6 @@ exports.getMeals = catchAsync(async (req, res, next) => {
     total,
     currentPage: parseInt(page),
     totalPages: Math.ceil(totalForFetch / limit),
-    data: meals,
-  });
-});
-
-/**
- * Get all meal by category, preference, restriction or search query
- */
-exports.searchMeals = catchAsync(async (req, res, next) => {
-  const {
-    limit = 10,
-    category,
-    preference,
-    restriction,
-    searchQuery,
-  } = req.query;
-
-  // Query the database for all meals for the user
-  const DbQuery = { user: req.user._id, archived: false };
-
-  // Add filters if provided
-  if (category) DbQuery.category = category;
-  if (preference) DbQuery.preferences = preference;
-  if (restriction) DbQuery.restrictions = restriction;
-  if (searchQuery && searchQuery.length > 0) DbQuery.$text = { $search: query };
-
-  // Fetch filtered meals with pagination
-  const meals = await Meal.find(DbQuery)
-    .limit(parseInt(limit))
-    .sort({ createdAt: -1 })
-    .select("title category"); // Newest first
-
-  // Send the response
-  res.status(200).json({
-    status: "success",
     data: meals,
   });
 });

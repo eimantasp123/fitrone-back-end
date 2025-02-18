@@ -24,6 +24,7 @@
     "ingredientIdRequired": "Ingrediento ID yra privalomas",
     "ingredientNotFound": "Ingredientas nerastas",
     "mealUpdateError": "Klaida atnaujinant patiekalą",
-    "invalidIngredientId": "Netinkamas ingrediento ID"
+    "invalidIngredientId": "Netinkamas ingrediento ID",
+    "ingredientUsedInActiveWeeklyMenu": "Ingredientas naudojamas aktyviame savaitės meniu ir negali būti ištrintas"
   }
 }

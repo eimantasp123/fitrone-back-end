@@ -1,7 +1,7 @@
 {
   "messages": {
     "timezoneSetSuccess": "Timezone set successfully.",
-    "weekPlanUpdated": "Week plan updated successfully.",
+    "weeklyPlanUpdated": "Weekly plan updated successfully.",
     "menuDeleted": "Menu deleted successfully.",
     "menuPublished": "Menu published successfully.",
     "menuUnpublished": "Menu unpublished successfully.",
@@ -17,12 +17,12 @@
     "timezoneNotYetSet": "Timezone is not set yet. Please set timezone first.",
     "timezoneRequired": "Timezone is required.",
     "assignMenuRequired": "Assign menu is required.",
-    "weekPlanNotFound": "Week plan not found.",
+    "weeklyPlanNotFound": "Weekly plan not found.",
     "invalidObjectId": "Invalid object id.",
     "menuNotAssigned": "Menu is not assigned.",
     "menuAlreadyAssigned": "Menu is already assigned.",
     "menuPublishedAndCanNotBeDeleted": "Menu is published and can not be deleted.",
-    "weekPlanMenuPublishFieldsAreRequired": "Week plan menu publish fields are required ( year, week, menu ID and publish type ).",
+    "weeklyPlanMenuPublishFieldsAreRequired": "Weekly plan menu publish fields are required ( year, week, menu ID and publish type ).",
     "clientsRequired": "Customers are required.",
     "menuRequired": "Menu is required.",
     "menuPublished": "Menu is published and this action is not allowed.",
@@ -37,6 +37,6 @@
     "clientNotAssigned": "Customer is not assigned.",
     "groupNotAssigned": "Group is not assigned.",
     "groupAlreadyAssignedOnCurrentMenu": "Group already assigned on current menu.",
-    "weekPlanNotFoundOrMenuIsNotAssigned": "Week plan not found or menu is not assigned."
+    "weeklyPlanNotFoundOrMenuIsNotAssigned": "Weekly plan not found or menu is not assigned."
   }
 }

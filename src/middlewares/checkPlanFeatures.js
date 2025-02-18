@@ -35,6 +35,7 @@ const checkPlanFeatures = (resourceType, featureKey) => {
         case "customers":
           currentCount = await Customer.countDocuments({
             supplier: user._id,
+            status: { $ne: "inactive" },
             deletedAt: null,
           });
           break;

@@ -29,7 +29,7 @@
     "nutritionCalculationFailed": "Mitybos skaičiavimas nepavyko",
     "customerFormNotSubmitted": "Kliento forma dar nebuvo pateikta, todėl negalima apskaičiuoti mitybos medžiagų kiekio nes trūksta informacijos.",
     "customerAttachedToGroup": "Klientas priskirtas grupei ir negalima pakeisti meniu kiekio",
-    "customerAttachedToActiveWeekPlan": "Klientas priskirtas aktyviam savaitės planui, todėl negalima atlikti šio veiksmo"
+    "customerAttachedToActiveWeeklyPlan": "Klientas priskirtas aktyviam savaitės planui, todėl negalima atlikti šio veiksmo"
   },
 
   "errors": {

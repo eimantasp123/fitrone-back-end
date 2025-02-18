@@ -29,10 +29,6 @@ router.use(
   }),
 );
 
-/**
- * Routes for ingredients
- */
-
 // Add a new ingredient
 router.post(
   "/",
@@ -42,6 +38,12 @@ router.post(
 
 // Get all ingredients
 router.get("/", getIngredients);
+
+// Update ingredient by ID
+router.put("/:ingredientId", updateIngredient);
+
+// Delete ingredient by ID
+router.delete("/:ingredientId", deleteIngredient);
 
 // Get ingredient search results from user database
 router.get("/search", getIngredientSearch);
@@ -55,11 +57,5 @@ router.post(
 
 // Get ingredient nutrition info
 router.get("/nutrition/:ingredientId", getIngredientNutrition);
-
-// Get ingredient by ID
-router.delete("/:ingredientId", deleteIngredient);
-
-// Update ingredient by ID
-router.put("/:ingredientId", updateIngredient);
 
 module.exports = router;

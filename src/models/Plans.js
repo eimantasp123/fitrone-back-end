@@ -40,7 +40,7 @@ const plansSchema = new mongoose.Schema({
       required: true,
       default: -1,
     },
-    week_plan_menu_limit: {
+    weekly_plan_menu_limit: {
       type: Number,
       required: true,
       default: -1,

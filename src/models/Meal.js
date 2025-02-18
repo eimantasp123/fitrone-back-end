@@ -131,15 +131,13 @@ const mealSchema = new mongoose.Schema(
 // Indexes
 mealSchema.index({
   user: 1,
+  deletedAt: 1,
   archived: 1,
   createdAt: -1,
 });
 mealSchema.index({ category: 1 });
 mealSchema.index({ restrictions: 1 });
 mealSchema.index({ preferences: 1 });
-
-// Text index for searching by title
-mealSchema.index({ title: "text" });
 
 const Meal = mongoose.model("Meal", mealSchema);
 

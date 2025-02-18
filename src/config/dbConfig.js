@@ -6,7 +6,7 @@ const Meal = require("../models/Meal");
 const Ingredient = require("../models/Ingredient");
 const Group = require("../models/Group");
 const Customer = require("../models/Customer");
-const WeekPlan = require("../models/WeekPlan");
+const WeekPlan = require("../models/WeeklyPlan");
 
 const connectDB = async () => {
   try {

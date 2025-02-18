@@ -1,7 +1,5 @@
-const { roundTo } = require("../helper/roundeNumber");
 const Meal = require("../models/Meal");
 const WeeklyMenu = require("../models/WeeklyMenu");
-const WeekPlan = require("../models/WeekPlan");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 
@@ -57,6 +55,7 @@ exports.updateWeeklyMenuBio = catchAsync(async (req, res, next) => {
     {
       user: req.user._id,
       _id: req.params.id,
+      deletedAt: null,
     },
     {
       $set: updates,
@@ -90,6 +89,7 @@ exports.deleteWeeklyMenu = catchAsync(async (req, res, next) => {
   const weeklyMenu = await WeeklyMenu.findOne({
     user: req.user._id,
     _id: req.params.id,
+    deletedAt: null,
   });
 
   // If the weekly menu does not exist, return an error
@@ -105,18 +105,8 @@ exports.deleteWeeklyMenu = catchAsync(async (req, res, next) => {
   }
 
   // Delete the weekly menu
-  await weeklyMenu.deleteOne();
-
-  // Delete the weekly menu from week plans
-  await WeekPlan.updateMany(
-    {
-      user: req.user._id,
-      "assignMenu.menu": weeklyMenu._id,
-    },
-    {
-      $pull: { assignMenu: { menu: weeklyMenu._id } },
-    },
-  );
+  weeklyMenu.deletedAt = Date.now();
+  await weeklyMenu.save();
 
   // Send the response
   res.status(200).json({
@@ -128,12 +118,12 @@ exports.deleteWeeklyMenu = catchAsync(async (req, res, next) => {
 /**
  * Archive a weekly menu.
  */
-
 exports.archiveWeeklyMenu = catchAsync(async (req, res, next) => {
   // Find the weekly menu by ID
   const weeklyMenu = await WeeklyMenu.findOne({
     user: req.user._id,
     _id: req.params.id,
+    deletedAt: null,
   });
 
   // If the weekly menu does not exist, return an error
@@ -173,6 +163,7 @@ exports.unarchiveWeeklyMenu = catchAsync(async (req, res, next) => {
     {
       user: req.user._id,
       _id: req.params.id,
+      deletedAt: null,
     },
     {
       archived: false,
@@ -214,6 +205,7 @@ exports.getWeeklyMenuById = catchAsync(async (req, res, next) => {
   const weeklyMenu = await WeeklyMenu.findOne({
     user: req.user._id,
     _id: req.params.id,
+    deletedAt: null,
   }).populate({
     path: "days.meals.meal",
     select:
@@ -254,27 +246,22 @@ exports.getAllWeeklyMenus = catchAsync(async (req, res, next) => {
   const dbQuery = {
     user: req.user._id,
     archived: archived ?? false,
+    deletedAt: null,
   };
 
   // Add preferences, restrictions, and search query to the dbQuery
-  if (preference && preference.length > 0) {
-    dbQuery.preferences = preference;
-  }
-
-  if (restriction && restriction.length > 0) {
-    dbQuery.restrictions = restriction;
-  }
-
+  if (preference && preference.length > 0) dbQuery.preferences = preference;
+  if (restriction && restriction.length > 0) dbQuery.restrictions = restriction;
   if (query && query.length > 0) {
     dbQuery.$or = [
-      { title: { $regex: query, $options: "i" } },
-      { description: { $regex: query, $options: "i" } },
+      { title: { $regex: query.toLowerCase() } },
+      { description: { $regex: query.toLowerCase() } },
     ];
   }
 
   // Get the total number of documents and the documents for the current page
   const [total, totalForFetch, weeklyMenus] = await Promise.all([
-    WeeklyMenu.countDocuments({ user: req.user._id }),
+    WeeklyMenu.countDocuments({ user: req.user._id, deletedAt: null }),
     WeeklyMenu.countDocuments(dbQuery),
     WeeklyMenu.find(dbQuery)
       .skip(skip)
@@ -367,12 +354,21 @@ const manageMealsInWeeklyMenu = async ({
   const weeklyMenu = await WeeklyMenu.findOne({
     user: req.user._id,
     _id: req.params.id,
+    deletedAt: null,
   });
 
   if (!weeklyMenu) {
     return next(
       new AppError(req.t("weeklyMenu:errors.weeklyMenuNotFound"), 404),
     );
+  }
+
+  // Check if the weekly menu is active
+  if (weeklyMenu.status === "active") {
+    return res.status(200).json({
+      status: "warning",
+      message: req.t("weeklyMenu:errors.weeklyMenuActive"),
+    });
   }
 
   let mealList = [];
