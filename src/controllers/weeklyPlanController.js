@@ -7,6 +7,7 @@ const { toZonedTime } = require("date-fns-tz");
 const WeeklyMenu = require("../models/WeeklyMenu");
 const Customer = require("../models/Customer");
 const { transformToUppercaseFirstLetter } = require("../utils/generalHelpers");
+const { publishOrders, unpublishOrders } = require("../utils/publishOrders");
 /**
  * Set user timezone
  */
@@ -89,11 +90,41 @@ exports.getWeeklyPlanByDateAndCreate = catchAsync(async (req, res, next) => {
     });
   }
 
-  res.status(200).json({
+  // Response body
+  const responseBody = {
     status: "success",
-    data: weeklyPlan,
     timezone: req.user.timezone,
-  });
+  };
+
+  // If weekly plan is expired and isSnapshot, refactor assignMenu
+  if (weeklyPlan.status === "expired" && weeklyPlan.isSnapshot) {
+    const refactoredWeeklyPlanAssignMenu = weeklyPlan.assignMenu.map(
+      (menu) => ({
+        ...menu,
+        menu: menu.menuSnapshot
+          ? {
+              _id: menu.menuSnapshot._id,
+              title: menu.menuSnapshot.title,
+              description: menu.menuSnapshot.description,
+              preferences: menu.menuSnapshot.preferences,
+              restrictions: menu.menuSnapshot.restrictions,
+            }
+          : menu.menu,
+      }),
+    );
+    responseBody.data = {
+      ...weeklyPlan.toObject(),
+      assignMenu: refactoredWeeklyPlanAssignMenu,
+    };
+  } else {
+    responseBody.data = weeklyPlan;
+  }
+
+  // Ensure responseBody.data is always initialized
+  responseBody.data = responseBody.data || { assignMenu: [] };
+
+  // Send response
+  res.status(200).json(responseBody);
 });
 
 /**
@@ -377,8 +408,10 @@ exports.managePublishMenu = catchAsync(async (req, res, next) => {
   // Perform publish or unpublish action
   if (publish) {
     // Perfom publish action
+    publishOrders(req, parseInt(year), parseInt(week), menuId);
   } else {
     // Perform unpublish action
+    unpublishOrders(req, parseInt(year), parseInt(week), menuId);
   }
 
   // Send response

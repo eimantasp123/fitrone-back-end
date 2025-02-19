@@ -1,6 +1,6 @@
 export const ingredients = [
   {
-    title: { lt: "obuolys", en: "apple" },
+    title: "apple",
     unit: "g",
     amount: 100,
     calories: 52,
@@ -9,7 +9,7 @@ export const ingredients = [
     carbs: 14,
   },
   {
-    title: { lt: "bananas", en: "banana" },
+    title: "banana",
     unit: "g",
     amount: 120,
     calories: 105,
@@ -18,7 +18,7 @@ export const ingredients = [
     carbs: 27,
   },
   {
-    title: { lt: "morka", en: "carrot" },
+    title: "carrot",
     unit: "g",
     amount: 100,
     calories: 41,
@@ -27,7 +27,7 @@ export const ingredients = [
     carbs: 10,
   },
   {
-    title: { lt: "braškės", en: "strawberries" },
+    title: "strawberries",
     unit: "g",
     amount: 150,
     calories: 49,
@@ -36,7 +36,7 @@ export const ingredients = [
     carbs: 12,
   },
   {
-    title: { lt: "avokadas", en: "avocado" },
+    title: "avocado",
     unit: "g",
     amount: 100,
     calories: 160,
@@ -45,7 +45,7 @@ export const ingredients = [
     carbs: 9,
   },
   {
-    title: { lt: "bulvė", en: "potato" },
+    title: "potato",
     unit: "g",
     amount: 150,
     calories: 110,
@@ -54,7 +54,7 @@ export const ingredients = [
     carbs: 26,
   },
   {
-    title: { lt: "cukinija", en: "zucchini" },
+    title: "zucchini",
     unit: "g",
     amount: 100,
     calories: 17,
@@ -63,7 +63,7 @@ export const ingredients = [
     carbs: 3.1,
   },
   {
-    title: { lt: "brokoliai", en: "broccoli" },
+    title: "broccoli",
     unit: "g",
     amount: 150,
     calories: 50,
@@ -72,7 +72,7 @@ export const ingredients = [
     carbs: 9.8,
   },
   {
-    title: { lt: "pomidoras", en: "tomato" },
+    title: "tomato",
     unit: "g",
     amount: 100,
     calories: 18,
@@ -81,7 +81,7 @@ export const ingredients = [
     carbs: 3.9,
   },
   {
-    title: { lt: "agurkas", en: "cucumber" },
+    title: "cucumber",
     unit: "g",
     amount: 150,
     calories: 22,
@@ -90,7 +90,7 @@ export const ingredients = [
     carbs: 4.3,
   },
   {
-    title: { lt: "žiedinis kopūstas", en: "cauliflower" },
+    title: "cauliflower",
     unit: "g",
     amount: 150,
     calories: 40,
@@ -99,7 +99,7 @@ export const ingredients = [
     carbs: 7,
   },
   {
-    title: { lt: "žirniai", en: "peas" },
+    title: "peas",
     unit: "g",
     amount: 100,
     calories: 81,
@@ -108,7 +108,7 @@ export const ingredients = [
     carbs: 14,
   },
   {
-    title: { lt: "špinatai", en: "spinach" },
+    title: "spinach",
     unit: "g",
     amount: 100,
     calories: 23,
@@ -117,7 +117,7 @@ export const ingredients = [
     carbs: 3.6,
   },
   {
-    title: { lt: "avietės", en: "raspberries" },
+    title: "raspberries",
     unit: "g",
     amount: 125,
     calories: 64,
@@ -126,7 +126,7 @@ export const ingredients = [
     carbs: 15,
   },
   {
-    title: { lt: "kriaušė", en: "pear" },
+    title: "pear",
     unit: "g",
     amount: 100,
     calories: 57,
@@ -135,7 +135,7 @@ export const ingredients = [
     carbs: 15,
   },
   {
-    title: { lt: "vyšnios", en: "cherries" },
+    title: "cherries",
     unit: "g",
     amount: 150,
     calories: 77,
@@ -144,7 +144,7 @@ export const ingredients = [
     carbs: 19,
   },
   {
-    title: { lt: "mėlynės", en: "blueberries" },
+    title: "blueberries",
     unit: "g",
     amount: 150,
     calories: 85,
@@ -153,7 +153,7 @@ export const ingredients = [
     carbs: 21,
   },
   {
-    title: { lt: "paprika", en: "bell pepper" },
+    title: "bell pepper",
     unit: "g",
     amount: 100,
     calories: 20,
@@ -162,7 +162,7 @@ export const ingredients = [
     carbs: 4.6,
   },
   {
-    title: { lt: "salierai", en: "celery" },
+    title: "celery",
     unit: "g",
     amount: 100,
     calories: 16,
@@ -171,7 +171,7 @@ export const ingredients = [
     carbs: 3,
   },
   {
-    title: { lt: "moliūgas", en: "pumpkin" },
+    title: "pumpkin",
     unit: "g",
     amount: 100,
     calories: 26,
@@ -180,7 +180,7 @@ export const ingredients = [
     carbs: 6.5,
   },
   {
-    title: { lt: "žemės riešutai", en: "peanuts" },
+    title: "peanuts",
     unit: "g",
     amount: 100,
     calories: 567,
@@ -189,7 +189,7 @@ export const ingredients = [
     carbs: 16.1,
   },
   {
-    title: { lt: "lazdynų riešutai", en: "hazelnuts" },
+    title: "hazelnuts",
     unit: "g",
     amount: 100,
     calories: 628,
@@ -198,7 +198,7 @@ export const ingredients = [
     carbs: 17,
   },
   {
-    title: { lt: "migdolai", en: "almonds" },
+    title: "almonds",
     unit: "g",
     amount: 100,
     calories: 579,
@@ -207,7 +207,7 @@ export const ingredients = [
     carbs: 22,
   },
   {
-    title: { lt: "avižos", en: "oats" },
+    title: "oats",
     unit: "g",
     amount: 100,
     calories: 389,
@@ -216,7 +216,7 @@ export const ingredients = [
     carbs: 66,
   },
   {
-    title: { lt: "ryžiai", en: "rice" },
+    title: "rice",
     unit: "g",
     amount: 150,
     calories: 200,
@@ -225,7 +225,7 @@ export const ingredients = [
     carbs: 45,
   },
   {
-    title: { lt: "grikiai", en: "buckwheat" },
+    title: "buckwheat",
     unit: "g",
     amount: 150,
     calories: 154,
@@ -234,7 +234,7 @@ export const ingredients = [
     carbs: 33,
   },
   {
-    title: { lt: "duona", en: "bread" },
+    title: "bread",
     unit: "g",
     amount: 50,
     calories: 130,
@@ -243,7 +243,7 @@ export const ingredients = [
     carbs: 26,
   },
   {
-    title: { lt: "sūris", en: "cheese" },
+    title: "cheese",
     unit: "g",
     amount: 30,
     calories: 110,
@@ -252,7 +252,7 @@ export const ingredients = [
     carbs: 1,
   },
   {
-    title: { lt: "jogurtas", en: "yogurt" },
+    title: "yogurt",
     unit: "g",
     amount: 150,
     calories: 100,
@@ -261,7 +261,7 @@ export const ingredients = [
     carbs: 12,
   },
   {
-    title: { lt: "pienas", en: "milk" },
+    title: "milk",
     unit: "ml",
     amount: 250,
     calories: 150,
@@ -270,7 +270,7 @@ export const ingredients = [
     carbs: 12,
   },
   {
-    title: { lt: "žuvis", en: "fish" },
+    title: "fish",
     unit: "g",
     amount: 100,
     calories: 206,
@@ -279,7 +279,7 @@ export const ingredients = [
     carbs: 0,
   },
   {
-    title: { lt: "vištiena", en: "chicken" },
+    title: "chicken",
     unit: "g",
     amount: 100,
     calories: 165,
@@ -288,7 +288,7 @@ export const ingredients = [
     carbs: 0,
   },
   {
-    title: { lt: "kiauliena", en: "pork" },
+    title: "pork",
     unit: "g",
     amount: 100,
     calories: 242,
@@ -297,7 +297,7 @@ export const ingredients = [
     carbs: 0,
   },
   {
-    title: { lt: "jautiena", en: "beef" },
+    title: "beef",
     unit: "g",
     amount: 100,
     calories: 250,
@@ -306,7 +306,7 @@ export const ingredients = [
     carbs: 0,
   },
   {
-    title: { lt: "kiaušiniai", en: "eggs" },
+    title: "eggs",
     unit: "g",
     amount: 50,
     calories: 70,
@@ -315,7 +315,7 @@ export const ingredients = [
     carbs: 0.6,
   },
   {
-    title: { lt: "medus", en: "honey" },
+    title: "honey",
     unit: "g",
     amount: 100,
     calories: 304,
@@ -324,7 +324,7 @@ export const ingredients = [
     carbs: 82,
   },
   {
-    title: { lt: "cukrus", en: "sugar" },
+    title: "sugar",
     unit: "g",
     amount: 100,
     calories: 387,
@@ -333,7 +333,7 @@ export const ingredients = [
     carbs: 100,
   },
   {
-    title: { lt: "druska", en: "salt" },
+    title: "salt",
     unit: "g",
     amount: 100,
     calories: 0,
@@ -342,7 +342,7 @@ export const ingredients = [
     carbs: 0,
   },
   {
-    title: { lt: "aliejus", en: "oil" },
+    title: "oil",
     unit: "g",
     amount: 100,
     calories: 884,
@@ -351,7 +351,7 @@ export const ingredients = [
     carbs: 0,
   },
   {
-    title: { lt: "pomidorų pasta", en: "tomato paste" },
+    title: "tomato paste",
     unit: "g",
     amount: 100,
     calories: 82,
@@ -360,7 +360,7 @@ export const ingredients = [
     carbs: 18,
   },
   {
-    title: { lt: "moliuskai", en: "shellfish" },
+    title: "shellfish",
     unit: "g",
     amount: 100,
     calories: 99,
@@ -369,7 +369,7 @@ export const ingredients = [
     carbs: 2.5,
   },
   {
-    title: { lt: "krevetės", en: "shrimp" },
+    title: "shrimp",
     unit: "g",
     amount: 100,
     calories: 99,
@@ -378,7 +378,7 @@ export const ingredients = [
     carbs: 0.2,
   },
   {
-    title: { lt: "tunai", en: "tuna" },
+    title: "tuna",
     unit: "g",
     amount: 100,
     calories: 132,

@@ -33,7 +33,7 @@ const seedMultipleData = async () => {
     // Insert ingredients into the database
     for (const ingredient of ingredients) {
       await Ingredient.create({ ...ingredient, user: userId });
-      console.log(`Inserted ingredient: ${ingredient.title.lt}`);
+      console.log(`Inserted ingredient: ${ingredient.title}`);
       await delay(200); // 200ms delay between each ingredient insertion
     }
 
@@ -64,7 +64,7 @@ const seedMultipleData = async () => {
         const scalingFactor = Math.random() * 0.5 + 0.5; // Random scaling factor (50% to 100%)
         return {
           ingredientId: ingredient._id,
-          title: ingredient.title.lt,
+          title: ingredient.title,
           currentAmount: roundTo(ingredient.amount * scalingFactor, 1),
           unit: ingredient.unit,
           calories: roundTo(ingredient.calories * scalingFactor, 1),

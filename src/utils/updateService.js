@@ -36,9 +36,6 @@ const UpdateService = {
    * @param {Object} req - The request object, for translations and user context.
    */
   async updateMealsUsingIngredient(updatedIngredient, req) {
-    // Get the language from the request object
-    const lang = req.language.split("-")[0].toLowerCase() || "en";
-
     // Find all meals that use the ingredient
     const meals = await Meal.find({
       user: req.user._id,
@@ -57,7 +54,7 @@ const UpdateService = {
 
           return {
             ...ingredient._doc,
-            title: updatedIngredient.title[lang],
+            title: updatedIngredient.title,
             unit: updatedIngredient.unit,
             calories: roundTo(updatedIngredient.calories * scalingFactor, 1),
             protein: roundTo(updatedIngredient.protein * scalingFactor, 1),
