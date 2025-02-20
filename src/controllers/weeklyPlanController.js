@@ -7,7 +7,10 @@ const { toZonedTime } = require("date-fns-tz");
 const WeeklyMenu = require("../models/WeeklyMenu");
 const Customer = require("../models/Customer");
 const { transformToUppercaseFirstLetter } = require("../utils/generalHelpers");
-const { publishOrders, unpublishOrders } = require("../utils/publishOrders");
+const {
+  publishOrders,
+  unpublishOrders,
+} = require("../utils/publishAndUnpublishOrders");
 /**
  * Set user timezone
  */
@@ -399,6 +402,14 @@ exports.managePublishMenu = catchAsync(async (req, res, next) => {
         400,
       ),
     );
+  }
+
+  // Check does weekly plan has any clients assigned
+  if (assignedMenu.assignedClients.length === 0) {
+    return res.status(200).json({
+      status: "warning",
+      message: req.t("weeklyPlan:validationErrors.noClientsAssigned"),
+    });
   }
 
   // Toogle publish status

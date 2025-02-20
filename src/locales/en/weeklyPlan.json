@@ -37,6 +37,7 @@
     "clientNotAssigned": "Customer is not assigned.",
     "groupNotAssigned": "Group is not assigned.",
     "groupAlreadyAssignedOnCurrentMenu": "Group already assigned on current menu.",
-    "weeklyPlanNotFoundOrMenuIsNotAssigned": "Weekly plan not found or menu is not assigned."
+    "weeklyPlanNotFoundOrMenuIsNotAssigned": "Weekly plan not found or menu is not assigned.",
+    "noClientsAssigned": "No clients assigned, therefore the menu cannot be published."
   }
 }
