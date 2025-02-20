@@ -37,6 +37,7 @@
     "clientNotAssigned": "Klientas nėra priskirtas.",
     "groupNotAssigned": "Grupė nėra priskirta.",
     "groupAlreadyAssignedOnCurrentMenu": "Grupė jau priskirta šiam meniu.",
-    "weeklyPlanNotFoundOrMenuIsNotAssigned": "Savaitės planas nerastas arba meniu nėra priskirtas."
+    "weeklyPlanNotFoundOrMenuIsNotAssigned": "Savaitės planas nerastas arba meniu nėra priskirtas.",
+    "noClientsAssigned": "Nėra priskirtų klientų, todėl negalima publikuoti meniu."
   }
 }

@@ -33,9 +33,6 @@ const allowedFileTypes = ["image/jpeg", "image/png", "image/jpg"]; // Allowed im
 exports.addMeal = catchAsync(async (req, res, next) => {
   const { title, description, category } = req.body;
 
-  // Get the language from the request object
-  const lng = req.language.split("-")[0].toLowerCase() || "en";
-
   // Ensure required fields are present
   if (!title || !category || !req.body.ingredients) {
     return next(new AppError(req.t("meals:error.missingRequiredFields"), 400));
@@ -67,7 +64,7 @@ exports.addMeal = catchAsync(async (req, res, next) => {
 
       return {
         ingredientId: ingredient.id,
-        title: ingredientDoc.title[lng],
+        title: ingredientDoc.title,
         currentAmount: Number(ingredient.currentAmount),
         unit: ingredientDoc.unit,
         calories: roundTo(ingredientDoc.calories * scalingFactor, 1),
@@ -162,9 +159,6 @@ exports.updateMeal = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const { title, description, category } = req.body;
 
-  // Get the language from the request object
-  const lng = req.language.split("-")[0].toLowerCase() || "en";
-
   // Check if the id parameter is provided
   if (!id || !mongoose.Types.ObjectId.isValid(id)) {
     return next(new AppError(req.t("meals:error.idRequired"), 400));
@@ -224,7 +218,7 @@ exports.updateMeal = catchAsync(async (req, res, next) => {
       const scalingFactor = ingredient.currentAmount / ingredientDoc.amount;
       return {
         ingredientId: ingredient.id,
-        title: ingredientDoc.title[lng],
+        title: ingredientDoc.title,
         currentAmount: Number(ingredient.currentAmount),
         unit: ingredientDoc.unit,
         calories: roundTo(ingredientDoc.calories * scalingFactor, 1),

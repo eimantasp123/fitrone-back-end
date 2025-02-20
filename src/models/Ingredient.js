@@ -8,18 +8,10 @@ const ingredientSchema = new mongoose.Schema(
       required: [true, "userRequired"],
     },
     title: {
-      lt: {
-        type: String,
-        required: [true, "titleRequired"],
-        trim: true,
-        lowercase: true,
-      },
-      en: {
-        type: String,
-        required: [true, "titleRequired"],
-        trim: true,
-        lowercase: true,
-      },
+      type: String,
+      required: [true, "titleRequired"],
+      trim: true,
+      lowercase: true,
     },
     unit: {
       type: String,

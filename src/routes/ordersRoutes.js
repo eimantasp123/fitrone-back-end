@@ -9,7 +9,7 @@ const router = express.Router();
  */
 router.use(authMiddleware);
 
-// Route to submit feedback
+//
 router.post("/", createOrder);
 
 module.exports = router;

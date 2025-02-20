@@ -17,9 +17,9 @@ const seedIngredients = async () => {
     await Ingredient.deleteMany({ user: userId });
 
     let ingredients = [];
-    for (let i = 0; i < 400; i++) {
+    for (let i = 0; i < 100; i++) {
       ingredients.push({
-        title: { lt: `ingredient${i}`, en: `ingredient${i}` },
+        title: `ingredient${i}`,
         unit: "g",
         amount: Math.floor(Math.random() * 200) + 50,
         calories: Math.floor(Math.random() * 500) + 10,
@@ -32,7 +32,7 @@ const seedIngredients = async () => {
     // Insert ingredients into the database
     for (const ingredient of ingredients) {
       await Ingredient.create({ ...ingredient, user: userId });
-      console.log(`Inserted ingredient: ${ingredient.title.lt}`);
+      console.log(`Inserted ingredient: ${ingredient.title}`);
       await delay(50); // 200ms delay between each ingredient insertion
     }
     console.log("Ingredients have been successfully added!");

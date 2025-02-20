@@ -17,10 +17,7 @@ const openAi = new openai(process.env.OPENAI_API_KEY);
  * Nutrition information schema
  */
 const nutritionSchema = z.object({
-  title: z.object({
-    lt: z.string(),
-    en: z.string(),
-  }),
+  title: z.string(),
   unit: z.string(),
   amount: z.number(),
   calories: z.number(),
@@ -35,9 +32,6 @@ const nutritionSchema = z.object({
 exports.getIngredientInfo = catchAsync(async (req, res, next) => {
   let { query, unit } = req.body;
 
-  // Get the language from the request object
-  const lang = req.language.split("-")[0].toLowerCase() || "en";
-
   // Check if the query parameter is provided
   if (!query) {
     return next(new AppError(req.t("meals:error.queryRequired"), 400));
@@ -50,7 +44,7 @@ exports.getIngredientInfo = catchAsync(async (req, res, next) => {
       {
         role: "system",
         content:
-          "Please provide the nutrition information for the given ingredient. Response should include the title of the ingredient, unit, amount, calories, protein, fat, and carbs. Title should be the same as the input ingredient just with the first letter capitalized, grammar corrected and in Lithuanian and English languages. If this ingredient do not exist, please provide empty values for all fields.",
+          "Please provide the nutrition information for the given ingredient. Response should include the title of the ingredient, unit, amount, calories, protein, fat, and carbs. Title should be the same as the input ingredient just with the first letter capitalized, grammar corrected in provided language. If this ingredient do not exist, please provide empty values for all fields.",
       },
       {
         role: "user",
@@ -58,6 +52,7 @@ exports.getIngredientInfo = catchAsync(async (req, res, next) => {
             ingredient: ${query}
             unit: ${unit}
             amount: 100
+            language: ${req.language}
         `,
       },
     ],
@@ -73,7 +68,7 @@ exports.getIngredientInfo = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     data: {
-      title: response.title[lang],
+      title: response.title,
       amount: response.amount,
       unit: response.unit,
       calories: response.calories,
@@ -100,9 +95,6 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
     withCurrentAmount,
   } = req.body;
 
-  // Get the language from the request object
-  const lang = req.language.split("-")[0].toLowerCase() || "en";
-
   // Validate input
   if (!title || !unit) {
     return next(new AppError(req.t("meals:error.missingRequiredFields"), 400));
@@ -124,12 +116,12 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
   // Check if the ingredient already exists in the user ingredient document
   const ingredients = await Ingredient.find({
     user: req.user._id,
-    [`title.${lang}`]: title.toLowerCase(),
+    title: title.toLowerCase(),
     deletedAt: null,
   });
 
   const ingredientMatches = ingredients.filter(
-    (ingredient) => ingredient.title[lang] === title.toLowerCase(),
+    (ingredient) => ingredient.title === title.toLowerCase(),
   );
 
   if (ingredientMatches.length > 0) {
@@ -139,7 +131,7 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
   // Create a new ingredient
   const newIngredient = await Ingredient.create({
     user: req.user._id,
-    title: { en: title, lt: title }, // Assuming titles in both languages are the same
+    title, // Assuming titles in both languages are the same
     unit,
     amount,
     calories: roundTo(calories, 1),
@@ -154,7 +146,7 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
     const scalingFactor = currentAmount / amount;
     nutritionInfo = {
       ingredientId: newIngredient._id,
-      title: newIngredient.title[lang],
+      title: newIngredient.title,
       currentAmount: roundTo(currentAmount, 1),
       unit: newIngredient.unit,
       calories: roundTo(newIngredient.calories * scalingFactor, 1),
@@ -165,7 +157,7 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
   } else {
     nutritionInfo = {
       ingredientId: newIngredient._id,
-      title: newIngredient.title[lang],
+      title: newIngredient.title,
       unit: newIngredient.unit,
       amount: newIngredient.amount,
       calories: newIngredient.calories,
@@ -196,8 +188,6 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
  */
 exports.getIngredients = catchAsync(async (req, res, next) => {
   const { query } = req.query;
-  // Get the language from the request object
-  const lang = req.language.split("-")[0].toLowerCase() || "en";
 
   // Define the query object
   const dbQuery = {
@@ -208,7 +198,7 @@ exports.getIngredients = catchAsync(async (req, res, next) => {
 
   // Check if the query parameter is provided
   if (query && query.length > 0) {
-    dbQuery[`title.${lang}`] = { $regex: query.toLowerCase() };
+    dbQuery.title = { $regex: query.toLowerCase() };
   }
 
   // page and limit
@@ -224,7 +214,7 @@ exports.getIngredients = catchAsync(async (req, res, next) => {
 
   const response = ingredients.map((ingredient) => ({
     ingredientId: ingredient._id,
-    title: ingredient.title[lang],
+    title: ingredient.title,
     unit: ingredient.unit,
     amount: ingredient.amount,
     calories: ingredient.calories,
@@ -294,9 +284,6 @@ exports.updateIngredient = catchAsync(async (req, res, next) => {
   const { ingredientId } = req.params;
   const { title, unit, calories, protein, carbs, amount, fat } = req.body;
 
-  // Get the language from the request object
-  const lang = req.language.split("-")[0].toLowerCase() || "en";
-
   // Check if the id parameter is provided
   if (!ingredientId) {
     return next(new AppError(req.t("meals:error.ingredientIdRequired"), 400));
@@ -305,14 +292,14 @@ exports.updateIngredient = catchAsync(async (req, res, next) => {
   // Check if the ingredient title already exists in the user ingredient document on other ingredient
   const ingredients = await Ingredient.find({
     user: req.user._id,
-    [`title.${lang}`]: title.toLowerCase(),
+    title: title.toLowerCase(),
     _id: { $ne: ingredientId },
     deletedAt: null,
   });
 
   // Check if the ingredient title already exists in the user ingredient document
   const ingredientMatches = ingredients.filter(
-    (ingredient) => ingredient.title[lang] === title.toLowerCase(),
+    (ingredient) => ingredient.title === title.toLowerCase(),
   );
 
   if (ingredientMatches.length > 0) {
@@ -321,7 +308,7 @@ exports.updateIngredient = catchAsync(async (req, res, next) => {
 
   // Define updates
   const updates = {
-    title: { en: title, lt: title }, // Assuming bilingual titles
+    title, // Assuming bilingual titles
     unit,
     calories: roundTo(calories, 1),
     protein: roundTo(protein, 1),
@@ -346,9 +333,6 @@ exports.updateIngredient = catchAsync(async (req, res, next) => {
 exports.getIngredientSearch = catchAsync(async (req, res, next) => {
   const query = req.query.query;
 
-  // Get the language from the request object
-  const lang = req.language.split("-")[0].toLowerCase() || "en";
-
   // Check if the query parameter is provided
   if (!query) {
     return next(new AppError(req.t("meals:error.queryRequired"), 400));
@@ -356,7 +340,7 @@ exports.getIngredientSearch = catchAsync(async (req, res, next) => {
   // Query the `Ingredient` collection for matching titles
   const ingredients = await Ingredient.find({
     user: req.user._id,
-    [`title.${lang}`]: { $regex: query.toLowerCase() },
+    title: { $regex: query.toLowerCase() },
     archived: { $ne: true },
     deletedAt: null,
   });
@@ -364,7 +348,7 @@ exports.getIngredientSearch = catchAsync(async (req, res, next) => {
   // Map the results to the desired format
   const results = ingredients.map((ingredient) => ({
     ingredientId: ingredient._id,
-    title: ingredient.title[lang],
+    title: ingredient.title,
     unit: ingredient.unit,
     amount: ingredient.amount,
     calories: ingredient.calories,
@@ -387,9 +371,6 @@ exports.getIngredientSearch = catchAsync(async (req, res, next) => {
 exports.getIngredientNutrition = catchAsync(async (req, res, next) => {
   const { ingredientId } = req.params;
   const { currentAmount } = req.query;
-
-  // Get the language from the request object
-  const lang = req.language.split("-")[0].toLowerCase() || "en";
 
   // Check if the id parameter is provided
   if (
@@ -420,7 +401,7 @@ exports.getIngredientNutrition = catchAsync(async (req, res, next) => {
   const scalingFactor = currentAmount / ingredient.amount;
   const nutritionInfo = {
     ingredientId: ingredient._id,
-    title: ingredient.title[lang],
+    title: ingredient.title,
     currentAmount: Number(currentAmount),
     unit: ingredient.unit,
     calories: roundTo(ingredient.calories * scalingFactor, 1),

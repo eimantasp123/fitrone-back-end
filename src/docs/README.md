@@ -175,6 +175,7 @@ Keičiant prenumeratos planą iš aukštesnio į žemesnį, tam tikri duomenys y
 - **PATCH** | `/weekly-plan/manage-publish-menu` (dokumentacijos nuoroda: `URL`)
   Gamintojas, pridėjęs savaitės meniu ir priskyręs klientus prie kiekvieno savaitės meniu, turi publikuoti meniu, kad būtų galima formuoti užsakymus ir atlikti skaičiavimus. Ši užklausa veikia `Toggle` principu – jei meniu jau publikuotas, jis bus išpublikuotas ir atvirkščiai. Po sėkmingo publikavimo/išpublikavimo priekinėje dalyje turi būti inicijuojamas duomenų atnaujinimas:
   **GET** : `/weekly-plan`
+  **GET** : `/orders`
 
 - **GET** | `/weekly-plan/:id/menu-details/:menuId` (dokumentacijos nuoroda: `URL`)
   Gamintojas gali gauti priskirtų klientų sąrašą prie kiekvieno savaitės meniu plano. Pvz., jei yra 2025 metų 7 savaitė ir priskirti 4 savaitės meniu, gamintojas gali gauti kiekvieno priskirto meniu klientų sąrašą bei patikrinti, ar priskyrimai atitinka atnaujintus duomenis.
@@ -228,3 +229,17 @@ Keičiant prenumeratos planą iš aukštesnio į žemesnį, tam tikri duomenys y
 
 - **POST** | `/customers/:id/calculate-nutrition` (dokumentacijos nuoroda: `URL`)
   Gamintojas gali pasinaudoti rekomenduojamu kliento maistinių medžiagų skaičiavimu. Sistema automatiškai apskaičiuoja reikiamą maistinių medžiagų kiekį pagal tam tikrus kliento parametrus. Po sėkmingo skaičiavimo siuntimo metu pateikiami apskaičiuoti duomenys, todėl kliento pusėje jie gali būti pridėti prie bendrų kliento duomenų.
+
+### **2.6 Užsakymai **
+
+#### Priklausomybės:
+
+- Savaitės planas (publish/unpublish)
+- Savaites meniu (updates Bio)
+- Klientai (updates)
+- Ingredientai (updates)
+- Patiekalai (updates)
+
+#### Užklausų Metodai:
+
+- **GET** | `/orders` (dokumentacijos nuoroda: `URL`)
