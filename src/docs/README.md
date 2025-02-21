@@ -173,7 +173,7 @@ Keičiant prenumeratos planą iš aukštesnio į žemesnį, tam tikri duomenys y
   **GET** : `/weekly-plan/:id/menu-details/:menuId`
 
 - **PATCH** | `/weekly-plan/manage-publish-menu` (dokumentacijos nuoroda: `URL`)
-  Gamintojas, pridėjęs savaitės meniu ir priskyręs klientus prie kiekvieno savaitės meniu, turi publikuoti meniu, kad būtų galima formuoti užsakymus ir atlikti skaičiavimus. Ši užklausa veikia `Toggle` principu – jei meniu jau publikuotas, jis bus išpublikuotas ir atvirkščiai. Po sėkmingo publikavimo/išpublikavimo priekinėje dalyje turi būti inicijuojamas duomenų atnaujinimas:
+  Gamintojas, pridėjęs savaitės meniu ir priskyręs klientus prie kiekvieno savaitės meniu, turi publikuoti meniu, kad būtų galima formuoti užsakymus ir atlikti skaičiavimus. Ši užklausa veikia `Toggle` principu – jei meniu jau publikuotas, jis bus išpublikuotas ir atvirkščiai. Publikavimo metu yra sukuriami uzsakymai. Jei gamintojas pasirenka ispublikuoti meniu, tada visi uzsakymai su susiijusiu meniu yra pasalinami. Po sėkmingo publikavimo/išpublikavimo priekinėje dalyje turi būti inicijuojamas duomenų atnaujinimas:
   **GET** : `/weekly-plan`
   **GET** : `/orders`
 
@@ -243,3 +243,16 @@ Keičiant prenumeratos planą iš aukštesnio į žemesnį, tam tikri duomenys y
 #### Užklausų Metodai:
 
 - **GET** | `/orders` (dokumentacijos nuoroda: `URL`)
+  Gamintojas gauna visus pasirinktos savaites uzsakymus, kurie buvo sugeneruoti publikuojant savaites palana.
+
+- **GET** | `/orders/:id` (dokumentacijos nuoroda: `URL`)
+  Gamintojas gauna atitinkamos dienos uzsakymus su detalia informacija, jog butu galima patogiai valdyti atitinkamos dienos uzsakymus bei patiekalų paruošimo procesus.
+
+- **PATCH** | `/orders/change-status/:id` (dokumentacijos nuoroda: `URL`)
+  Gamintojas gali keisti atitinkamo patiekalo ruosimo statusa uzsakymo dienoje, jog butu lengviau sekti jo gamybos procesa. Po sėkmingo atnaujinimo priekinėje dalyje turi būti inicijuojamas duomenų atnaujinimas:
+  **GET** : `/orders/:id`
+
+- **PATCH** | `/orders/:id` (dokumentacijos nuoroda: `URL`)
+  Gamintojas baiges dienos gamybos procesa pazymi diena kaip atlikta ir visi patiekalai pakeicia status kaip `done` taip pat ir pati diena pazymima kaip `done` ir inicijuojamas **Snapshot** procesas su visais reikalingais duomenimis.
+  **GET** : `/orders/:id`
+  **GET** : `/orders`
