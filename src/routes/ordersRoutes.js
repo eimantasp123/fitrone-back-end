@@ -6,6 +6,8 @@ const {
   changeMealStatus,
   changeOrderStatus,
   getIngredientsLists,
+  enterSingleDayIngredientStock,
+  createCombinedIngredientsList,
 } = require("../controllers/ordersController");
 
 const router = express.Router();
@@ -15,11 +17,17 @@ const router = express.Router();
  */
 router.use(authMiddleware);
 
-// Get orders by provided year and week number
-router.get("/", getOrders);
-
 // Get ingredients lists for each day of the week
 router.get("/ingredients-list", getIngredientsLists);
+
+// Create a new combined ingredients list document
+router.post("/ingredients-list-combo", createCombinedIngredientsList);
+
+// Enter ingredient stock for the day
+router.patch("/:id/ingredients/enter-stock", enterSingleDayIngredientStock);
+
+// Get orders by provided year and week number
+router.get("/", getOrders);
 
 // Change status of single day order meal
 router.patch("/change-status/:id", changeMealStatus);

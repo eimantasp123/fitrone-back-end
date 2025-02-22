@@ -1,7 +1,9 @@
+const { create } = require("connect-mongo");
 const { roundTo } = require("../helper/roundeNumber");
 const SingleDayOrder = require("../models/SingleDayOrder");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
+const IngredientsStock = require("../models/IngredientsStock");
 
 /**
  *  Get orders by provided year and week number
@@ -276,68 +278,366 @@ exports.getIngredientsLists = catchAsync(async (req, res, next) => {
 
   // Check if orders exist
   if (!orders.length) {
-    return next(new AppError("Orders not found", 404));
+    return res.status(200).json({
+      status: "success",
+      data: {
+        generalList: [],
+        combinedList: [],
+      },
+    });
   }
 
-  // Generate ingredients list for each day of the week
+  // Refactor orders and calculate general amount of ingredients
   const ingredientsLists = orders.map((order) => {
-    //
-    const list = order.categories
-      .map((category) => {
-        // Map to get unique ingredients
-        const ingredientsMap = new Map();
+    // Create a map to store ingredients
+    const list = new Map();
 
-        // Map to get ingredients
-        category.meals.forEach((meal) => {
-          // Calculate general amount of ingredients
-          const customerAmount = meal.customers.length;
+    // Iterate over each category
+    order.categories.forEach((category) => {
+      // Iterate over each meal
+      category.meals.forEach((meal) => {
+        // Iterate over each ingredient
+        meal.meal.ingredients.forEach((ingredient) => {
+          // Create ingredient key
+          const ingredientKey = ingredient.ingredientId.toString();
 
-          // Group ingredients by id
-          meal.meal.ingredients.forEach((ingredient) => {
-            const ingredientKey = ingredient.ingredientId.toString();
+          // Get number of customers
+          const customers = meal.customers.length;
 
-            // Check if ingredient already exists
-            if (ingredientsMap.has(ingredientKey)) {
-              ingredientsMap.set(ingredientKey, {
-                ...ingredientsMap.get(ingredientKey),
-                generalAmount:
-                  ingredientsMap.get(ingredientKey).generalAmount +
-                  roundTo(customerAmount * ingredient.currentAmount, 1),
-              });
-            } else {
-              ingredientsMap.set(ingredientKey, {
-                _id: ingredient.ingredient,
-                title: ingredient.title,
-                unit: ingredient.unit,
-                perServingAmount: ingredient.currentAmount,
-                generalAmount: roundTo(
-                  customerAmount * ingredient.currentAmount,
-                  1,
-                ),
-              });
-            }
-          });
+          // Check if ingredient already exists
+          if (list.has(ingredientKey)) {
+            list.set(ingredientKey, {
+              ...list.get(ingredientKey),
+              mealsToUse: [
+                ...list.get(ingredientKey).mealsToUse,
+                {
+                  meal: meal.meal.title,
+                  quantity: customers,
+                  amountPerPortion: ingredient.currentAmount,
+                },
+              ],
+              generalAmount: roundTo(
+                list.get(ingredientKey).generalAmount +
+                  customers * ingredient.currentAmount,
+                2,
+              ),
+            });
+          } else {
+            // Add ingredient to the list
+            list.set(ingredientKey, {
+              _id: ingredient.ingredientId,
+              title: ingredient.title,
+              mealsToUse: [
+                {
+                  meal: meal.meal.title,
+                  quantity: customers,
+                  amountPerPortion: ingredient.currentAmount,
+                },
+              ],
+              generalAmount: roundTo(customers * ingredient.currentAmount, 2),
+              unit: ingredient.unit,
+            });
+          }
         });
+      });
+    });
 
-        // Return ingredients list  for each category
-        return Array.from(ingredientsMap.values());
-      })
-      .flat();
-
-    // Return ingredients list for each day
+    // Return refactored order
     return {
+      _id: order._id,
       year: order.year,
       weekNumber: order.weekNumber,
       day: order.day,
       status: order.status,
       isSnapshot: order.isSnapshot,
-      ingredientsList: list,
+      ingredients: Array.from(list.values()),
+      updatedAt: order.updatedAt,
+      createdAt: order.createdAt,
     };
+  });
+
+  // Find any stock data for the provided week
+  const ingredientsStock = await IngredientsStock.find({
+    user: req.user._id,
+    year,
+    weekNumber,
+  });
+
+  // Refactor ingredients lists and add stock data
+  ingredientsLists.forEach((order) => {
+    // Find stock data for the day
+    const stockData = ingredientsStock.find((stock) => stock.day === order.day);
+
+    // If stock data exists, add it to the order
+    if (stockData) {
+      order.ingredients.forEach((ingredient) => {
+        // Find stock ingredient
+        const stockIngredient = stockData.ingredients.find(
+          (stock) => stock.ingredient.toString() === ingredient._id.toString(),
+        );
+
+        // If stock ingredient exists, add it to the order
+        if (stockIngredient) {
+          ingredient.stockAmount = stockIngredient.stockAmount;
+
+          // Calculate if ingredient needs restock
+          const stockDeficit = roundTo(
+            ingredient.generalAmount - stockIngredient.stockAmount,
+            2,
+          );
+
+          // Add needsRestock to the ingredient
+          ingredient.restockNeeded = stockDeficit > 0 ? stockDeficit : 0;
+        }
+      });
+    }
+  });
+
+  // Check if combined list egzists in the database
+  const combinedList = await IngredientsStock.find({
+    user: req.user._id,
+    year,
+    weekNumber,
+    day: null,
+    dayCombined: { $exists: true, $not: { $size: 0 } },
+  });
+
+  // Refactor combined list
+  let combinedListRefactored = [];
+
+  // If combined list exists, create combined days ingredient list from refactored ingredients lists
+  if (combinedList.length > 0) {
+    // Refactor combined list
+    combinedListRefactored = combinedList.map((list) => {
+      // Create a map to store ingredients
+      const combinedList = new Map();
+
+      // Iterate over each day
+      list.dayCombined.forEach((day) => {
+        // Find ingredients list for the day
+        const dayList = ingredientsLists.find((order) => order.day === day);
+
+        // Iterate over each ingredient
+        dayList.ingredients.forEach((ingredient) => {
+          // Create ingredient key
+          const ingredientKey = ingredient._id.toString();
+
+          // Check if ingredient already exists
+          if (combinedList.has(ingredientKey)) {
+            combinedList.set(ingredientKey, {
+              ...combinedList.get(ingredientKey),
+              mealsToUse: [
+                ...combinedList.get(ingredientKey).mealsToUse,
+                ...ingredient.mealsToUse,
+              ],
+              generalAmount: roundTo(
+                combinedList.get(ingredientKey).generalAmount +
+                  ingredient.generalAmount,
+                2,
+              ),
+            });
+          } else {
+            // Add ingredient to the list
+            combinedList.set(ingredientKey, {
+              _id: ingredient._id,
+              title: ingredient.title,
+              mealsToUse: [...ingredient.mealsToUse],
+              generalAmount: ingredient.generalAmount,
+              unit: ingredient.unit,
+            });
+          }
+        });
+      });
+
+      // Check if stock data exists on the combined list
+      if (list.ingredients.length > 0) {
+        // Add stock data to the combined list
+        list.ingredients.forEach((obj) => {
+          // Check if ingredient already exists in the combined list
+          if (combinedList.has(obj.ingredient.toString())) {
+            combinedList.get(obj.ingredient.toString()).stockAmount =
+              obj.stockAmount;
+
+            // Calculate if ingredient needs restock
+            const stockDeficit = roundTo(
+              combinedList.get(obj.ingredient.toString()).generalAmount -
+                obj.stockAmount,
+              2,
+            );
+
+            // Add needsRestock to the ingredient
+            combinedList.get(obj.ingredient.toString()).restockNeeded =
+              stockDeficit > 0 ? stockDeficit : 0;
+          }
+        });
+      }
+
+      // Return refactored combined list
+      return {
+        combineListDocId: list._id,
+        year: list.year,
+        weekNumber: list.weekNumber,
+        dayCombined: list.dayCombined,
+        ingredients: Array.from(combinedList.values()),
+        updatedAt: list.updatedAt,
+        createdAt: list.createdAt,
+      };
+    });
+  }
+
+  // Return response
+  res.status(200).json({
+    status: "success",
+    data: {
+      // generalList: ingredientsLists,
+      combinedList: combinedListRefactored,
+    },
+  });
+});
+
+/**
+ * Enter ingredient stock amount for the provided day
+ */
+exports.enterSingleDayIngredientStock = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const { year, weekNumber, days, ingredientId, stockQuantity } = req.body;
+
+  // Check if all required fields are provided
+  if (!year || !weekNumber || !ingredientId || !stockQuantity) {
+    return next(new AppError("Please provide all required fields", 400));
+  }
+
+  // Check if single day order exists
+  const order = await SingleDayOrder.findOne({
+    user: req.user._id,
+    _id: id,
+  });
+
+  if (!order) {
+    return next(new AppError("Order not found", 404));
+  }
+
+  // Check if provided day is in the order
+  if (!days.includes(order.day)) {
+    return next(new AppError("Day not found in the order", 400));
+  }
+
+  // Declare ingredients stock variable
+  let ingredientsStock;
+
+  // Check if days have more than one day
+  if (days.length > 1) {
+    // Check if combined list document already exists
+    ingredientsStock = await IngredientsStock.findOne({
+      user: req.user._id,
+      year,
+      weekNumber,
+      dayCombined: { $all: days },
+    });
+
+    // If combined list document doesn't exist, create it
+    if (!ingredientsStock) {
+      ingredientsStock = await IngredientsStock.create({
+        user: req.user._id,
+        year,
+        weekNumber,
+        dayCombined: days,
+      });
+    }
+  } else {
+    // Check if ingredients stock document already exists
+    ingredientsStock = await IngredientsStock.findOne({
+      user: req.user._id,
+      year,
+      weekNumber,
+      day: days[0],
+    });
+
+    // If ingredients stock document doesn't exist, create it
+    if (!ingredientsStock) {
+      ingredientsStock = await IngredientsStock.create({
+        user: req.user._id,
+        year,
+        weekNumber,
+        day: days[0],
+      });
+    }
+  }
+
+  // Find ingredient index
+  const ingredientIndex = ingredientsStock.ingredients.findIndex(
+    (ingredient) => ingredient.ingredient.toString() === ingredientId,
+  );
+
+  // If ingredient exists, update stock amount
+  if (ingredientIndex !== -1) {
+    ingredientsStock.ingredients[ingredientIndex].stockAmount =
+      Number(stockQuantity);
+  } else {
+    // If ingredient doesn't exist, add it
+    ingredientsStock.ingredients.push({
+      ingredient: ingredientId,
+      stockAmount: stockQuantity,
+    });
+  }
+
+  // Save changes
+  await ingredientsStock.save();
+
+  // Return response
+  return res.status(200).json({
+    status: "success",
+    message: "Ingredient stock amount entered successfully",
+  });
+});
+
+/**
+ * Create combined ingredients list for the provided week
+ */
+exports.createCombinedIngredientsList = catchAsync(async (req, res, next) => {
+  const { year, weekNumber, days } = req.body;
+
+  // Check if all required fields are provided
+  if (!year || !weekNumber || !days || days.length < 2) {
+    return next(new AppError("Please provide all required fields", 400));
+  }
+
+  // Check if combined list already exists
+  const combinedList = await IngredientsStock.findOne({
+    user: req.user._id,
+    year,
+    weekNumber,
+    dayCombined: { $all: days },
+  });
+
+  // If combined list exists, return an error
+  if (combinedList) {
+    return next(new AppError("Combined list already exists", 400));
+  }
+
+  // Check if all single day orders exist
+  const orders = await SingleDayOrder.find({
+    user: req.user._id,
+    year,
+    weekNumber,
+    day: { $in: days },
+  });
+
+  // If not all orders exist, return an error
+  if (orders.length !== days.length) {
+    return next(new AppError("Not all orders exist", 400));
+  }
+
+  // Create combined list document
+  await IngredientsStock.create({
+    user: req.user._id,
+    year,
+    weekNumber,
+    dayCombined: days,
   });
 
   // Return response
   res.status(200).json({
     status: "success",
-    data: ingredientsLists,
   });
 });

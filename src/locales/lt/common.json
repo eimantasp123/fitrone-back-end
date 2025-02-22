@@ -74,6 +74,7 @@
     "userRequired": "Vartotojas yra privalomas",
     "invalidPreference": "Netinkama reikšmė '{{value}}' dietiniui pasirinkimui.",
     "invalidRestriction": "Netinkama reikšmė '{{value}}' dietiniui apribojimui.",
-    "invalidCategory": "Netinkama reikšmė '{{value}}' kategorijai."
+    "invalidCategory": "Netinkama reikšmė '{{value}}' kategorijai.",
+    "invalidCombinedDaysArray": "Netinkamas kombinuotų dienų masyvas. Masyvas turi turėti bent 2 dienas."
   }
 }
