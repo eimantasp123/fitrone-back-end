@@ -173,7 +173,7 @@ Keičiant prenumeratos planą iš aukštesnio į žemesnį, tam tikri duomenys y
   **GET** : `/weekly-plan/:id/menu-details/:menuId`
 
 - **PATCH** | `/weekly-plan/manage-publish-menu` (dokumentacijos nuoroda: `URL`)
-  Gamintojas, pridėjęs savaitės meniu ir priskyręs klientus prie kiekvieno savaitės meniu, turi publikuoti meniu, kad būtų galima formuoti užsakymus ir atlikti skaičiavimus. Ši užklausa veikia `Toggle` principu – jei meniu jau publikuotas, jis bus išpublikuotas ir atvirkščiai. Po sėkmingo publikavimo/išpublikavimo priekinėje dalyje turi būti inicijuojamas duomenų atnaujinimas:
+  Gamintojas, pridėjęs savaitės meniu ir priskyręs klientus prie kiekvieno savaitės meniu, turi publikuoti meniu, kad būtų galima formuoti užsakymus ir atlikti skaičiavimus. Ši užklausa veikia `Toggle` principu – jei meniu jau publikuotas, jis bus išpublikuotas ir atvirkščiai. Publikavimo metu yra sukuriami uzsakymai. Jei gamintojas pasirenka ispublikuoti meniu, tada visi uzsakymai su susiijusiu meniu yra pasalinami. Po sėkmingo publikavimo/išpublikavimo priekinėje dalyje turi būti inicijuojamas duomenų atnaujinimas:
   **GET** : `/weekly-plan`
   **GET** : `/orders`
 
@@ -242,4 +242,28 @@ Keičiant prenumeratos planą iš aukštesnio į žemesnį, tam tikri duomenys y
 
 #### Užklausų Metodai:
 
+- **GET** | `/orders/ingredients-list` (dokumentacijos nuoroda: `URL`)
+  Gamintojas gauna visos savaitės visų meniu ingredientų sąrašą, kuriame nurodoma, kiek bendrai reikia kiekvieno ingrediento pagal pateiktus savaitės planus. Ingredientai yra sumuojami iš visų patiekalų.
+
+- **POST** | `/orders/ingredients-list-combo` (dokumentacijos nuoroda: `URL`)
+  Gamintojas gali sujungti kelias pasirinktos savaitės dienas ir gauti bendrą ingredientų sąrašą. Po sėkmingo kombinavimo priekinėje dalyje turi būti inicijuojamas duomenų atnaujinimas:
+  **GET** : `/orders/ingredients-list`
+
+- **PATCH** | `/orders/:id/ingredients/enter-stock` (dokumentacijos nuoroda: `URL`)
+  Gamintojas gali įvesti turimą kiekvieno ingrediento likutį, kad būtų galima perskaičiuoti ir tiksliai parodyti, kiek dar ingredientų reikia, įskaitant jau turimas atsargas. Po sėkmingo likučių įvedimo priekinėje dalyje turi būti inicijuojamas duomenų atnaujinimas:
+  **GET** : `/orders/ingredients-list`
+
 - **GET** | `/orders` (dokumentacijos nuoroda: `URL`)
+  Gamintojas gauna visus pasirinktos savaitės užsakymus, kurie buvo sugeneruoti publikuojant savaitės planą.
+
+- **GET** | `/orders/:id` (dokumentacijos nuoroda: `URL`)
+  Gamintojas gauna konkrečios dienos užsakymus su detalia informacija, kad būtų galima patogiai valdyti tos dienos užsakymus ir patiekalų paruošimo procesą.
+
+- **PATCH** | `/orders/change-status/:id` (dokumentacijos nuoroda: `URL`)
+  Gamintojas gali keisti konkretaus patiekalo ruošimo statusą užsakymo dieną, kad būtų lengviau sekti gamybos procesą. Po sėkmingo atnaujinimo priekinėje dalyje turi būti inicijuojamas duomenų atnaujinimas:
+  **GET** : `/orders/:id`
+
+- **PATCH** | `/orders/:id` (dokumentacijos nuoroda: `URL`)
+  Kai gamintojas baigia dienos gamybos procesą, jis pažymi dieną kaip "atlikta", o visi patiekalai tos dienos užsakymuose automatiškai pakeičiami į `done` statusą. Taip pat pati diena pažymima kaip `done`, o sistemoje inicijuojamas **Snapshot** procesas su visais reikalingais duomenimis. Po šio veiksmo duomenys atnaujinami:
+  **GET** : `/orders/:id`
+  **GET** : `/orders`

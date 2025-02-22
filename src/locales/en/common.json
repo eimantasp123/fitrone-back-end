@@ -75,6 +75,7 @@
     "userRequired": "User is required.",
     "invalidPreference": "Invalid value '{{value}}' for dietary preference.",
     "invalidRestriction": "Invalid value '{{value}}' for dietary restriction.",
-    "invalidCategory": "Invalid value '{{value}}' for category."
+    "invalidCategory": "Invalid value '{{value}}' for category.",
+    "invalidCombinedDaysArray": "Invalid combined days array. Must be at least 2 days."
   }
 }
