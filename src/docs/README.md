@@ -249,6 +249,9 @@ Keičiant prenumeratos planą iš aukštesnio į žemesnį, tam tikri duomenys y
   Gamintojas gali sujungti kelias pasirinktos savaitės dienas ir gauti bendrą ingredientų sąrašą. Po sėkmingo kombinavimo priekinėje dalyje turi būti inicijuojamas duomenų atnaujinimas:
   **GET** : `/orders/ingredients-list`
 
+- **GET** | `/orders/generate-ingredients-pdf` (dokumentacijos nuoroda: `URL`)
+  Gamintojas gali generuoti PDF failą pasirinktai dienai ar kombinuotam sąrašui, kad būtų galima jį persiųsti ar atsispausdinti.
+
 - **PATCH** | `/orders/:id/ingredients/enter-stock` (dokumentacijos nuoroda: `URL`)
   Gamintojas gali įvesti turimą kiekvieno ingrediento likutį, kad būtų galima perskaičiuoti ir tiksliai parodyti, kiek dar ingredientų reikia, įskaitant jau turimas atsargas. Po sėkmingo likučių įvedimo priekinėje dalyje turi būti inicijuojamas duomenų atnaujinimas:
   **GET** : `/orders/ingredients-list`

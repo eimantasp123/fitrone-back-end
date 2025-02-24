@@ -26,13 +26,13 @@ const singleDayOrderSchema = new mongoose.Schema(
       enum: ["not_done", "done"],
       default: "not_done",
     },
-    isSnapshot: {
-      type: Boolean,
-      default: false,
-    },
     categoriesSnapshot: {
       type: Object,
       default: null,
+    },
+    expired: {
+      type: Boolean,
+      default: false,
     },
     categories: [
       {

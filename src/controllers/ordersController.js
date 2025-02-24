@@ -1,9 +1,10 @@
-const { create } = require("connect-mongo");
 const { roundTo } = require("../helper/roundeNumber");
 const SingleDayOrder = require("../models/SingleDayOrder");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const IngredientsStock = require("../models/IngredientsStock");
+const PDFDocument = require("pdfkit");
+const fs = require("fs");
 
 /**
  *  Get orders by provided year and week number
@@ -278,13 +279,7 @@ exports.getIngredientsLists = catchAsync(async (req, res, next) => {
 
   // Check if orders exist
   if (!orders.length) {
-    return res.status(200).json({
-      status: "success",
-      data: {
-        generalList: [],
-        combinedList: [],
-      },
-    });
+    return next(new AppError("Orders not found", 404));
   }
 
   // Refactor orders and calculate general amount of ingredients
@@ -349,7 +344,6 @@ exports.getIngredientsLists = catchAsync(async (req, res, next) => {
       weekNumber: order.weekNumber,
       day: order.day,
       status: order.status,
-      isSnapshot: order.isSnapshot,
       ingredients: Array.from(list.values()),
       updatedAt: order.updatedAt,
       createdAt: order.createdAt,
@@ -489,7 +483,7 @@ exports.getIngredientsLists = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     data: {
-      // generalList: ingredientsLists,
+      generalList: ingredientsLists,
       combinedList: combinedListRefactored,
     },
   });
@@ -640,4 +634,55 @@ exports.createCombinedIngredientsList = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
   });
+});
+
+// Example Ingredients List
+const ingredients = [
+  { name: "Tomatoes", quantity: 5, unit: "kg" },
+  { name: "Onions", quantity: 3, unit: "kg" },
+  { name: "Potatoes", quantity: 7, unit: "kg" },
+];
+
+/**
+ * Generate pdf for combined ingredients list
+ */
+exports.generateIngredientsPdf = catchAsync(async (req, res, next) => {
+  const doc = new PDFDocument();
+  doc.pipe(fs.createWriteStream("./pdf/file2.pdf"));
+
+  // Set response headers for inline viewing
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", 'inline; filename="ingredients.pdf"');
+
+  // Pipe PDF to response
+  doc.pipe(res);
+
+  // Title
+  doc.fontSize(20).text("Ingredients List", { align: "center" });
+  doc.moveDown();
+
+  // Example Table Header
+  doc.fontSize(12).text("Ingredient", 50, doc.y);
+  doc.text("Quantity", 250, doc.y);
+  doc.text("Unit", 350, doc.y);
+  doc.moveDown();
+  doc.moveTo(50, doc.y).lineTo(500, doc.y).stroke();
+  doc.moveDown();
+
+  // Example Table Rows
+  const ingredients = [
+    { name: "Tomatoes", quantity: 5, unit: "kg" },
+    { name: "Onions", quantity: 3, unit: "kg" },
+    { name: "Potatoes", quantity: 7, unit: "kg" },
+  ];
+
+  ingredients.forEach((ingredient) => {
+    doc.text(ingredient.name, 50, doc.y);
+    doc.text(ingredient.quantity.toString(), 250, doc.y);
+    doc.text(ingredient.unit, 350, doc.y);
+    doc.moveDown();
+  });
+
+  // End document
+  doc.end();
 });

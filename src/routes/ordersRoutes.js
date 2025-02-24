@@ -8,6 +8,7 @@ const {
   getIngredientsLists,
   enterSingleDayIngredientStock,
   createCombinedIngredientsList,
+  generateIngredientsPdf,
 } = require("../controllers/ordersController");
 
 const router = express.Router();
@@ -22,6 +23,9 @@ router.get("/ingredients-list", getIngredientsLists);
 
 // Create a new combined ingredients list document
 router.post("/ingredients-list-combo", createCombinedIngredientsList);
+
+// Generate pdf for combined ingredients list
+router.get("/generate-ingredients-pdf", generateIngredientsPdf);
 
 // Enter ingredient stock for the day
 router.patch("/:id/ingredients/enter-stock", enterSingleDayIngredientStock);
