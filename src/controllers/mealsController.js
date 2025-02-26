@@ -311,7 +311,6 @@ exports.updateMeal = catchAsync(async (req, res, next) => {
   // Send the response
   res.status(200).json({
     status: "success",
-    action: "update",
     message: req.t("meals:mealUpdatedSuccessfully"),
   });
 });

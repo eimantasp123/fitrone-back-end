@@ -49,7 +49,7 @@ const seedWeeklyMenu = async () => {
 
           day.meals = randomMeals.map((meal) => ({
             category: meal.category,
-            meal: meal._id,
+            meal,
           }));
         }
       }

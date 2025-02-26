@@ -1,9 +1,10 @@
-const { create } = require("connect-mongo");
 const { roundTo } = require("../helper/roundeNumber");
 const SingleDayOrder = require("../models/SingleDayOrder");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const IngredientsStock = require("../models/IngredientsStock");
+const PDFDocument = require("pdfkit");
+const fs = require("fs");
 
 /**
  *  Get orders by provided year and week number
@@ -17,7 +18,7 @@ exports.getOrders = catchAsync(async (req, res, next) => {
     year,
     weekNumber,
     categories: { $exists: true, $not: { $size: 0 } },
-  }).select("_id year weekNumber day status");
+  }).select("_id year weekNumber day status expired");
 
   // Return response
   res.status(200).json({
@@ -108,7 +109,9 @@ exports.getOrderById = catchAsync(async (req, res, next) => {
           mealDescription: meal.meal.description,
           ingredients: ingredientsQuantity,
           portions: meal.customers.length,
-          weeklyMenuTitle: meal.weeklyMenu.title,
+          weeklyMenuTitle: order.expired
+            ? meal.weeklyMenuTitle
+            : meal.weeklyMenu.title,
           status: meal.status,
           customers: groupedCustomers,
           _id: meal._id,
@@ -193,6 +196,16 @@ exports.changeMealStatus = catchAsync(async (req, res, next) => {
     return next(new AppError("Order not found", 404));
   }
 
+  // Check if order expired than any changes are not allowed
+  if (order.expired) {
+    return next(
+      new AppError(
+        "Order has expired, therefore no actions can be performed.",
+        400,
+      ),
+    );
+  }
+
   // Find meal by id
   const meal = order.categories
     .map((category) => category.meals)
@@ -228,11 +241,23 @@ exports.changeOrderStatus = catchAsync(async (req, res, next) => {
   const order = await SingleDayOrder.findOne({
     user: req.user._id,
     _id: id,
+  }).populate({
+    path: "categories.meals.weeklyMenu",
   });
 
   // Check if order exists
   if (!order) {
     return next(new AppError("Order not found", 404));
+  }
+
+  // Check if order expired than any changes are not allowed
+  if (order.expired) {
+    return next(
+      new AppError(
+        "Order has expired, therefore no actions can be performed.",
+        400,
+      ),
+    );
   }
 
   // Change meal status
@@ -267,24 +292,11 @@ exports.getIngredientsLists = catchAsync(async (req, res, next) => {
     year,
     weekNumber,
     categories: { $exists: true, $not: { $size: 0 } },
-  })
-    .populate([
-      {
-        path: "categories.meals.meal",
-        select: "title ingredients description",
-      },
-    ])
-    .select("_id year weekNumber day status categories");
+  }).select("_id year weekNumber day status categories expired");
 
   // Check if orders exist
   if (!orders.length) {
-    return res.status(200).json({
-      status: "success",
-      data: {
-        generalList: [],
-        combinedList: [],
-      },
-    });
+    return next(new AppError("Orders not found", 404));
   }
 
   // Refactor orders and calculate general amount of ingredients
@@ -349,7 +361,7 @@ exports.getIngredientsLists = catchAsync(async (req, res, next) => {
       weekNumber: order.weekNumber,
       day: order.day,
       status: order.status,
-      isSnapshot: order.isSnapshot,
+      expired: order.expired,
       ingredients: Array.from(list.values()),
       updatedAt: order.updatedAt,
       createdAt: order.createdAt,
@@ -417,37 +429,41 @@ exports.getIngredientsLists = catchAsync(async (req, res, next) => {
         // Find ingredients list for the day
         const dayList = ingredientsLists.find((order) => order.day === day);
 
-        // Iterate over each ingredient
-        dayList.ingredients.forEach((ingredient) => {
-          // Create ingredient key
-          const ingredientKey = ingredient._id.toString();
+        if (dayList && dayList.ingredients.length > 0) {
+          // Iterate over each ingredient
+          dayList.ingredients.forEach((ingredient) => {
+            // Create ingredient key
+            const ingredientKey = ingredient._id.toString();
 
-          // Check if ingredient already exists
-          if (combinedList.has(ingredientKey)) {
-            combinedList.set(ingredientKey, {
-              ...combinedList.get(ingredientKey),
-              mealsToUse: [
-                ...combinedList.get(ingredientKey).mealsToUse,
-                ...ingredient.mealsToUse,
-              ],
-              generalAmount: roundTo(
-                combinedList.get(ingredientKey).generalAmount +
-                  ingredient.generalAmount,
-                2,
-              ),
-            });
-          } else {
-            // Add ingredient to the list
-            combinedList.set(ingredientKey, {
-              _id: ingredient._id,
-              title: ingredient.title,
-              mealsToUse: [...ingredient.mealsToUse],
-              generalAmount: ingredient.generalAmount,
-              unit: ingredient.unit,
-            });
-          }
-        });
+            // Check if ingredient already exists
+            if (combinedList.has(ingredientKey)) {
+              combinedList.set(ingredientKey, {
+                ...combinedList.get(ingredientKey),
+                mealsToUse: [
+                  ...combinedList.get(ingredientKey).mealsToUse,
+                  ...ingredient.mealsToUse,
+                ],
+                generalAmount: roundTo(
+                  combinedList.get(ingredientKey).generalAmount +
+                    ingredient.generalAmount,
+                  2,
+                ),
+              });
+            } else {
+              // Add ingredient to the list
+              combinedList.set(ingredientKey, {
+                _id: ingredient._id,
+                title: ingredient.title,
+                mealsToUse: [...ingredient.mealsToUse],
+                generalAmount: ingredient.generalAmount,
+                unit: ingredient.unit,
+              });
+            }
+          });
+        }
       });
+
+      console.log("list", list);
 
       // Check if stock data exists on the combined list
       if (list.ingredients.length > 0) {
@@ -472,12 +488,19 @@ exports.getIngredientsLists = catchAsync(async (req, res, next) => {
         });
       }
 
+      // Check if all days from the combined list are done in orders
+      const allDaysDone = list.dayCombined.every((day) => {
+        const order = orders.find((order) => order.day === day);
+        return order.status === "done";
+      });
+
       // Return refactored combined list
       return {
         combineListDocId: list._id,
         year: list.year,
         weekNumber: list.weekNumber,
         dayCombined: list.dayCombined,
+        allDaysDone,
         ingredients: Array.from(combinedList.values()),
         updatedAt: list.updatedAt,
         createdAt: list.createdAt,
@@ -489,7 +512,7 @@ exports.getIngredientsLists = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     data: {
-      // generalList: ingredientsLists,
+      generalList: ingredientsLists,
       combinedList: combinedListRefactored,
     },
   });
@@ -498,8 +521,7 @@ exports.getIngredientsLists = catchAsync(async (req, res, next) => {
 /**
  * Enter ingredient stock amount for the provided day
  */
-exports.enterSingleDayIngredientStock = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
+exports.enterIngredientStock = catchAsync(async (req, res, next) => {
   const { year, weekNumber, days, ingredientId, stockQuantity } = req.body;
 
   // Check if all required fields are provided
@@ -507,26 +529,37 @@ exports.enterSingleDayIngredientStock = catchAsync(async (req, res, next) => {
     return next(new AppError("Please provide all required fields", 400));
   }
 
-  // Check if single day order exists
+  // Check if order not expired
   const order = await SingleDayOrder.findOne({
     user: req.user._id,
-    _id: id,
+    year,
+    weekNumber,
   });
 
-  if (!order) {
-    return next(new AppError("Order not found", 404));
+  if (order.expired) {
+    return next(
+      new AppError(
+        "Order has expired, therefore no actions can be performed.",
+        400,
+      ),
+    );
   }
 
-  // Check if provided day is in the order
-  if (!days.includes(order.day)) {
-    return next(new AppError("Day not found in the order", 400));
+  // Check if days are provided as an array with at least one day
+  if (!Array.isArray(days) || days.length === 0) {
+    return next(
+      new AppError(
+        "Please provide days as an array with at least one day",
+        400,
+      ),
+    );
   }
 
   // Declare ingredients stock variable
   let ingredientsStock;
 
   // Check if days have more than one day
-  if (days.length > 1) {
+  if (Array.isArray(days) && days.length > 1) {
     // Check if combined list document already exists
     ingredientsStock = await IngredientsStock.findOne({
       user: req.user._id,
@@ -537,12 +570,7 @@ exports.enterSingleDayIngredientStock = catchAsync(async (req, res, next) => {
 
     // If combined list document doesn't exist, create it
     if (!ingredientsStock) {
-      ingredientsStock = await IngredientsStock.create({
-        user: req.user._id,
-        year,
-        weekNumber,
-        dayCombined: days,
-      });
+      return next(new AppError("Combined list not found", 404));
     }
   } else {
     // Check if ingredients stock document already exists
@@ -569,6 +597,8 @@ exports.enterSingleDayIngredientStock = catchAsync(async (req, res, next) => {
     (ingredient) => ingredient.ingredient.toString() === ingredientId,
   );
 
+  console.log("ingredientIndex", ingredientIndex);
+
   // If ingredient exists, update stock amount
   if (ingredientIndex !== -1) {
     ingredientsStock.ingredients[ingredientIndex].stockAmount =
@@ -577,7 +607,7 @@ exports.enterSingleDayIngredientStock = catchAsync(async (req, res, next) => {
     // If ingredient doesn't exist, add it
     ingredientsStock.ingredients.push({
       ingredient: ingredientId,
-      stockAmount: stockQuantity,
+      stockAmount: Number(stockQuantity),
     });
   }
 
@@ -600,6 +630,22 @@ exports.createCombinedIngredientsList = catchAsync(async (req, res, next) => {
   // Check if all required fields are provided
   if (!year || !weekNumber || !days || days.length < 2) {
     return next(new AppError("Please provide all required fields", 400));
+  }
+
+  // Check if order not expired
+  const order = await SingleDayOrder.findOne({
+    user: req.user._id,
+    year,
+    weekNumber,
+  });
+
+  if (order.expired) {
+    return next(
+      new AppError(
+        "Order has expired, therefore no actions can be performed.",
+        400,
+      ),
+    );
   }
 
   // Check if combined list already exists
@@ -640,4 +686,193 @@ exports.createCombinedIngredientsList = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
   });
+});
+
+/**
+ * Delete ingredient stock amount for the provided day
+ */
+exports.deleteSingleDayIngredientStock = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const { year, weekNumber, days, ingredientId } = req.body;
+
+  // Check if all required fields are provided
+  if (!year || !weekNumber || !days.length || !ingredientId) {
+    return next(new AppError("Please provide all required fields", 400));
+  }
+
+  // Check if single day order exists
+  const order = await SingleDayOrder.findOne({
+    user: req.user._id,
+    _id: id,
+  });
+
+  if (!order) {
+    return next(new AppError("Order not found", 404));
+  }
+
+  // Check if order expired than any changes are not allowed
+  if (order.expired) {
+    return next(
+      new AppError(
+        "Order has expired, therefore no actions can be performed.",
+        400,
+      ),
+    );
+  }
+
+  // Check if provided day is in the order
+  if (!days.includes(order.day)) {
+    return next(new AppError("Day not found in the order", 400));
+  }
+
+  // Declare ingredients stock variable
+  let ingredientsStock;
+
+  // Check if days have more than one day
+  if (days.length > 1) {
+    // Check if combined list document already exists
+    ingredientsStock = await IngredientsStock.findOne({
+      user: req.user._id,
+      year,
+      weekNumber,
+      dayCombined: { $all: days },
+    });
+  } else {
+    // Check if ingredients stock document already exists
+    ingredientsStock = await IngredientsStock.findOne({
+      user: req.user._id,
+      year,
+      weekNumber,
+      day: days[0],
+    });
+  }
+
+  // If ingredients stock document doesn't exist, return an error
+  if (!ingredientsStock) {
+    return next(new AppError("Ingredients stock not found", 404));
+  }
+
+  // Find ingredient index
+  const ingredientIndex = ingredientsStock.ingredients.findIndex(
+    (ingredient) => ingredient.ingredient.toString() === ingredientId,
+  );
+
+  // If ingredient exists, delete it
+  if (ingredientIndex !== -1) {
+    ingredientsStock.ingredients.splice(ingredientIndex, 1);
+  }
+
+  // If ingredients list is empty, delete the document
+  if (ingredientsStock.ingredients.length === 0) {
+    await ingredientsStock.deleteOne();
+  } else {
+    // Save changes
+    await ingredientsStock.save();
+  }
+
+  // Return response
+  return res.status(200).json({
+    status: "success",
+    message: "Ingredient stock amount deleted successfully",
+  });
+});
+
+/**
+ * Remove combined ingredients list
+ */
+exports.deleteCombinedIngredientsList = catchAsync(async (req, res, next) => {
+  const { year, weekNumber, days } = req.body;
+
+  // Check if all required fields are provided
+  if (!year || !weekNumber || !days || days.length < 2) {
+    return next(new AppError("Please provide all required fields", 400));
+  }
+
+  // Check if order not expired
+  const order = await SingleDayOrder.findOne({
+    user: req.user._id,
+    year,
+    weekNumber,
+  });
+
+  if (order.expired) {
+    return next(
+      new AppError(
+        "Order has expired, therefore no actions can be performed.",
+        400,
+      ),
+    );
+  }
+
+  // Check if combined list already exists
+  const combinedList = await IngredientsStock.findOne({
+    user: req.user._id,
+    year,
+    weekNumber,
+    dayCombined: { $all: days },
+  });
+
+  // If combined list doesn't exist, return an error
+  if (!combinedList) {
+    return next(new AppError("Combined list not found", 404));
+  }
+
+  // Delete combined list
+  await combinedList.deleteOne();
+
+  // Return response
+  res.status(200).json({
+    status: "success",
+  });
+});
+
+// Example Ingredients List
+const ingredients = [
+  { name: "Tomatoes", quantity: 5, unit: "kg" },
+  { name: "Onions", quantity: 3, unit: "kg" },
+  { name: "Potatoes", quantity: 7, unit: "kg" },
+];
+
+/**
+ * Generate pdf for combined ingredients list
+ */
+exports.generateIngredientsPdf = catchAsync(async (req, res, next) => {
+  const doc = new PDFDocument();
+  doc.pipe(fs.createWriteStream("./pdf/file2.pdf"));
+
+  // Set response headers for inline viewing
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", 'inline; filename="ingredients.pdf"');
+
+  // Pipe PDF to response
+  doc.pipe(res);
+
+  // Title
+  doc.fontSize(20).text("Ingredients List", { align: "center" });
+  doc.moveDown();
+
+  // Example Table Header
+  doc.fontSize(12).text("Ingredient", 50, doc.y);
+  doc.text("Quantity", 250, doc.y);
+  doc.text("Unit", 350, doc.y);
+  doc.moveDown();
+  doc.moveTo(50, doc.y).lineTo(500, doc.y).stroke();
+  doc.moveDown();
+
+  // Example Table Rows
+  const ingredients = [
+    { name: "Tomatoes", quantity: 5, unit: "kg" },
+    { name: "Onions", quantity: 3, unit: "kg" },
+    { name: "Potatoes", quantity: 7, unit: "kg" },
+  ];
+
+  ingredients.forEach((ingredient) => {
+    doc.text(ingredient.name, 50, doc.y);
+    doc.text(ingredient.quantity.toString(), 250, doc.y);
+    doc.text(ingredient.unit, 350, doc.y);
+    doc.moveDown();
+  });
+
+  // End document
+  doc.end();
 });

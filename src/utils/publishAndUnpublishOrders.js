@@ -1,25 +1,24 @@
+const IngredientsStock = require("../models/IngredientsStock");
 const SingleDayOrder = require("../models/SingleDayOrder");
-const WeeklyPlan = require("../models/WeeklyPlan");
+const catchAsync = require("./catchAsync");
 const { sendMessageToClients } = require("./websocket");
 
 /**
  * Publish weekly plan and create single day orders for each day of the week
  * @param {Request} req - Express request object
+ * @param {Array} singleDayOrders - Single day orders for current week
+ * @param {Object} assignedWeeklyMenu - Assigned weekly menu details
  * @param {Number} year - Year of the weekly plan
  * @param {Number} weekNumber - Week number of the weekly plan
- * @param {String} menuIdInWeeklyPlan - Menu document id in weekly plan (not weekly menu id)
  */
-const publishOrders = async (req, year, weekNumber, menuIdInWeeklyPlan) => {
+const publishOrders = async (
+  req,
+  singleDayOrders,
+  assignedWeeklyMenu,
+  year,
+  weekNumber,
+) => {
   try {
-    // Get weekly plan details and single day orders
-    const { weeklyPlanDetails, singleDayOrders } =
-      await getWeeklyPlanDetailsAndOrders(
-        req,
-        year,
-        weekNumber,
-        menuIdInWeeklyPlan,
-      );
-
     // If single day orders on current week are already published, update them with new weekly plan details
     if (singleDayOrders.length > 0) {
       // Map on each single day order
@@ -28,8 +27,10 @@ const publishOrders = async (req, year, weekNumber, menuIdInWeeklyPlan) => {
         const categoryMap = new Map();
 
         // Map for each meal in the day
-        for (const meal of weeklyPlanDetails.menu.days[singleDayOrder.day]
+        for (const meal of assignedWeeklyMenu.menu.days[singleDayOrder.day]
           .meals) {
+          console.log(meal);
+
           const category = meal.category; // Get category of meal
 
           // Create category if it doesn't exist
@@ -43,9 +44,9 @@ const publishOrders = async (req, year, weekNumber, menuIdInWeeklyPlan) => {
           // Add meal to category
           categoryMap.get(category).meals.push({
             meal: meal.meal,
-            weeklyMenu: weeklyPlanDetails.menu._id,
+            weeklyMenu: assignedWeeklyMenu.menu._id,
             status: "not_done",
-            customers: weeklyPlanDetails.assignedClients,
+            customers: assignedWeeklyMenu.assignedClients,
           });
         }
 
@@ -81,12 +82,10 @@ const publishOrders = async (req, year, weekNumber, menuIdInWeeklyPlan) => {
       );
 
       // Send message to clients
-      // sendMessageToClients(req.user._id, "singleDayOrders");
-
-      console.log("publish updated weekly plan");
+      sendMessageToClients(req.user._id, "customer_publish_unpublish_orders");
     } else {
       // Create new single day orders
-      const newOrders = weeklyPlanDetails.menu.days.map((day) => {
+      const newOrders = assignedWeeklyMenu.menu.days.map((day) => {
         // Create category map which will be used to organize meals by category
         const categoryMap = new Map();
 
@@ -105,9 +104,9 @@ const publishOrders = async (req, year, weekNumber, menuIdInWeeklyPlan) => {
           // Add meal to category
           categoryMap.get(category).meals.push({
             meal: meal.meal,
-            weeklyMenu: weeklyPlanDetails.menu._id,
+            weeklyMenu: assignedWeeklyMenu.menu._id,
             status: "not_done",
-            customers: weeklyPlanDetails.assignedClients,
+            customers: assignedWeeklyMenu.assignedClients,
           });
         }
 
@@ -125,8 +124,7 @@ const publishOrders = async (req, year, weekNumber, menuIdInWeeklyPlan) => {
       await SingleDayOrder.insertMany(newOrders);
 
       // Send message to clients
-      // sendMessageToClients(req.user._id, "singleDayOrders");
-      console.log("publish new weekly plan");
+      sendMessageToClients(req.user._id, "customer_publish_unpublish_orders");
     }
   } catch (error) {
     console.error("Error publishing orders:", error.message);
@@ -136,30 +134,28 @@ const publishOrders = async (req, year, weekNumber, menuIdInWeeklyPlan) => {
 /**
  * Unpublish weekly plan and remove meals from single day orders
  * @param {Request} req - Express request object
+ * @param {Array} singleDayOrders - Single day orders for current week
+ * @param {Object} assignedWeeklyMenu - Assigned weekly menu details
  * @param {Number} year - Year of the weekly plan
  * @param {Number} weekNumber - Week number of the weekly plan
- * @param {String} menuIdInWeeklyPlan - Menu document id in weekly plan (not weekly menu id)
  */
-const unpublishOrders = async (req, year, weekNumber, menuIdInWeeklyPlan) => {
+const unpublishOrders = async (
+  req,
+  singleDayOrders,
+  assignedWeeklyMenu,
+  year,
+  weekNumber,
+) => {
   try {
-    // Get weekly plan details and single day orders
-    const { weeklyPlanDetails, singleDayOrders } =
-      await getWeeklyPlanDetailsAndOrders(
-        req,
-        year,
-        weekNumber,
-        menuIdInWeeklyPlan,
-      );
-
     // Map on each single day order
     for (const singleDayOrder of singleDayOrders) {
       // Map on each category of single day order
       for (const category of singleDayOrder.categories) {
-        // Filter out meals that belong to weekly menu
+        // Filter out meals that belong to the unpublished weekly menu
         category.meals = category.meals.filter(
           (meal) =>
             meal.weeklyMenu.toString() !==
-            weeklyPlanDetails.menu._id.toString(),
+            assignedWeeklyMenu.menu._id.toString(),
         );
 
         // If meals are empty, remove category
@@ -181,54 +177,74 @@ const unpublishOrders = async (req, year, weekNumber, menuIdInWeeklyPlan) => {
       })),
     );
 
+    // After removing meals from orders, clean up ingredient stock
+    await cleanupIngredientsStock(req.user._id, year, weekNumber);
+
     // Send message to clients
-    // sendMessageToClients(req.user._id, "singleDayOrders");
-    console.log("unpublish weekly plan");
+    sendMessageToClients(req.user._id, "customer_publish_unpublish_orders");
   } catch (error) {
     console.error("Error unpublishing orders:", error.message);
   }
 };
 
 /**
- * Helper function to get weekly plan details and single day orders from request
- * @param {Request} req - Express request object
+ * Clean up ingredient stock by removing unused ingredients
+ * @param {String} userId - User id
  * @param {Number} year - Year of the weekly plan
  * @param {Number} weekNumber - Week number of the weekly plan
- * @param {String} menuIdInWeeklyPlan - Menu document id in weekly plan (not weekly menu id)
  */
-const getWeeklyPlanDetailsAndOrders = async (
-  req,
-  year,
-  weekNumber,
-  menuIdInWeeklyPlan,
-) => {
-  try {
-    const weeklyPlan = await WeeklyPlan.findOne({
-      user: req.user._id,
-      status: "active",
-      year,
-      weekNumber,
-    }).populate({
-      path: "assignMenu.menu",
-    });
+const cleanupIngredientsStock = catchAsync(async (userId, year, weekNumber) => {
+  // Find all active orders for this week
+  const activeOrders = await SingleDayOrder.find({
+    user: userId,
+    year,
+    weekNumber,
+    categories: { $exists: true, $not: { $size: 0 } },
+  });
 
-    // Get weekly plan assigned menu details and customers
-    const weeklyPlanDetails = weeklyPlan.assignMenu.find(
-      (assigned) => assigned._id.toString() === menuIdInWeeklyPlan,
+  // If no active orders, clean up all stock documents
+  if (activeOrders.length === 0) {
+    await IngredientsStock.deleteMany({ user: userId, year, weekNumber });
+    return;
+  }
+
+  // Get all ingredients still used in active orders
+  const activeIngredients = new Set();
+
+  // Loop through each active order and add ingredients to set
+  activeOrders.forEach((order) => {
+    order.categories.forEach((category) => {
+      category.meals.forEach((meal) => {
+        meal.meal.ingredients.forEach((ingredient) => {
+          activeIngredients.add(ingredient.ingredientId.toString());
+        });
+      });
+    });
+  });
+
+  // Find stock documents for this week
+  const stockDocuments = await IngredientsStock.find({
+    user: userId,
+    year,
+    weekNumber,
+  });
+
+  // Loop through each stock document and remove unused ingredients
+  for (const stockDoc of stockDocuments) {
+    // Remove ingredients that are not in active orders
+    stockDoc.ingredients = stockDoc.ingredients.filter((stockIngredient) =>
+      activeIngredients.has(stockIngredient.ingredient.toString()),
     );
 
-    // Check if single day order for current week is already published
-    const singleDayOrders = await SingleDayOrder.find({
-      user: req.user._id,
-      year,
-      weekNumber,
-    });
-
-    // Return weekly plan details and single day orders
-    return { weeklyPlanDetails, singleDayOrders };
-  } catch (error) {
-    console.error("Error getting details from request:", error.message);
+    // If stock document is now empty, delete it
+    if (stockDoc.ingredients.length === 0) {
+      await IngredientsStock.deleteOne({ _id: stockDoc._id });
+    } else {
+      await stockDoc.save(); // Save changes if there are still ingredients
+    }
   }
-};
+
+  console.log("✅ Stock cleanup completed successfully.");
+});
 
 module.exports = { publishOrders, unpublishOrders };

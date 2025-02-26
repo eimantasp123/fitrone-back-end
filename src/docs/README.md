@@ -55,7 +55,6 @@ Keičiant prenumeratos planą iš aukštesnio į žemesnį, tam tikri duomenys y
   - Atnaujinant ingredientą, paleidžiamos galinės operacijos. Perskaičiuojamos visų patiekalų maistinės vertės, kur ingredientas yra naudojamas.
   - Po sėkmingo atnaujinimo siunčiama **WebSocket** žinutė `ingredient_updated_in_meals`, kuri informuoja, kad operacija įvykdyta sėkmingai, ir kliento pusėje duomenys gali būti atnaujinami:
     **GET** : `/meals`
-    **GET** : `/weekly-menu/:id` (su kiekvienu id)
 
 - **DELETE** | `/ingredients/:ingredientId` (dokumentacijos nuoroda: `URL`)
   Gamintojas taip pat gali pašalinti ingredientus iš sistemos naudojant **Soft delete** principą. Po sėkmingo pašalinimo priekinėje dalyje turi būti inicijuotas duomenų atnaujinimas.
@@ -89,7 +88,6 @@ Keičiant prenumeratos planą iš aukštesnio į žemesnį, tam tikri duomenys y
 - **PUT** | `/meals/:id` (dokumentacijos nuoroda: `URL`)
   Gamintojas gali atnaujinti savo patiekalus bei pakeisti tam tikrus duomenis. Kai patiekalas sėkmingai atnaujinamas priekinėje dalyje turi būti inicijuojamas duomenų atnaujinimas:
   **GET** : `/meals`
-  **GET** : `/weekly-menu/:id`
 
 - **DELETE** | `/meals/:id` (dokumentacijos nuoroda: `URL`)
   Gamintojas taip pat gali pašalinti patiekalus iš sistemos naudojant **Soft delete** principą. Kai patiekalas sėkmingai ištrinamas kliento pusėje turi būti inicijuojamas duomenų atnaujinimas:
@@ -99,8 +97,7 @@ Keičiant prenumeratos planą iš aukštesnio į žemesnį, tam tikri duomenys y
 
 #### Priklausomybės:
 
-- Patiekalai
-- Ingredientai
+- Savaitės planas
 
 #### Užklausų Metodai:
 
@@ -115,6 +112,7 @@ Keičiant prenumeratos planą iš aukštesnio į žemesnį, tam tikri duomenys y
   **GET** : `/weekly-menu`
   **GET** : `/weekly-menu/:id`
   **GET** : `/weekly-plan`
+  **GET** : `/orders`
 
 - **DELETE** | `/weekly-menu/:id` (dokumentacijos nuoroda: `URL`)
   Gamintojas gali pašalinti savaitės meniu iš sistemos naudojant **Soft delete** principą. Savaitės meniu negali būti ištrinamas, jei jis yra priskirtas prie `aktyvaus savaitės plano`. Jei savaitės meniu sėkmingai pašalinamas kliento pusėje turi būti inicijuojamas duomenų atnaujinimas:
@@ -132,7 +130,7 @@ Keičiant prenumeratos planą iš aukštesnio į žemesnį, tam tikri duomenys y
   Gamintojas gauna atitinkamo savaitės meniu duomenis, kurie nėra ištrinti ar pašalinti iš sistemos **deletedAt: null**. Gamintojas gauna visos savaitės duomenis, įskaitant visas savaitės dienas ir prie jų priskirtus patiekalus. Kliento pusėje apskaičiuojamos kiekvienos dienos kalorijų normos ir maistinės vertės.
 
 - **POST** | `/weekly-menu/:id/meal` (dokumentacijos nuoroda: `URL`)
-  Gamintojas gali pridėti patiekalą prie tam tikros savaitės dienos, jei savaitės meniu nėra aktyvus sistemoje. Jei savaitės meniu jau yra aktyvus, šio veiksmo atlikti negalima.
+  Gamintojas gali pridėti patiekalą prie tam tikros savaitės dienos, jei savaitės meniu nėra aktyvus sistemoje. Jei savaitės meniu jau yra aktyvus, šio veiksmo atlikti negalima. Patiekalas prie savaitės meniu yra pridedamas kaip kopija, todėl ingredientų, patiekalų kiti pakeitimai nepaveiks sukurtų savaitės meniu. Jei gamintojas norės atnaujinti tam tikra patiekalo informaciją, turės patiekalą priskirti prie atitinkamo savaitės meniu išnaujo.
 
 - **DELETE** | `/weekly-menu/:id/meal` (dokumentacijos nuoroda: `URL`)
   Gamintojas gali pašalinti patiekalą iš tam tikros savaitės dienos, jei savaitės meniu nėra aktyvus sistemoje. Jei savaitės meniu yra aktyvus, šio veiksmo atlikti negalima.
@@ -173,9 +171,13 @@ Keičiant prenumeratos planą iš aukštesnio į žemesnį, tam tikri duomenys y
   **GET** : `/weekly-plan/:id/menu-details/:menuId`
 
 - **PATCH** | `/weekly-plan/manage-publish-menu` (dokumentacijos nuoroda: `URL`)
-  Gamintojas, pridėjęs savaitės meniu ir priskyręs klientus prie kiekvieno savaitės meniu, turi publikuoti meniu, kad būtų galima formuoti užsakymus ir atlikti skaičiavimus. Ši užklausa veikia `Toggle` principu – jei meniu jau publikuotas, jis bus išpublikuotas ir atvirkščiai. Publikavimo metu yra sukuriami uzsakymai. Jei gamintojas pasirenka ispublikuoti meniu, tada visi uzsakymai su susiijusiu meniu yra pasalinami. Po sėkmingo publikavimo/išpublikavimo priekinėje dalyje turi būti inicijuojamas duomenų atnaujinimas:
+  Gamintojas, pridėjęs savaitės meniu ir priskyręs klientus prie kiekvieno savaitės meniu, turi publikuoti meniu, kad būtų galima formuoti užsakymus ir atlikti skaičiavimus. Ši užklausa veikia `Toggle` principu – jei meniu jau publikuotas, jis bus išpublikuotas ir atvirkščiai. Po sėkmingo publikavimo/išpublikavimo priekinėje dalyje turi būti inicijuojamas duomenų atnaujinimas:
   **GET** : `/weekly-plan`
   **GET** : `/orders`
+
+`PUBLISH` : Prieš leidžiant publikuoti meniu, reikia patikrinti, ar jau yra sukurti užsakymai einamajai savaitei. Jei užsakymai yra sukurti, reikia patikrinti, ar bent viena diena jau yra baigta iš suformuotų užsakymų, kurie yra susiję su naujai publikuojamu meniu. Jei bent viena diena iš publikuojamo meniu yra baigta sukurtuose užsakymuose, šio meniu publikuoti nebus galima.
+
+`UNPUBLISH` : Prieš išpublikuojant, reikia patikrinti, ar norimo išpublikuoti meniu bent viena diena yra baigta. Jei yra baigta, tada negalima jo išpublikuoti. Jei nėra, tada galima išpublikuoti. Taip pat išpublikuojant meniu yra patikrinami visi dar aktyvūs ingredientai ir jų likučiai. Ingredientų likučiai, kurie nėra aktyviuose užsakymuose, yra pašalinami iš sistemos.
 
 - **GET** | `/weekly-plan/:id/menu-details/:menuId` (dokumentacijos nuoroda: `URL`)
   Gamintojas gali gauti priskirtų klientų sąrašą prie kiekvieno savaitės meniu plano. Pvz., jei yra 2025 metų 7 savaitė ir priskirti 4 savaitės meniu, gamintojas gali gauti kiekvieno priskirto meniu klientų sąrašą bei patikrinti, ar priskyrimai atitinka atnaujintus duomenis.
@@ -237,8 +239,6 @@ Keičiant prenumeratos planą iš aukštesnio į žemesnį, tam tikri duomenys y
 - Savaitės planas (publish/unpublish)
 - Savaites meniu (updates Bio)
 - Klientai (updates)
-- Ingredientai (updates)
-- Patiekalai (updates)
 
 #### Užklausų Metodai:
 
@@ -248,6 +248,9 @@ Keičiant prenumeratos planą iš aukštesnio į žemesnį, tam tikri duomenys y
 - **POST** | `/orders/ingredients-list-combo` (dokumentacijos nuoroda: `URL`)
   Gamintojas gali sujungti kelias pasirinktos savaitės dienas ir gauti bendrą ingredientų sąrašą. Po sėkmingo kombinavimo priekinėje dalyje turi būti inicijuojamas duomenų atnaujinimas:
   **GET** : `/orders/ingredients-list`
+
+- **GET** | `/orders/generate-ingredients-pdf` (dokumentacijos nuoroda: `URL`)
+  Gamintojas gali generuoti PDF failą pasirinktai dienai ar kombinuotam sąrašui, kad būtų galima jį persiųsti ar atsispausdinti.
 
 - **PATCH** | `/orders/:id/ingredients/enter-stock` (dokumentacijos nuoroda: `URL`)
   Gamintojas gali įvesti turimą kiekvieno ingrediento likutį, kad būtų galima perskaičiuoti ir tiksliai parodyti, kiek dar ingredientų reikia, įskaitant jau turimas atsargas. Po sėkmingo likučių įvedimo priekinėje dalyje turi būti inicijuojamas duomenų atnaujinimas:

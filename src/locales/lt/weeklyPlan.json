@@ -38,6 +38,8 @@
     "groupNotAssigned": "Grupė nėra priskirta.",
     "groupAlreadyAssignedOnCurrentMenu": "Grupė jau priskirta šiam meniu.",
     "weeklyPlanNotFoundOrMenuIsNotAssigned": "Savaitės planas nerastas arba meniu nėra priskirtas.",
-    "noClientsAssigned": "Nėra priskirtų klientų, todėl negalima publikuoti meniu."
+    "noClientsAssigned": "Nėra priskirtų klientų, todėl negalima publikuoti meniu.",
+    "ordersAlreadyStarted_publish": "Atitinkamos savaitės meniu užsakymai jau pradėti, todėl šio meniu publikuoti negalima, nes tai paveiktu jau baigtus užsakymus.",
+    "ordersAlreadyStarted_unpublish": "Atitinkamos savaitės meniu užsakymai jau pradėti, todėl šio meniu išpublikuoti negalima, nes tai paveiktu jau baigtus užsakymus."
   }
 }
