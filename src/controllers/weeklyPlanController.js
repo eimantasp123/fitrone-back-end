@@ -11,6 +11,7 @@ const {
   publishOrders,
   unpublishOrders,
 } = require("../utils/publishAndUnpublishOrders");
+const SingleDayOrder = require("../models/SingleDayOrder");
 /**
  * Set user timezone
  */
@@ -103,7 +104,8 @@ exports.getWeeklyPlanByDateAndCreate = catchAsync(async (req, res, next) => {
   if (weeklyPlan.status === "expired" && weeklyPlan.isSnapshot) {
     const refactoredWeeklyPlanAssignMenu = weeklyPlan.assignMenu.map(
       (menu) => ({
-        ...menu,
+        ...menu.toObject(),
+        menuSnapshot: true,
         menu: menu.menuSnapshot
           ? {
               _id: menu.menuSnapshot._id,
@@ -372,6 +374,8 @@ exports.managePublishMenu = catchAsync(async (req, res, next) => {
     status: "active",
     year: parseInt(year),
     weekNumber: parseInt(week),
+  }).populate({
+    path: "assignMenu.menu",
   });
 
   if (!weeklyPlan) {
@@ -384,18 +388,18 @@ exports.managePublishMenu = catchAsync(async (req, res, next) => {
   }
 
   // Check if menu is assigned
-  const assignedMenu = weeklyPlan.assignMenu.find(
+  const assignedWeeklyMenu = weeklyPlan.assignMenu.find(
     (assigned) => assigned._id.toString() === menuId,
   );
 
-  if (!assignedMenu) {
+  if (!assignedWeeklyMenu) {
     return next(
       new AppError(req.t("weeklyPlan:validationErrors.menuNotAssigned"), 400),
     );
   }
 
   // Check if menu is already published or  unpublished
-  if (assignedMenu.published === publish) {
+  if (assignedWeeklyMenu.published === publish) {
     return next(
       new AppError(
         `Week plan is already ${publish ? "published" : "unpublished"}.`,
@@ -405,25 +409,71 @@ exports.managePublishMenu = catchAsync(async (req, res, next) => {
   }
 
   // Check does weekly plan has any clients assigned
-  if (assignedMenu.assignedClients.length === 0) {
+  if (assignedWeeklyMenu.assignedClients.length === 0) {
     return res.status(200).json({
       status: "warning",
       message: req.t("weeklyPlan:validationErrors.noClientsAssigned"),
     });
   }
 
-  // Toogle publish status
-  assignedMenu.published = publish;
-  await weeklyPlan.save();
+  // Check if single day order for current week is already published
+  const singleDayOrders = await SingleDayOrder.find({
+    user: req.user._id,
+    year: parseInt(year),
+    weekNumber: parseInt(week),
+  });
+
+  // If orders are created for the week, check if they are already started
+  if (singleDayOrders.length > 0) {
+    for (const day of assignedWeeklyMenu.menu.days) {
+      // Check if meals are already created for the day
+      if (day.meals.length !== 0) {
+        // Find single day order for the day
+        const singleDayOrder = singleDayOrders.find(
+          (order) => order.day === day.day,
+        );
+
+        // If single day order is done, prevent publish action
+        if (singleDayOrder && singleDayOrder.status === "done") {
+          return res.status(200).json({
+            status: "warning",
+            message: publish
+              ? req.t(
+                  "weeklyPlan:validationErrors.ordersAlreadyStarted_publish",
+                )
+              : req.t(
+                  "weeklyPlan:validationErrors.ordersAlreadyStarted_unpublish",
+                ),
+          });
+        }
+      }
+    }
+  }
 
   // Perform publish or unpublish action
   if (publish) {
     // Perfom publish action
-    publishOrders(req, parseInt(year), parseInt(week), menuId);
+    publishOrders(
+      req,
+      singleDayOrders,
+      assignedWeeklyMenu,
+      parseInt(year),
+      parseInt(week),
+    );
   } else {
     // Perform unpublish action
-    unpublishOrders(req, parseInt(year), parseInt(week), menuId);
+    unpublishOrders(
+      req,
+      singleDayOrders,
+      assignedWeeklyMenu,
+      parseInt(year),
+      parseInt(week),
+    );
   }
+
+  // Toogle publish status
+  assignedWeeklyMenu.published = publish;
+  await weeklyPlan.save();
 
   // Send response
   res.status(200).json({
@@ -432,8 +482,6 @@ exports.managePublishMenu = catchAsync(async (req, res, next) => {
       ? req.t("weeklyPlan:messages.menuPublished")
       : req.t("weeklyPlan:messages.menuUnpublished"),
   });
-
-  //
 });
 
 /**

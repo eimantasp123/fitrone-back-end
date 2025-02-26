@@ -6,9 +6,11 @@ const {
   changeMealStatus,
   changeOrderStatus,
   getIngredientsLists,
-  enterSingleDayIngredientStock,
+  enterIngredientStock,
   createCombinedIngredientsList,
   generateIngredientsPdf,
+  deleteSingleDayIngredientStock,
+  deleteCombinedIngredientsList,
 } = require("../controllers/ordersController");
 
 const router = express.Router();
@@ -28,7 +30,16 @@ router.post("/ingredients-list-combo", createCombinedIngredientsList);
 router.get("/generate-ingredients-pdf", generateIngredientsPdf);
 
 // Enter ingredient stock for the day
-router.patch("/:id/ingredients/enter-stock", enterSingleDayIngredientStock);
+router.patch("/ingredients/enter-stock", enterIngredientStock);
+
+// Remove ingredient stock from current day stock list
+router.patch("/:id/ingredients/remove-stock", deleteSingleDayIngredientStock);
+
+// Delete combined ingredients list
+router.patch(
+  "/:id/ingredients/delete-combined-list",
+  deleteCombinedIngredientsList,
+);
 
 // Get orders by provided year and week number
 router.get("/", getOrders);

@@ -19,6 +19,7 @@ const ingredientsStockSchema = new mongoose.Schema(
       type: Number,
       min: 0,
       max: 6,
+      default: null,
     },
     dayCombined: {
       type: [Number], // Array of numbers for days (0-6)

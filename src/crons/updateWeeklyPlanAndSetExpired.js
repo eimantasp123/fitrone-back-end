@@ -3,6 +3,7 @@ const { getYear } = require("date-fns/getYear");
 const WeeklyPlan = require("../models/WeeklyPlan.js");
 const WeeklyMenu = require("../models/WeeklyMenu.js");
 const cron = require("node-cron");
+const SingleDayOrder = require("../models/SingleDayOrder.js");
 
 // Cron Job - Runs Every Monday at 14:00 UTC
 cron.schedule("0 14 * * 1", () => updateWeeklyPlanAndSetExpired());
@@ -37,9 +38,6 @@ const updateWeeklyPlanAndSetExpired = async () => {
       status: "active",
     }).populate({
       path: "assignMenu.menu",
-      populate: {
-        path: "days.meals.meal",
-      },
     }); // Populate asignMenu.menu details
 
     for (const weeklyPlan of expiredWeeklyPlans) {
@@ -56,6 +54,50 @@ const updateWeeklyPlanAndSetExpired = async () => {
     }
 
     console.log("✅ WeekPlan snapshots created successfully!");
+    console.log("🗑 Setting expired Single Day Orders...");
+
+    // Get all single day orders for the expired weeks and set them to `expired`
+    const singleDayOrders = await SingleDayOrder.find({
+      $or: [
+        { year: { $lt: minExpiredYear } },
+        {
+          year: minExpiredYear,
+          weekNumber: { $gte: adjustedWeek, $lt: currentWeek },
+        },
+        {
+          year: currentYear,
+          weekNumber: { $lt: currentWeek },
+        },
+      ],
+      expired: false,
+    }).populate({
+      path: "categories.meals.weeklyMenu",
+    });
+
+    // Update single day orders
+    for (const singleDayOrder of singleDayOrders) {
+      // Set all meals to `done`
+      singleDayOrder.categories = singleDayOrder.categories.map((category) => {
+        return {
+          ...category,
+          meals: category.meals.map((meal) => {
+            return {
+              ...meal,
+              status: "done",
+              weeklyMenuTitle: meal.weeklyMenu.title,
+            };
+          }),
+        };
+      });
+
+      singleDayOrder.expired = true;
+      singleDayOrder.status = "done";
+
+      // Save the updated single day order
+      await singleDayOrder.save({ validateBeforeSave: true });
+    }
+
+    console.log("✅ Single Day Orders set to expired successfully!");
 
     console.log("🗑 Removing expired weeks from WeeklyMenu...");
 

@@ -26,10 +26,6 @@ const singleDayOrderSchema = new mongoose.Schema(
       enum: ["not_done", "done"],
       default: "not_done",
     },
-    categoriesSnapshot: {
-      type: Object,
-      default: null,
-    },
     expired: {
       type: Boolean,
       default: false,
@@ -55,14 +51,16 @@ const singleDayOrderSchema = new mongoose.Schema(
         meals: [
           {
             meal: {
-              type: mongoose.Schema.Types.ObjectId,
-              ref: "Meal",
+              type: Object,
               required: true,
             },
             weeklyMenu: {
               type: mongoose.Schema.Types.ObjectId,
               ref: "WeeklyMenu",
               required: true,
+            },
+            weeklyMenuTitle: {
+              type: String,
             },
             status: {
               type: String,

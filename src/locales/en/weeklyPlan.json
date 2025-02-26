@@ -38,6 +38,8 @@
     "groupNotAssigned": "Group is not assigned.",
     "groupAlreadyAssignedOnCurrentMenu": "Group already assigned on current menu.",
     "weeklyPlanNotFoundOrMenuIsNotAssigned": "Weekly plan not found or menu is not assigned.",
-    "noClientsAssigned": "No clients assigned, therefore the menu cannot be published."
+    "noClientsAssigned": "No clients assigned, therefore the menu cannot be published.",
+    "ordersAlreadyStarted_publish": "Orders for the respective week's menu have already started, so this menu cannot be published as it would affect already completed orders.",
+    "ordersAlreadyStarted_unpublish": "Orders for the respective week's menu have already started, so this menu cannot be unpublished as it would affect already completed orders."
   }
 }
