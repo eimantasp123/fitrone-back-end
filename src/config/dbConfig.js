@@ -4,7 +4,6 @@ const mongoose = require("mongoose");
 const WeeklyMenu = require("../models/WeeklyMenu");
 const Meal = require("../models/Meal");
 const Ingredient = require("../models/Ingredient");
-const Group = require("../models/Group");
 const Customer = require("../models/Customer");
 const WeekPlan = require("../models/WeeklyPlan");
 
@@ -23,9 +22,6 @@ const connectDB = async () => {
 
     // Rebuild indexes for Ingredient
     await Ingredient.syncIndexes(); // Ensure indexes are in sync
-
-    // Rebuild indexes for Group
-    await Group.syncIndexes(); // Ensure indexes are in sync
 
     // Create indexes for Customer
     await Customer.createIndexes(); // Ensure indexes are in sync
