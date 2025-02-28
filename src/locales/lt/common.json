@@ -76,5 +76,25 @@
     "invalidRestriction": "Netinkama reikšmė '{{value}}' dietiniui apribojimui.",
     "invalidCategory": "Netinkama reikšmė '{{value}}' kategorijai.",
     "invalidCombinedDaysArray": "Netinkamas kombinuotų dienų masyvas. Masyvas turi turėti bent 2 dienas."
+  },
+
+  "ingredientsPdf": {
+    "moreDetails": "Daugiau informacijos",
+    "ingredients": "Ingredientai",
+    "title": "Pavadinimas",
+    "generalAmount": "Bendras kiekis",
+    "stockAmount": "Atsargų kiekis",
+    "unit": "Vienetas",
+    "needAmount": "Reikalingas kiekis",
+    "listGenerated": "Sąrašas sukurtas",
+    "days": {
+      "0": "Sekmadienis",
+      "1": "Pirmadienis",
+      "2": "Antradienis",
+      "3": "Trečiadienis",
+      "4": "Ketvirtadienis",
+      "5": "Penktadienis",
+      "6": "Šeštadienis"
+    }
   }
 }
