@@ -80,9 +80,6 @@ const publishOrders = async (
           },
         })),
       );
-
-      // Send message to clients
-      sendMessageToClients(req.user._id, "customer_publish_unpublish_orders");
     } else {
       // Create new single day orders
       const newOrders = assignedWeeklyMenu.menu.days.map((day) => {
@@ -122,9 +119,6 @@ const publishOrders = async (
 
       // Insert new single day orders
       await SingleDayOrder.insertMany(newOrders);
-
-      // Send message to clients
-      sendMessageToClients(req.user._id, "customer_publish_unpublish_orders");
     }
   } catch (error) {
     console.error("Error publishing orders:", error.message);
@@ -179,9 +173,6 @@ const unpublishOrders = async (
 
     // After removing meals from orders, clean up ingredient stock
     await cleanupIngredientsStock(req.user._id, year, weekNumber);
-
-    // Send message to clients
-    sendMessageToClients(req.user._id, "customer_publish_unpublish_orders");
   } catch (error) {
     console.error("Error unpublishing orders:", error.message);
   }
@@ -209,14 +200,20 @@ const cleanupIngredientsStock = catchAsync(async (userId, year, weekNumber) => {
   }
 
   // Get all ingredients still used in active orders
-  const activeIngredients = new Set();
+  const activeIngredients = new Map();
 
-  // Loop through each active order and add ingredients to set
+  // Loop through each active order
   activeOrders.forEach((order) => {
+    // Create set for each day
+    activeIngredients.set(order.day, new Set());
+
+    // Loop through each meal and add ingredients to set
     order.categories.forEach((category) => {
       category.meals.forEach((meal) => {
         meal.meal.ingredients.forEach((ingredient) => {
-          activeIngredients.add(ingredient.ingredientId.toString());
+          activeIngredients
+            .get(order.day)
+            .add(ingredient.ingredientId.toString());
         });
       });
     });
@@ -229,11 +226,19 @@ const cleanupIngredientsStock = catchAsync(async (userId, year, weekNumber) => {
     weekNumber,
   });
 
-  // Loop through each stock document and remove unused ingredients
-  for (const stockDoc of stockDocuments) {
-    // Remove ingredients that are not in active orders
+  // Filter single day stock documents
+  const singleDayStockDocuments = stockDocuments.filter(
+    (stock) => stock.day !== null,
+  );
+
+  // Loop through each single day stock document and remove unused ingredients
+  for (const stockDoc of singleDayStockDocuments) {
     stockDoc.ingredients = stockDoc.ingredients.filter((stockIngredient) =>
-      activeIngredients.has(stockIngredient.ingredient.toString()),
+      activeIngredients.has(stockDoc.day)
+        ? activeIngredients
+            .get(stockDoc.day)
+            .has(stockIngredient.ingredient.toString())
+        : false,
     );
 
     // If stock document is now empty, delete it
@@ -244,7 +249,41 @@ const cleanupIngredientsStock = catchAsync(async (userId, year, weekNumber) => {
     }
   }
 
-  console.log("✅ Stock cleanup completed successfully.");
+  // Filter combined stock documents
+  const combinedStockDocuments = stockDocuments.filter(
+    (stock) => stock.day === null,
+  );
+
+  // Extract days from combined stock document
+  const getActiveIngredientsDays = Array.from(activeIngredients.keys());
+
+  // Loop through each combined stock document and remove unused ingredients
+  for (const stockDoc of combinedStockDocuments) {
+    // Check if all days are included in combined stock document
+    const allDaysIncluded = stockDoc.dayCombined.every((day) =>
+      getActiveIngredientsDays.includes(day),
+    );
+
+    // If not all days are included, delete the stock document
+    if (!allDaysIncluded) {
+      await IngredientsStock.deleteOne({ _id: stockDoc._id });
+    } else {
+      // Get all active ingredients for each day
+      const getAllActiveIngredients = stockDoc.dayCombined.map((day) =>
+        Array.from(activeIngredients.get(day)),
+      );
+
+      // Filter out ingredient stock which is not used in active orders
+      stockDoc.ingredients = stockDoc.ingredients.filter((stockIngredient) =>
+        getAllActiveIngredients
+          .flat()
+          .includes(stockIngredient.ingredient.toString()),
+      );
+
+      // Save changes
+      await stockDoc.save();
+    }
+  }
 });
 
 module.exports = { publishOrders, unpublishOrders };

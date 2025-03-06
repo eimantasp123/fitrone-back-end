@@ -77,25 +77,5 @@
     "invalidRestriction": "Invalid value '{{value}}' for dietary restriction.",
     "invalidCategory": "Invalid value '{{value}}' for category.",
     "invalidCombinedDaysArray": "Invalid combined days array. Must be at least 2 days."
-  },
-
-  "ingredientsPdf": {
-    "moreDetails": "More details",
-    "ingredients": "Ingredients",
-    "title": "Title",
-    "generalAmount": "General amount",
-    "stockAmount": "Stock amount",
-    "unit": "Unit",
-    "needAmount": "Need amount",
-    "listGenerated": "List generated on",
-    "days": {
-      "0": "Sunday",
-      "1": "Monday",
-      "2": "Tuesday",
-      "3": "Wednesday",
-      "4": "Thursday",
-      "5": "Friday",
-      "6": "Saturday"
-    }
   }
 }
