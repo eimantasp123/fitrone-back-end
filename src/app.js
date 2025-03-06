@@ -52,6 +52,7 @@ i18next
       "weeklyPlan",
       "customers",
       "groups",
+      "orders",
     ],
     backend: {
       loadPath: path.join(__dirname, "/locales/{{lng}}/{{ns}}.json"),
@@ -129,6 +130,10 @@ app.use(
 
 // Cookie parser middleware
 app.use(cookieParser());
+
+if (process.env.NODE_ENV === "development") {
+  app.use("/pdf", express.static(path.join(__dirname, "../pdf")));
+}
 
 // Routes
 app.use("/api/v1/auth", authRoutes);

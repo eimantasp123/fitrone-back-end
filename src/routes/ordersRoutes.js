@@ -32,14 +32,14 @@ router.get("/generate-ingredients-pdf", generateIngredientsPdf);
 // Enter ingredient stock for the day
 router.patch("/ingredients/enter-stock", enterIngredientStock);
 
-// Remove ingredient stock from current day stock list
-router.patch("/:id/ingredients/remove-stock", deleteSingleDayIngredientStock);
-
 // Delete combined ingredients list
 router.patch(
-  "/:id/ingredients/delete-combined-list",
+  "/ingredients/delete-combined-list",
   deleteCombinedIngredientsList,
 );
+
+// Remove ingredient stock from current day stock list
+router.patch("/ingredients/remove-stock", deleteSingleDayIngredientStock);
 
 // Get orders by provided year and week number
 router.get("/", getOrders);

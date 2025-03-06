@@ -1,0 +1,55 @@
+{
+  "mealStatusChangedSuccessfully": "Patiekalo būsena sėkmingai pakeista",
+  "orderStatusChangedSuccessfully": "Užsakymo būsena sėkmingai pakeista",
+  "stockUpdatedSuccessfully": "Likučiai sėkmingai atnaujinti",
+  "stockDeletedSuccessfully": "Likučiai sėkmingai ištrinti",
+  "stockAddedSuccessfully": "Likučiai sėkmingai pridėti",
+  "combinedListCreatedSuccessfully": "Kombinuotas sąrašas sukurtas sėkmingai",
+  "combinedListDeletedSuccessfully": "Kombinuotas sąrašas sėkmingai ištrintas",
+
+  "ingredientsPdf": {
+    "ingredientsList": "Ingredientų-sąrašas",
+    "ingredient": "Ingredientas",
+    "generalAmount": "Bendras kiekis",
+    "stockAmount": "Turimas kiekis",
+    "unit": "Mato vienetas",
+    "needAmount": "Reikalingas kiekis",
+    "generalFieldsExplanation": "Bendri laukai ir paaiškinimai",
+    "generalAmountExplanation": "Bendras reikalingas ingredientų kiekis visiems suplanuotiems patiekalams.",
+    "stockAmountExplanation": "Šiuo metu turimas, nepanaudotas ingredientų kiekis.",
+    "unitExplanation": "Mato vienetas, naudojamas ingredientui matuoti.",
+    "needAmountExplanation": "Galutinis ingredientų kiekis, kurį reikia įsigyti, atėmus turimą likutį, kad būtų galima paruošti visus patiekalus.",
+    "page": "Puslapis {{page}} iš {{pages}}",
+    "ingredientsListTitle": "Ingredientų pirkimo sąrašas",
+    "listGenerated": "Sąrašas sugeneruotas {{date}}",
+    "firstShortDescription": "Šiame dokumente pateikiamas ingredientų sąrašas su atliktais skaičiavimais.",
+    "secondShortDescription": "Jame yra nurodytas jūsų turimas ingrediento likutis, reikalingas kiekis visiems patiekalams, matavimo vienetas ir kiekis, kurį jums reikia įsigyti.",
+    "listAttached": "Data, prie kurios priskirtas ingredientų sąrašas",
+    "week": "Savaitė {{week}}",
+    "selectedDays": "Pasirinktos dienos",
+
+    "days": {
+      "0": "Sekmadienis",
+      "1": "Pirmadienis",
+      "2": "Antradienis",
+      "3": "Trečiadienis",
+      "4": "Ketvirtadienis",
+      "5": "Penktadienis",
+      "6": "Šeštadienis"
+    }
+  },
+
+  "errors": {
+    "orderNotFound": "Užsakymas nerastas",
+    "orderExpired": "Užsakymas pasibaigė, todėl jokių veiksmų atlikti negalima.",
+    "mealNotFound": "Patiekalas nerastas",
+    "pleaseProvideAllRequiredFields": "Prašome pateikti visus reikalingus laukus",
+    "pleaseProvideDaysAsArray": "Prašome pateikti dienas kaip masyvą su bent viena diena",
+    "combinedListNotFound": "Kombinuotas sąrašas nerastas",
+    "combinedListAlreadyExists": "Kombinuotas sąrašas jau egzistuoja",
+    "notAllOrdersExist": "Visi užsakymai neegzistuoja",
+    "dayNotFoundInOrder": "Diena nerasta užsakyme",
+    "stockNotFound": "Likučiai nerasti",
+    "orderDone": "Užsakymas jau atliktas, todėl jokių veiksmų atlikti negalima."
+  }
+}

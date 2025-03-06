@@ -9,12 +9,14 @@ const {
   format,
   setWeek,
   setYear,
+  addDays,
+  addWeeks,
+  startOfISOWeek,
 } = require("date-fns");
 const { toZonedTime } = require("date-fns-tz");
 const path = require("path");
 const PdfPrinter = require("pdfmake");
-const { table } = require("console");
-const { doesNotThrow } = require("assert");
+const fs = require("fs");
 const { transformToUppercaseFirstLetter } = require("../utils/generalHelpers");
 
 /**
@@ -23,18 +25,51 @@ const { transformToUppercaseFirstLetter } = require("../utils/generalHelpers");
 exports.getOrders = catchAsync(async (req, res, next) => {
   const { year, weekNumber } = req.query;
 
+  // Format current date and get required values
+  const userLocalTime = toZonedTime(new Date(), req.user.timezone || "UTC"); // Convert to user timezone
+  const formattedDate = format(userLocalTime, "yyyy.MM.dd"); // Format as "yyyy.MM.dd"
+
   // Collect all orders for the provided year and week number
   const orders = await SingleDayOrder.find({
     user: req.user._id,
     year,
     weekNumber,
     categories: { $exists: true, $not: { $size: 0 } },
-  }).select("_id year weekNumber day status expired");
+  })
+    .select("_id year weekNumber day status expired")
+    .sort("day");
+
+  let activeOrder = null; // Store active order separately
+  let inactiveOrders = []; // Store inactive orders
+
+  // Refactor orders and calculate the date for each order
+  orders.forEach((order) => {
+    const orderDate = getDateFromWeek(order.year, order.weekNumber, order.day);
+    const isActive = orderDate === formattedDate;
+
+    // Refactor order
+    const transformedOrder = {
+      ...order.toObject(),
+      date: orderDate,
+      active: isActive,
+    };
+
+    if (isActive) {
+      activeOrder = transformedOrder;
+    } else {
+      inactiveOrders.push(transformedOrder);
+    }
+  });
+
+  // If an active order exists, place it first; otherwise, sort normally with Sunday last
+  const sortedOrders = activeOrder
+    ? [activeOrder, ...inactiveOrders]
+    : inactiveOrders.sort((a, b) => (a.day === 0 ? 1 : b.day === 0 ? -1 : 0));
 
   // Return response
   res.status(200).json({
     status: "success",
-    data: orders,
+    data: sortedOrders,
   });
 });
 
@@ -67,12 +102,13 @@ exports.getOrderById = catchAsync(async (req, res, next) => {
 
   // Check if order exists
   if (!order) {
-    return next(new AppError("Order not found", 404));
+    return next(new AppError(req.t("orders:errors.orderNotFound"), 400));
   }
 
   // Refactor order and calculate unique customers for each meal
   const refactoredOrder = {
     ...order.toObject(),
+    date: getDateFromWeek(order.year, order.weekNumber, order.day),
     categories: order.categories.map((category) => ({
       ...category.toObject(),
       mealsPerCategory: category.meals.length,
@@ -204,17 +240,17 @@ exports.changeMealStatus = catchAsync(async (req, res, next) => {
 
   // Check if order exists
   if (!order) {
-    return next(new AppError("Order not found", 404));
+    return next(new AppError(req.t("orders:errors.orderNotFound"), 400));
   }
 
   // Check if order expired than any changes are not allowed
   if (order.expired) {
-    return next(
-      new AppError(
-        "Order has expired, therefore no actions can be performed.",
-        400,
-      ),
-    );
+    return next(new AppError(req.t("orders:errors.orderExpired"), 400));
+  }
+
+  // If order done than any changes are not allowed
+  if (order.status === "done") {
+    return next(new AppError(req.t("orders:errors.orderDone"), 400));
   }
 
   // Find meal by id
@@ -225,7 +261,7 @@ exports.changeMealStatus = catchAsync(async (req, res, next) => {
 
   // Check if meal exists
   if (!meal) {
-    return next(new AppError("Meal not found", 404));
+    return next(new AppError(req.t("orders:errors.mealNotFound"), 400));
   }
 
   // Change meal status
@@ -237,7 +273,7 @@ exports.changeMealStatus = catchAsync(async (req, res, next) => {
   // Return response
   res.status(200).json({
     status: "success",
-    message: "Meal status changed successfully",
+    message: req.t("orders:mealStatusChangedSuccessfully"),
   });
 });
 
@@ -258,17 +294,12 @@ exports.changeOrderStatus = catchAsync(async (req, res, next) => {
 
   // Check if order exists
   if (!order) {
-    return next(new AppError("Order not found", 404));
+    return next(new AppError(req.t("orders:errors.orderNotFound"), 400));
   }
 
   // Check if order expired than any changes are not allowed
   if (order.expired) {
-    return next(
-      new AppError(
-        "Order has expired, therefore no actions can be performed.",
-        400,
-      ),
-    );
+    return next(new AppError(req.t("orders:errors.orderExpired"), 400));
   }
 
   // Change meal status
@@ -287,7 +318,7 @@ exports.changeOrderStatus = catchAsync(async (req, res, next) => {
   // Return response
   res.status(200).json({
     status: "success",
-    message: "Order status changed successfully",
+    message: req.t("orders:orderStatusChangedSuccessfully"),
   });
 });
 
@@ -303,11 +334,13 @@ exports.getIngredientsLists = catchAsync(async (req, res, next) => {
     year,
     weekNumber,
     categories: { $exists: true, $not: { $size: 0 } },
-  }).select("_id year weekNumber day status categories expired");
+  })
+    .select("_id year weekNumber day status categories expired")
+    .sort("day");
 
   // Check if orders exist
   if (!orders.length) {
-    return next(new AppError("Orders not found", 404));
+    return next(new AppError(req.t("orders:errors.orderNotFound"), 400));
   }
 
   // Refactor orders and calculate general amount of ingredients
@@ -325,6 +358,7 @@ exports.getIngredientsLists = catchAsync(async (req, res, next) => {
       weekNumber: order.weekNumber,
       day: order.day,
       status: order.status,
+      date: getDateFromWeek(order.year, order.weekNumber, order.day),
       expired: order.expired,
       ingredients: Array.from(list.values()),
       updatedAt: order.updatedAt,
@@ -338,6 +372,9 @@ exports.getIngredientsLists = catchAsync(async (req, res, next) => {
     year,
     weekNumber,
   });
+
+  // Sort ingredients lists by day and push Sunday(0) to the end of the array
+  ingredientsLists.sort((a, b) => (a.day === 0 ? 1 : b.day === 0 ? -1 : 0));
 
   // Refactor ingredients lists and add stock data
   ingredientsLists.forEach((orderDay) => {
@@ -367,19 +404,13 @@ exports.getIngredientsLists = catchAsync(async (req, res, next) => {
       // Combine multiple days ingredients list
       combineMultipleDaysIngredientsList(list, ingredientsLists, lists);
 
-      // Check if all days from the combined list are done in orders
-      const allDaysDone = list.dayCombined.every((day) => {
-        const order = orders.find((order) => order.day === day);
-        return order.status === "done";
-      });
-
       // Return refactored combined list
       return {
         combineListDocId: list._id,
         year: list.year,
         weekNumber: list.weekNumber,
         dayCombined: list.dayCombined,
-        allDaysDone,
+        expired: orders.every((order) => order.expired),
         ingredients: Array.from(lists.values()),
         updatedAt: list.updatedAt,
         createdAt: list.createdAt,
@@ -391,6 +422,7 @@ exports.getIngredientsLists = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     data: {
+      expired: orders.every((order) => order.expired),
       generalList: ingredientsLists,
       combinedList: combinedListRefactored,
     },
@@ -405,7 +437,9 @@ exports.enterIngredientStock = catchAsync(async (req, res, next) => {
 
   // Check if all required fields are provided
   if (!year || !weekNumber || !ingredientId || !stockQuantity) {
-    return next(new AppError("Please provide all required fields", 400));
+    return next(
+      new AppError(req.t("orders:errors.pleaseProvideAllRequiredFields"), 400),
+    );
   }
 
   // Check if order not expired
@@ -416,21 +450,13 @@ exports.enterIngredientStock = catchAsync(async (req, res, next) => {
   });
 
   if (order.expired) {
-    return next(
-      new AppError(
-        "Order has expired, therefore no actions can be performed.",
-        400,
-      ),
-    );
+    return next(new AppError(req.t("orders:errors.orderExpired"), 400));
   }
 
   // Check if days are provided as an array with at least one day
   if (!Array.isArray(days) || days.length === 0) {
     return next(
-      new AppError(
-        "Please provide days as an array with at least one day",
-        400,
-      ),
+      new AppError(req.t("orders:errors.pleaseProvideDaysAsArray"), 400),
     );
   }
 
@@ -449,7 +475,9 @@ exports.enterIngredientStock = catchAsync(async (req, res, next) => {
 
     // If combined list document doesn't exist, create it
     if (!ingredientsStock) {
-      return next(new AppError("Combined list not found", 404));
+      return next(
+        new AppError(req.t("orders:errors.combinedListNotFound"), 400),
+      );
     }
   } else {
     // Check if ingredients stock document already exists
@@ -476,8 +504,6 @@ exports.enterIngredientStock = catchAsync(async (req, res, next) => {
     (ingredient) => ingredient.ingredient.toString() === ingredientId,
   );
 
-  console.log("ingredientIndex", ingredientIndex);
-
   // If ingredient exists, update stock amount
   if (ingredientIndex !== -1) {
     ingredientsStock.ingredients[ingredientIndex].stockAmount =
@@ -496,7 +522,7 @@ exports.enterIngredientStock = catchAsync(async (req, res, next) => {
   // Return response
   return res.status(200).json({
     status: "success",
-    message: "Ingredient stock amount entered successfully",
+    message: req.t("orders:stockAddedSuccessfully"),
   });
 });
 
@@ -508,7 +534,9 @@ exports.createCombinedIngredientsList = catchAsync(async (req, res, next) => {
 
   // Check if all required fields are provided
   if (!year || !weekNumber || !days || days.length < 2) {
-    return next(new AppError("Please provide all required fields", 400));
+    return next(
+      new AppError(req.t("orders:errors.pleaseProvideAllRequiredFields"), 400),
+    );
   }
 
   // Check if order not expired
@@ -520,12 +548,10 @@ exports.createCombinedIngredientsList = catchAsync(async (req, res, next) => {
   });
 
   if (order.every((order) => order.expired)) {
-    return next(
-      new AppError(
-        "Order has expired, therefore no actions can be performed.",
-        400,
-      ),
-    );
+    return res.status(200).json({
+      status: "warning",
+      message: req.t("orders:errors.orderExpired"),
+    });
   }
 
   // Check if combined list already exists
@@ -533,12 +559,15 @@ exports.createCombinedIngredientsList = catchAsync(async (req, res, next) => {
     user: req.user._id,
     year,
     weekNumber,
-    dayCombined: { $all: days },
+    dayCombined: { $all: days, $size: days.length },
   });
 
   // If combined list exists, return an error
   if (combinedList) {
-    return next(new AppError("Combined list already exists", 400));
+    return res.status(200).json({
+      status: "warning",
+      message: req.t("orders:errors.combinedListAlreadyExists"),
+    });
   }
 
   // Check if all single day orders exist
@@ -551,7 +580,7 @@ exports.createCombinedIngredientsList = catchAsync(async (req, res, next) => {
 
   // If not all orders exist, return an error
   if (orders.length !== days.length) {
-    return next(new AppError("Not all orders exist", 400));
+    return next(new AppError(req.t("orders:errors.notAllOrdersExist"), 400));
   }
 
   // Create combined list document
@@ -565,6 +594,7 @@ exports.createCombinedIngredientsList = catchAsync(async (req, res, next) => {
   // Return response
   res.status(200).json({
     status: "success",
+    message: req.t("orders:combinedListCreatedSuccessfully"),
   });
 });
 
@@ -572,37 +602,13 @@ exports.createCombinedIngredientsList = catchAsync(async (req, res, next) => {
  * Delete ingredient stock amount for the provided day
  */
 exports.deleteSingleDayIngredientStock = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
   const { year, weekNumber, days, ingredientId } = req.body;
 
   // Check if all required fields are provided
   if (!year || !weekNumber || !days.length || !ingredientId) {
-    return next(new AppError("Please provide all required fields", 400));
-  }
-
-  // Check if single day order exists
-  const order = await SingleDayOrder.findOne({
-    user: req.user._id,
-    _id: id,
-  });
-
-  if (!order) {
-    return next(new AppError("Order not found", 404));
-  }
-
-  // Check if order expired than any changes are not allowed
-  if (order.expired) {
     return next(
-      new AppError(
-        "Order has expired, therefore no actions can be performed.",
-        400,
-      ),
+      new AppError(req.t("orders:errors.pleaseProvideAllRequiredFields"), 400),
     );
-  }
-
-  // Check if provided day is in the order
-  if (!days.includes(order.day)) {
-    return next(new AppError("Day not found in the order", 400));
   }
 
   // Declare ingredients stock variable
@@ -629,7 +635,7 @@ exports.deleteSingleDayIngredientStock = catchAsync(async (req, res, next) => {
 
   // If ingredients stock document doesn't exist, return an error
   if (!ingredientsStock) {
-    return next(new AppError("Ingredients stock not found", 404));
+    return next(new AppError(req.t("orders:errors.stockNotFound"), 400));
   }
 
   // Find ingredient index
@@ -642,18 +648,13 @@ exports.deleteSingleDayIngredientStock = catchAsync(async (req, res, next) => {
     ingredientsStock.ingredients.splice(ingredientIndex, 1);
   }
 
-  // If ingredients list is empty, delete the document
-  if (ingredientsStock.ingredients.length === 0) {
-    await ingredientsStock.deleteOne();
-  } else {
-    // Save changes
-    await ingredientsStock.save();
-  }
+  // Save changes
+  await ingredientsStock.save();
 
   // Return response
   return res.status(200).json({
     status: "success",
-    message: "Ingredient stock amount deleted successfully",
+    message: req.t("orders:stockDeletedSuccessfully"),
   });
 });
 
@@ -665,7 +666,9 @@ exports.deleteCombinedIngredientsList = catchAsync(async (req, res, next) => {
 
   // Check if all required fields are provided
   if (!year || !weekNumber || !days || days.length < 2) {
-    return next(new AppError("Please provide all required fields", 400));
+    return next(
+      new AppError(req.t("orders:errors.pleaseProvideAllRequiredFields"), 400),
+    );
   }
 
   // Check if combined list already exists
@@ -678,7 +681,7 @@ exports.deleteCombinedIngredientsList = catchAsync(async (req, res, next) => {
 
   // If combined list doesn't exist, return an error
   if (!combinedList) {
-    return next(new AppError("Combined list not found", 404));
+    return next(new AppError(req.t("orders:errors.combinedListNotFound"), 400));
   }
 
   // Check if order not expired
@@ -690,12 +693,7 @@ exports.deleteCombinedIngredientsList = catchAsync(async (req, res, next) => {
   });
 
   if (order.every((order) => order.expired)) {
-    return next(
-      new AppError(
-        "Order has expired, therefore no actions can be performed.",
-        400,
-      ),
-    );
+    return next(new AppError(req.t("orders:errors.orderExpired"), 400));
   }
 
   // Delete combined list
@@ -704,6 +702,7 @@ exports.deleteCombinedIngredientsList = catchAsync(async (req, res, next) => {
   // Return response
   res.status(200).json({
     status: "success",
+    message: req.t("orders:combinedListDeletedSuccessfully"),
   });
 });
 
@@ -711,19 +710,14 @@ exports.deleteCombinedIngredientsList = catchAsync(async (req, res, next) => {
  * Generate pdf for combined ingredients list
  */
 exports.generateIngredientsPdf = catchAsync(async (req, res, next) => {
-  // const { year, weekNumber, day } = req.query;
-  // const { day: pollutedDays } = req.queryPolluted;
-
-  const userId = "6783fab25298f3bc283577e7";
-  const year = 2025;
-  const weekNumber = 9;
-  const day = 0;
-  const pollutedDays = [2, 1, 5, 4, 3, 6];
-  // const pollutedDays = {};
+  const { year, weekNumber, day } = req.query;
+  const { day: pollutedDays } = req.queryPolluted;
 
   // Check if required fields are provided
   if (!year || !weekNumber || day === undefined) {
-    return next(new AppError("Please provide all required fields", 400));
+    return next(
+      new AppError(req.t("orders:errors.pleaseProvideAllRequiredFields"), 400),
+    );
   }
 
   // Convert days to an array of numbers
@@ -731,7 +725,7 @@ exports.generateIngredientsPdf = catchAsync(async (req, res, next) => {
     ? pollutedDays.map((day) => Number(day))
     : [Number(day)];
 
-  // Reorder days and push sunday to the end of the array
+  // Reorder days and move Sunday to the end of the array
   daysArray.sort((a, b) => a - b);
   const sundayIndex = daysArray.indexOf(0);
   if (sundayIndex !== -1) {
@@ -740,8 +734,7 @@ exports.generateIngredientsPdf = catchAsync(async (req, res, next) => {
 
   // Get orders
   const orders = await getOrdersByDays(
-    // req.user._id,
-    userId,
+    req.user._id,
     year,
     weekNumber,
     daysArray,
@@ -749,8 +742,7 @@ exports.generateIngredientsPdf = catchAsync(async (req, res, next) => {
 
   // Get stock data
   const stockData = await getStockByDays(
-    // req.user._id,
-    userId,
+    req.user._id,
     year,
     weekNumber,
     daysArray,
@@ -758,7 +750,7 @@ exports.generateIngredientsPdf = catchAsync(async (req, res, next) => {
 
   // Validate orders
   if (!orders.length) {
-    return next(new AppError("Orders not found", 404));
+    return next(new AppError(req.t("orders:errors.orderNotFound"), 400));
   }
 
   // Generate ingredient lists
@@ -791,7 +783,9 @@ exports.generateIngredientsPdf = catchAsync(async (req, res, next) => {
 
     // Check if combined list exists
     if (!combinedList) {
-      return next(new AppError("Combined list not found", 404));
+      return next(
+        new AppError(req.t("orders:errors.combinedListNotFound"), 400),
+      );
     }
 
     // Create a map to store combined ingredients
@@ -824,27 +818,20 @@ exports.generateIngredientsPdf = catchAsync(async (req, res, next) => {
     };
   }
 
-  // Get dates
+  // Get formated week range and current date based on user's timezone
   const { formatedWeekRange, dateNow } = getDates(
     year,
     weekNumber,
     req.user.timezone,
   );
 
-  const days = {
-    0: "Sekmadienis",
-    1: "Pirmadienis",
-    2: "Antradienis",
-    3: "Treciadienis",
-    4: "Ketvirtadienis",
-    5: "Penktadienis",
-    6: "Sestadienis",
-  };
+  // Get translated days object
+  const translatedDays = req.t("orders:ingredientsPdf.days", {
+    returnObjects: true,
+  });
 
   // Get days in words
-  const daysArrays = daysArray.map((day) => days[day]).join(" — ");
-
-  console.log("finalIngredients", finalIngredients);
+  const daysArrays = daysArray.map((day) => translatedDays[day]).join(" — ");
 
   // Define fonts
   const fonts = {
@@ -859,14 +846,122 @@ exports.generateIngredientsPdf = catchAsync(async (req, res, next) => {
   // Create a pdfmake printer instance
   const printer = new PdfPrinter(fonts);
 
+  // Create PDF document definition
+  const { docDefinition } = createPdf(
+    req,
+    finalIngredients,
+    daysArrays,
+    formatedWeekRange,
+    dateNow,
+    weekNumber,
+    year,
+  );
+
+  try {
+    // Check environment
+    const isDev = process.env.NODE_ENV === "development";
+    // Set file path dynamically
+    const pdfFileName = `${req.t("orders:ingredientsPdf.ingredientsList")}-${isDev ? Date.now() : dateNow}.pdf`;
+    const pdfFilePath = path.join(__dirname, "../../pdf", pdfFileName); // Store in pdf folder
+    const pdfDoc = printer.createPdfKitDocument(docDefinition); // Create PDF document
+
+    if (isDev) {
+      // Development Mode: Save the PDF to the server
+      const writeStream = fs.createWriteStream(pdfFilePath);
+      pdfDoc.pipe(writeStream);
+
+      // Production Mode: Directly send the file for download
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="ingredients.pdf"`,
+      );
+
+      // Send response when PDF is saved for postman testing
+      // writeStream.on("finish", () => {
+      //   res.json({
+      //     status: "success",
+      //     message: "PDF generated successfully",
+      //     pdfUrl: `http://localhost:5000/pdf/${pdfFileName}`,
+      //   });
+      // });
+
+      // Pipe the PDF to the response
+      pdfDoc.pipe(res);
+      pdfDoc.end();
+    } else {
+      // Production Mode: Directly send the file for download
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="ingredients.pdf"`,
+      );
+
+      // Pipe the PDF to the response
+      pdfDoc.pipe(res);
+      pdfDoc.end();
+    }
+  } catch (error) {
+    console.error("Error generating pdf:", error);
+  }
+});
+
+/**
+ * Get the exact date from a given year, ISO week number, and day of the week.
+ * @param {number} year - The year (e.g., 2025)
+ * @param {number} weekNumber - The ISO week number (1-53)
+ * @param {number} dayOfWeek - The day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+ * @returns {string} - The formatted date as "yyyy.MM.dd"
+ */
+const getDateFromWeek = (year, weekNumber, dayOfWeek) => {
+  // Get the first day of the given week (ISO weeks start on Monday)
+  const weekStartDate = startOfISOWeek(new Date(year, 0, 4)); // Find first Monday of the year
+  const correctWeekStart = addDays(weekStartDate, (weekNumber - 1) * 7); // Get start of given week
+
+  // Map day correctly (ISO: Monday = 1, Sunday = 0, but Sunday should be last)
+  const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Shift Sunday to end
+
+  // Get the actual date
+  const actualDate = addDays(correctWeekStart, adjustedDay);
+
+  // Format the result as "yyyy.MM.dd"
+  return format(actualDate, "yyyy.MM.dd");
+};
+
+/**
+ * Helper function to create pdf for combined ingredients list
+ * @param {Object} req - Request object for translation
+ * @param {Object} finalIngredients - Final ingredients list
+ * @param {String} daysArrays - Days in words
+ * @param {String} formatedWeekRange - Formated week range
+ * @param {String} dateNow - Current date in user's timezone
+ * @param {Number} weekNumber - Week number
+ * @param {Number} year - Year number
+ * @returns {Object} - PDF document definition
+ */
+const createPdf = (
+  req,
+  finalIngredients,
+  daysArrays,
+  formatedWeekRange,
+  dateNow,
+  weekNumber,
+  year,
+) => {
   // Define table structure
   const tableBody = [
     [
-      { text: "Ingredient", style: "tableHeader" },
-      { text: "General amount", style: "tableHeader" },
-      { text: "Stock amount", style: "tableHeader" },
-      { text: "Unit", style: "tableHeader" },
-      { text: "Needed amount", style: "tableHeader" },
+      { text: req.t("orders:ingredientsPdf.ingredient"), style: "tableHeader" },
+      { text: req.t("orders:ingredientsPdf.unit"), style: "tableHeader" },
+      {
+        text: req.t("orders:ingredientsPdf.stockAmount"),
+        style: "tableHeader",
+      },
+      {
+        text: req.t("orders:ingredientsPdf.generalAmount"),
+        style: "tableHeader",
+      },
+      { text: req.t("orders:ingredientsPdf.needAmount"), style: "tableHeader" },
     ],
   ];
 
@@ -877,14 +972,16 @@ exports.generateIngredientsPdf = catchAsync(async (req, res, next) => {
         text: transformToUppercaseFirstLetter(item.title),
         style: "tableRowFirst",
       },
-      { text: item.generalAmount, style: "tableRowOthers" },
+      { text: `${item.unit}.`, style: "tableRowOthers" },
       {
         text: item.stockAmount ? item.stockAmount : " - ",
         style: "tableRowOthers",
       },
-      { text: item.unit, style: "tableRowOthers" },
+      { text: item.generalAmount, style: "tableRowOthers" },
       {
-        text: item.stockAmount ? item.restockNeeded : item.generalAmount,
+        text: item.stockAmount
+          ? `${item.restockNeeded}${item.unit}.`
+          : `${item.generalAmount}${item.unit}.`,
         style: "neededAmount",
       }, // Orange background
     ]);
@@ -897,7 +994,10 @@ exports.generateIngredientsPdf = catchAsync(async (req, res, next) => {
 
     footer: function (currentPage, pageCount) {
       return {
-        text: `Page ${currentPage} of ${pageCount}`,
+        text: req.t("orders:ingredientsPdf.page", {
+          page: currentPage,
+          pages: pageCount,
+        }),
         alignment: "center",
         fontSize: 10,
         margin: [0, 10, 0, 0], // Move it slightly down
@@ -937,13 +1037,16 @@ exports.generateIngredientsPdf = catchAsync(async (req, res, next) => {
           {
             text: [
               {
-                text: "Ingredients list\n",
+                text: `${req.t("orders:ingredientsPdf.ingredientsListTitle")}\n`,
                 fontSize: 12,
                 color: "#ffffff",
                 bold: true,
               },
+
               {
-                text: `List generated on ${dateNow}`,
+                text: req.t("orders:ingredientsPdf.listGenerated", {
+                  date: dateNow,
+                }),
                 fontSize: 10,
                 bold: false,
                 color: "#d9d9d9",
@@ -962,7 +1065,7 @@ exports.generateIngredientsPdf = catchAsync(async (req, res, next) => {
 
       // CENTERED TEXT BELOW HEADER
       {
-        text: `This document contains the ingredient list required for the selected period.`,
+        text: req.t("orders:ingredientsPdf.firstShortDescription"),
         alignment: "center",
         fontSize: 10,
         color: "#1f1f1f",
@@ -970,7 +1073,7 @@ exports.generateIngredientsPdf = catchAsync(async (req, res, next) => {
         margin: [40, 20, 40, 1],
       },
       {
-        text: `It includes general stock levels, needed quantities, and units of measurement.`,
+        text: req.t("orders:ingredientsPdf.secondShortDescription"),
         alignment: "center",
         fontSize: 10,
         color: "#373737",
@@ -980,10 +1083,10 @@ exports.generateIngredientsPdf = catchAsync(async (req, res, next) => {
       {
         text: [
           {
-            text: `Ingredients list is attached for:`,
+            text: `${req.t("orders:ingredientsPdf.listAttached")}: `,
           },
           {
-            text: ` Week ${weekNumber} `,
+            text: `${year} ${req.t("orders:ingredientsPdf.week", { week: weekNumber })} | (${formatedWeekRange})`,
             bold: true,
           },
         ],
@@ -994,21 +1097,7 @@ exports.generateIngredientsPdf = catchAsync(async (req, res, next) => {
       {
         text: [
           {
-            text: `Date Range: `,
-          },
-          {
-            text: `${formatedWeekRange}`,
-            bold: true,
-          },
-        ],
-        margin: [40, 2, 30, 0],
-        fontSize: 10,
-      },
-
-      {
-        text: [
-          {
-            text: `Selected Day(s): `,
+            text: `${req.t("orders:ingredientsPdf.selectedDays")}: `,
           },
           {
             text: `${daysArrays}`,
@@ -1031,13 +1120,74 @@ exports.generateIngredientsPdf = catchAsync(async (req, res, next) => {
           vLineWidth: () => 1,
           hLineColor: () => "#cecece",
           vLineColor: () => "#cecece",
-          paddingTop: () => 5, // Space inside cells
-          paddingBottom: () => 5, // Space inside cells
+          paddingTop: () => 5,
+          paddingBottom: () => 5,
         },
         dontBreakRows: true,
         keepWithHeaderRows: 1,
-        // pageBreak: "before", // Ensure smooth breaks
         margin: [40, 0, 40, 0],
+      },
+
+      {
+        text: `${req.t("orders:ingredientsPdf.generalFieldsExplanation")}:`,
+        margin: [40, 10, 40, 0],
+        fontSize: 10,
+      },
+
+      {
+        text: [
+          {
+            text: `${req.t("orders:ingredientsPdf.unit")} - `,
+            bold: true,
+          },
+          {
+            text: req.t("orders:ingredientsPdf.unitExplanation"),
+          },
+        ],
+        margin: [40, 2, 30, 0],
+        fontSize: 10,
+      },
+
+      {
+        text: [
+          {
+            text: `${req.t("orders:ingredientsPdf.stockAmount")} - `,
+            bold: true,
+          },
+          {
+            text: req.t("orders:ingredientsPdf.stockAmountExplanation"),
+          },
+        ],
+        margin: [40, 2, 30, 0],
+        fontSize: 10,
+      },
+
+      {
+        text: [
+          {
+            text: `${req.t("orders:ingredientsPdf.generalAmount")} - `,
+            bold: true,
+          },
+          {
+            text: req.t("orders:ingredientsPdf.generalAmountExplanation"),
+          },
+        ],
+        margin: [40, 2, 30, 0],
+        fontSize: 10,
+      },
+
+      {
+        text: [
+          {
+            text: `${req.t("orders:ingredientsPdf.needAmount")} - `,
+            bold: true,
+          },
+          {
+            text: req.t("orders:ingredientsPdf.needAmountExplanation"),
+          },
+        ],
+        margin: [40, 2, 30, 0],
+        fontSize: 10,
       },
     ],
     styles: {
@@ -1070,21 +1220,8 @@ exports.generateIngredientsPdf = catchAsync(async (req, res, next) => {
     },
   };
 
-  try {
-    // Create a PDF document
-    const pdfDoc = printer.createPdfKitDocument(docDefinition);
-
-    // Set response headers to open/download PDF
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", 'inline; filename="generated.pdf"');
-
-    // Pipe PDF document to response stream
-    pdfDoc.pipe(res);
-    pdfDoc.end();
-  } catch (error) {
-    console.log(error);
-  }
-});
+  return { docDefinition };
+};
 
 /**
  * Helper function to get dates
@@ -1094,8 +1231,12 @@ exports.generateIngredientsPdf = catchAsync(async (req, res, next) => {
  * @returns {Object} - Formated week range and current date
  */
 const getDates = (year, weekNumber, timezone) => {
-  // Set the date to the first day of the given week in the year
-  let startDate = setWeek(setYear(new Date(), year), weekNumber);
+  // Set date to the first day of the given week in UTC
+  let startDate = setWeek(
+    setYear(new Date(Date.UTC(year, 0, 1)), year),
+    weekNumber,
+    { weekStartsOn: 1 },
+  );
 
   // Get the start and end of the week
   const startOfWeekDate = startOfWeek(startDate, { weekStartsOn: 1 }); // Monday start
@@ -1246,7 +1387,6 @@ const combineMultipleDaysIngredientsList = (
   ingredientsLists,
   combinedList,
 ) => {
-  console.log("list", list);
   // Iterate over each day
   list.dayCombined.forEach((day) => {
     // Find ingredients list for the day

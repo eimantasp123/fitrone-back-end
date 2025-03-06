@@ -14,7 +14,9 @@ const updateWeeklyPlanAndSetExpired = async () => {
   // Get the current year and week number in UTC time
   const now = new Date();
   const currentYear = getYear(now);
-  const currentWeek = getWeek(now);
+
+  // Force ISO week standard (Monday start)
+  const currentWeek = getWeek(now, { weekStartsOn: 1 });
 
   // Calculate the minimum week to expire (last 4 weeks)
   const minExpiredWeek = currentWeek - 4;
@@ -23,8 +25,6 @@ const updateWeeklyPlanAndSetExpired = async () => {
     minExpiredWeek > 0 ? minExpiredWeek : 52 + minExpiredWeek; // Handle negative week values (previous year)
 
   try {
-    console.log("Fetching expired Week Plans to create snapshots...");
-
     // Find expired Week Plans to create snapshots
     const expiredWeeklyPlans = await WeeklyPlan.find({
       $or: [
@@ -149,4 +149,4 @@ const updateWeeklyPlanAndSetExpired = async () => {
   }
 };
 
-updateWeeklyPlanAndSetExpired();
+// updateWeeklyPlanAndSetExpired();

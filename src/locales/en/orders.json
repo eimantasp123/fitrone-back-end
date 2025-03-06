@@ -1,0 +1,55 @@
+{
+  "mealStatusChangedSuccessfully": "Meal status changed successfully",
+  "orderStatusChangedSuccessfully": "Order status changed successfully",
+  "stockUpdatedSuccessfully": "Stock updated successfully",
+  "stockDeletedSuccessfully": "Stock deleted successfully",
+  "stockAddedSuccessfully": "Stock added successfully",
+  "combinedListCreatedSuccessfully": "Combined list created successfully",
+  "combinedListDeletedSuccessfully": "Combined list deleted successfully",
+
+  "ingredientsPdf": {
+    "ingredientsList": "Ingredients List",
+    "ingredient": "Ingredient",
+    "generalAmount": "General Amount",
+    "stockAmount": "Stock Amount",
+    "unit": "Unit",
+    "needAmount": "Needed Amount",
+    "generalFieldsExplanation": "General fields and explanations:",
+    "generalAmountExplanation": "Total amount of ingredients required for all planned meals.",
+    "stockAmountExplanation": "Currently available, unused amount of ingredients.",
+    "unitExplanation": "Unit used to measure the ingredient.",
+    "needAmountExplanation": "Final amount of ingredients needed to be purchased, after subtracting the available stock, to prepare all meals.",
+    "page": "Page {{page}} of {{pages}}",
+    "ingredientsListTitle": "Ingredients purchase list",
+    "listGenerated": "List generated on {{date}}",
+    "firstShortDescription": "This document contains a list of ingredients with calculations.",
+    "secondShortDescription": "It indicates your current stock of ingredients, the required amount for all meals, the unit of measurement, and the amount you need to purchase.",
+    "listAttached": "Date to which the ingredients list is assigned",
+    "week": "Week {{week}}",
+    "selectedDays": "Selected Days",
+
+    "days": {
+      "0": "Sunday",
+      "1": "Monday",
+      "2": "Tuesday",
+      "3": "Wednesday",
+      "4": "Thursday",
+      "5": "Friday",
+      "6": "Saturday"
+    }
+  },
+
+  "errors": {
+    "orderNotFound": "Order not found",
+    "orderExpired": "Order has expired, therefore no actions can be performed.",
+    "mealNotFound": "Meal not found",
+    "pleaseProvideAllRequiredFields": "Please provide all required fields",
+    "pleaseProvideDaysAsArray": "Please provide days as an array with at least one day",
+    "combinedListNotFound": "Combined list not found",
+    "combinedListAlreadyExists": "Combined list already exists",
+    "notAllOrdersExist": "Not all orders exist",
+    "dayNotFoundInOrder": "Day not found in order",
+    "stockNotFound": "Stock not found",
+    "orderDone": "Order is already done, therefore no actions can be performed."
+  }
+}
