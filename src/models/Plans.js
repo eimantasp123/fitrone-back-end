@@ -35,11 +35,6 @@ const plansSchema = new mongoose.Schema({
       required: true,
       default: -1,
     },
-    groups_limit: {
-      type: Number,
-      required: true,
-      default: -1,
-    },
     weekly_plan_menu_limit: {
       type: Number,
       required: true,

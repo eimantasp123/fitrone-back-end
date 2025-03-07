@@ -1,16 +1,16 @@
-const { getWeek } = require("date-fns/getWeek");
-const { getYear } = require("date-fns/getYear");
 const WeeklyPlan = require("../models/WeeklyPlan.js");
 const WeeklyMenu = require("../models/WeeklyMenu.js");
-const cron = require("node-cron");
 const SingleDayOrder = require("../models/SingleDayOrder.js");
+const User = require("../models/User.js");
+const { getWeek } = require("date-fns/getWeek");
+const { getYear } = require("date-fns/getYear");
+const { formatInTimeZone } = require("date-fns-tz");
 
-// Cron Job - Runs Every Monday at 14:00 UTC
-cron.schedule("0 14 * * 1", () => updateWeeklyPlanAndSetExpired());
-
-// cron.schedule("*/5 * * * * *", async () => updateWeekPlanAndSetExpired());
-
-const updateWeeklyPlanAndSetExpired = async () => {
+/**
+ * Function to process weekly plans, single day orders, weekly menus and set expired for a user
+ * @param {string} userId - The user ID
+ */
+const updateWeeklyPlanAndSetExpired = async (userId) => {
   // Get the current year and week number in UTC time
   const now = new Date();
   const currentYear = getYear(now);
@@ -27,6 +27,7 @@ const updateWeeklyPlanAndSetExpired = async () => {
   try {
     // Find expired Week Plans to create snapshots
     const expiredWeeklyPlans = await WeeklyPlan.find({
+      user: userId,
       $or: [
         { year: { $lt: minExpiredYear } }, // Expire past years
         {
@@ -53,11 +54,9 @@ const updateWeeklyPlanAndSetExpired = async () => {
       await weeklyPlan.save({ validateBeforeSave: true }); // Save updated snapshot
     }
 
-    console.log("✅ WeekPlan snapshots created successfully!");
-    console.log("🗑 Setting expired Single Day Orders...");
-
     // Get all single day orders for the expired weeks and set them to `expired`
     const singleDayOrders = await SingleDayOrder.find({
+      user: userId,
       $or: [
         { year: { $lt: minExpiredYear } },
         {
@@ -97,13 +96,10 @@ const updateWeeklyPlanAndSetExpired = async () => {
       await singleDayOrder.save({ validateBeforeSave: true });
     }
 
-    console.log("✅ Single Day Orders set to expired successfully!");
-
-    console.log("🗑 Removing expired weeks from WeeklyMenu...");
-
     // Remove expired weeks from WeeklyMenu
     await WeeklyMenu.updateMany(
       {
+        user: userId,
         $or: [
           { "activeWeeks.year": { $lt: minExpiredYear } },
           {
@@ -132,15 +128,14 @@ const updateWeeklyPlanAndSetExpired = async () => {
       },
     );
 
-    console.log("Set inactive for menus with empty activeWeeks");
-
     // Set `inactive` for menus with empty `activeWeeks`
     await WeeklyMenu.updateMany(
-      { activeWeeks: { $size: 0 } }, // If `activeWeeks` array is now empty
+      {
+        user: userId,
+        activeWeeks: { $size: 0 },
+      }, // If `activeWeeks` array is now empty
       { $set: { status: "inactive" } },
     );
-
-    console.log("WeekPlan expiration completed");
   } catch (error) {
     console.error(
       "Error during deep copy of week plan and change flags:",
@@ -149,4 +144,63 @@ const updateWeeklyPlanAndSetExpired = async () => {
   }
 };
 
-// updateWeeklyPlanAndSetExpired();
+/**
+ * Function to update weekly plans, single day orders and set expired for users
+ * @param {string[]} userIds - The user IDs
+ */
+const updateWeeklyPlanAndSetExpiredForUsers = async (userIds) => {
+  // Update weekly plan and set expired for each user
+  await Promise.all(
+    userIds.map(async (userId) => {
+      await updateWeeklyPlanAndSetExpired(userId);
+    }),
+  );
+};
+
+/**
+ * Function to check if it's Monday 00:15 AM in the given timezone
+ * @param {string} timezone - The timezone
+ * @param {Date} date - The date to check
+ * @returns {boolean} - True if it's Monday 00:15 AM in the given timezone
+ */
+const isMondayMidnight = (timezone, date = new Date()) => {
+  const localDay = parseInt(formatInTimeZone(date, timezone, "i"), 10); // ISO weekday (1 = Monday, 7 = Sunday)
+  const localHour = parseInt(formatInTimeZone(date, timezone, "H"), 10); // 0-23 hours
+  return localDay === 1 && localHour === 0; // Monday at 00:00
+};
+
+/**
+ * Function to process users and update weekly plans for the correct timezones
+ */
+const processWeeklyPlans = async () => {
+  // Fetch all users with a timezone
+  const users = await User.find({
+    timezone: { $ne: null },
+    role: "supplier",
+  }).select("_id timezone");
+
+  // Group users by timezone for processing
+  const usersByTimezone = users.reduce((acc, user) => {
+    if (!acc[user.timezone]) {
+      acc[user.timezone] = [];
+    }
+    acc[user.timezone].push(user._id); // Add user ID to the timezone group
+    return acc;
+  }, {});
+
+  // Process weekly plans for each timezone group
+  for (const [timezone, userIds] of Object.entries(usersByTimezone)) {
+    // Check if it's Monday midnight in the user's timezone
+    if (isMondayMidnight(timezone)) {
+      // Update weekly plans and set expired for users weekly plans and single day orders
+      await updateWeeklyPlanAndSetExpiredForUsers(userIds);
+    }
+  }
+};
+
+module.exports = {
+  isMondayMidnight,
+  processWeeklyPlans,
+  updateWeeklyPlanAndSetExpired,
+  updateWeeklyPlanAndSetExpiredForUsers,
+};
