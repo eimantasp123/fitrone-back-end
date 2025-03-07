@@ -7,7 +7,6 @@ export const plans = [
     features: {
       ingredients_limit: 0,
       meals_limit: 0,
-      groups_limit: 0,
       weekly_menus_limit: 0,
       weekly_plan_menu_limit: 0,
       clients_limit: 0,
@@ -23,7 +22,6 @@ export const plans = [
     features: {
       ingredients_limit: 5,
       meals_limit: 3,
-      groups_limit: 5,
       weekly_menus_limit: 5,
       weekly_plan_menu_limit: 10,
       clients_limit: 10,
@@ -39,7 +37,6 @@ export const plans = [
     features: {
       ingredients_limit: 10,
       meals_limit: 7,
-      groups_limit: 10,
       weekly_menus_limit: 10,
       weekly_plan_menu_limit: 20,
       clients_limit: 50,
@@ -55,7 +52,6 @@ export const plans = [
     features: {
       ingredients_limit: -1,
       meals_limit: -1,
-      groups_limit: -1,
       weekly_menus_limit: -1,
       weekly_plan_menu_limit: -1,
       clients_limit: -1,

@@ -272,4 +272,4 @@ Keičiant prenumeratos planą iš aukštesnio į žemesnį, tam tikri duomenys y
   **GET** : `/orders`
 
 - **GET** | `/orders/generate-ingredients-pdf` (dokumentacijos nuoroda: `URL`)
-  Kai
+  Gamintojas gali sugeneruoti PDF failą savo ingredientų sąrašui, kad būtų patogu ir lengva atsispausdinti.

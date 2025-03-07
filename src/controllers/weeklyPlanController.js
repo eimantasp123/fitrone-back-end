@@ -64,10 +64,6 @@ exports.getWeeklyPlanByDateAndCreate = catchAsync(async (req, res, next) => {
       path: "assignMenu.menu",
       select: "title description preferences restrictions",
     },
-    {
-      path: "assignMenu.assignedClients",
-      select: "firstName lastName email",
-    },
   ]);
 
   // If weekly plan is not found and timezone is set, create a new weekly plan
@@ -496,10 +492,9 @@ exports.getWeeklyPlanAssignedMenuDetails = catchAsync(
       {
         user: req.user._id,
         _id: id,
-        status: "active",
         "assignMenu.menu": menuId,
       },
-      { "assignMenu.$": 1 },
+      { "assignMenu.$": 1, status: 1 },
     ).populate({
       path: "assignMenu.assignedClients",
       select: "firstName lastName email",
@@ -516,12 +511,23 @@ exports.getWeeklyPlanAssignedMenuDetails = catchAsync(
       );
     }
 
+    // Determine if the weekly plan is expired
+    const isExpired = weeklyPlan.status === "expired";
+
+    // Prepare the response data
+    const responseData = {
+      weekPlanId: weeklyPlan._id,
+      expired: isExpired, // Add `expired: true` if the plan is expired
+      menuDetails: {
+        menu: weeklyPlan.assignMenu[0].menu,
+        published: weeklyPlan.assignMenu[0].published,
+        assignedClients: weeklyPlan.assignMenu[0].assignedClients,
+      },
+    };
+
     res.status(200).json({
       status: "success",
-      data: {
-        weekPlanId: weeklyPlan._id,
-        menuDetails: weeklyPlan.assignMenu[0],
-      },
+      data: responseData,
     });
   },
 );

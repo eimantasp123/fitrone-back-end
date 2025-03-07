@@ -1,6 +1,7 @@
 require("dotenv").config(); // Load environment variables
 
 const connectDB = require("../config/dbConfig");
+const SingleDayOrder = require("../models/SingleDayOrder");
 const WeeklyMenu = require("../models/WeeklyMenu");
 const WeeklyPlan = require("../models/WeeklyPlan");
 const {
@@ -44,6 +45,7 @@ const seedWeeklyPlans = async () => {
     const userId = process.env.TEST_USER_ID; // The user's ID
 
     await WeeklyPlan.deleteMany({ user: userId });
+    await SingleDayOrder.deleteMany({ user: userId });
 
     // Fetch all weekly menus created by the user
     const weeklyMenus = await WeeklyMenu.find({ user: userId });
@@ -56,7 +58,7 @@ const seedWeeklyPlans = async () => {
 
     console.log(`Found ${weeklyMenus.length} weekly menus for user ${userId}.`);
 
-    const weekAndYear = generateWeekAndYear("2025-02-08", "2025-03-15");
+    const weekAndYear = generateWeekAndYear("2025-02-24", "2025-03-05");
 
     for (const item of weekAndYear) {
       const randomMenu = weeklyMenus

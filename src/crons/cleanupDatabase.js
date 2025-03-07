@@ -1,12 +1,9 @@
 const Customer = require("../models/Customer");
 const User = require("../models/User");
-const cron = require("node-cron");
 
-// Cron Job - Runs every midnight to clean up expired data
-cron.schedule("0 0 * * *", () => cleanupDatabase());
-
-const cleanupDatabase = async () => {
+module.exports = async () => {
   try {
+    console.log("Running cleanup for user token cleanup");
     // Remove two-factor codes and expires for users with expired codes
     await User.updateMany(
       { twoFactorExpires: { $lt: new Date() } },

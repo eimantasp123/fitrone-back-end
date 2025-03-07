@@ -31,9 +31,11 @@ const weekPlanRoutes = require("./routes/weeklyPlanRoutes");
 const weeklyMenuRoutes = require("./routes/weeklyMenuRoutes");
 const webhookRoutes = require("./utils/webhookRoutes");
 const customerRoutes = require("./routes/customerRoutes");
-// const groupsRoutes = require("./routes/groupsRoutes");
 const ordersRoutes = require("./routes/ordersRoutes");
 const { initWebSocketServer } = require("./utils/websocket");
+const cron = require("node-cron");
+const cleanupDatabase = require("./crons/cleanupDatabase");
+const { processWeeklyPlans } = require("./crons/updateWeeklyPlanAndSetExpired");
 
 // Initialize i18next for localization
 i18next
@@ -144,14 +146,15 @@ app.use("/api/v1/meals", mealsRoutes);
 app.use("/api/v1/ingredients", ingredientsRoutes);
 app.use("/api/v1/subscription", subscriptionRoutes);
 app.use("/api/v1/customers", customerRoutes);
-// app.use("/api/v1/groups", groupsRoutes);
 app.use("/api/v1/orders", ordersRoutes);
 app.use("/api/v1/support", supportRoutes);
 app.use("/api/v1/feedback", feedbackRoutes);
 
-// Cron jobs
-require("./crons/updateWeeklyPlanAndSetExpired");
-require("./crons/cleanupDatabase");
+// Run every day at midnight (00:15) to clean up the database
+cron.schedule("0 15 0 * * *", () => cleanupDatabase());
+
+// Run every Sunday and Monday at 15 minutes past each hour (e.g., 10:15, 11:15, etc.)
+cron.schedule("0 15 * * * 0,1", () => processWeeklyPlans());
 
 // Error handling for invalid routes
 app.all("*", (req, res, next) => {
