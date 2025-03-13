@@ -3,7 +3,6 @@ const {
   PutObjectCommand,
   DeleteObjectCommand,
 } = require("@aws-sdk/client-s3");
-const AppError = require("../utils/appError");
 
 // Initialize AWS S3 Client
 const s3 = new S3Client({

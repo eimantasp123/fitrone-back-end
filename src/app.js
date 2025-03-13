@@ -32,6 +32,7 @@ const weeklyMenuRoutes = require("./routes/weeklyMenuRoutes");
 const webhookRoutes = require("./utils/webhookRoutes");
 const customerRoutes = require("./routes/customerRoutes");
 const ordersRoutes = require("./routes/ordersRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 const { initWebSocketServer } = require("./utils/websocket");
 const cron = require("node-cron");
 const cleanupDatabase = require("./crons/cleanupDatabase");
@@ -147,6 +148,7 @@ app.use("/api/v1/ingredients", ingredientsRoutes);
 app.use("/api/v1/subscription", subscriptionRoutes);
 app.use("/api/v1/customers", customerRoutes);
 app.use("/api/v1/orders", ordersRoutes);
+app.use("/api/v1/dashboard", dashboardRoutes);
 app.use("/api/v1/support", supportRoutes);
 app.use("/api/v1/feedback", feedbackRoutes);
 
