@@ -261,7 +261,11 @@ exports.getAllWeeklyMenus = catchAsync(async (req, res, next) => {
 
   // Get the total number of documents and the documents for the current page
   const [total, totalForFetch, weeklyMenus] = await Promise.all([
-    WeeklyMenu.countDocuments({ user: req.user._id, deletedAt: null }),
+    WeeklyMenu.countDocuments({
+      user: req.user._id,
+      deletedAt: null,
+      archived: archived ?? false,
+    }),
     WeeklyMenu.countDocuments(dbQuery),
     WeeklyMenu.find(dbQuery)
       .skip(skip)

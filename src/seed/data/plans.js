@@ -41,7 +41,7 @@ export const plans = [
       weekly_plan_menu_limit: 20,
       clients_limit: 50,
       ai_search: true,
-      client_request_form: false,
+      client_request_form: true,
     },
   },
   {

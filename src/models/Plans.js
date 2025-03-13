@@ -7,7 +7,7 @@ const plansSchema = new mongoose.Schema({
     required: true,
     enum: ["base", "basic", "pro", "premium"], // Restricts the possible values
   },
-  key: { type: String },
+  key: { type: String }, // Unique key for the plan
   price: { type: Number, required: true },
   currency: {
     type: String,
