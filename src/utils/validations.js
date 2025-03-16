@@ -1,5 +1,4 @@
 const yup = require("yup");
-const { addIssueToContext } = require("zod");
 // Validation Schema
 const updateCustomerSchema = yup.object({
   firstName: yup.string().required("First name is required"),

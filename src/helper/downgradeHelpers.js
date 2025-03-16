@@ -6,27 +6,20 @@ const WeeklyMenu = require("../models/WeeklyMenu");
 
 /**
  * Downgrade the user plan functionality based on the plan features
- *
  * @param {*} user  The user object
  * @param {*} planId  The plan ID
  * @returns
- *
  */
 exports.downgradeOrUpgradePlanHandler = async (user, planId) => {
   try {
     // Extract the plans from the database
     const plans = await Plans.find();
 
-    console.log("running downgradeOrUpgradePlanHandler");
-
     // Find the current and new plan
     const userPlan = plans.find((plan) => plan.plan === user.plan);
     const newPlan = plans.find(
       (plan) => plan.plan === mapPriceIdToPlan(planId),
     );
-
-    console.log("userPlan", userPlan);
-    console.log("newPlan", newPlan);
 
     // Ensure both plans exist
     if (!userPlan || !newPlan) {

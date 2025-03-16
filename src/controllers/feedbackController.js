@@ -19,6 +19,7 @@ exports.feedback = catchAsync(async (req, res, next) => {
     rating,
     user: req.user._id,
   });
+
   feedback.save();
 
   // Send response

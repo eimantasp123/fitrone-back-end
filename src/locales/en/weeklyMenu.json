@@ -1,4 +1,6 @@
 {
+  "copy": "Copy",
+
   "messages": {
     "created": "Weekly menu created successfully.",
     "updated": "Weekly menu updated successfully.",
@@ -7,7 +9,8 @@
     "unarchived": "Weekly menu unarchived successfully.",
     "mealAdded": "Meal added successfully.",
     "mealsAdded": "Meals added successfully.",
-    "mealRemoved": "Meal removed successfully."
+    "mealRemoved": "Meal removed successfully.",
+    "createdCopy": "Weekly menu copy created successfully."
   },
 
   "errors": {

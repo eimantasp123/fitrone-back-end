@@ -3,11 +3,11 @@ const { default: axios } = require("axios");
 // Helper function to map the price ID to a plan
 const mapPriceIdToPlan = (priceId) => {
   switch (priceId) {
-    case "price_1Q3SEZAVASYOGHJkuKEtFelC":
+    case process.env.STRIPE_PRICE_ID_BASIC:
       return "basic";
-    case "price_1Q3SF1AVASYOGHJkEpwY1xlm":
+    case process.env.STRIPE_PRICE_ID_PRO:
       return "pro";
-    case "price_1Q3SFiAVASYOGHJkUPUY9y7u":
+    case process.env.STRIPE_PRICE_ID_PREMIUM:
       return "premium";
     default:
       return "base";

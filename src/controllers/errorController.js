@@ -25,7 +25,6 @@ const handleDuplicateFieldsDB = (err, req) => {
     return new AppError(message, 400);
   }
   // Fallback for unexpected error formats
-  console.error("Unexpected duplicate key error format:", err);
   return new AppError(req.t("validationErrors.unexpectedError"), 500);
 };
 
@@ -61,7 +60,6 @@ const handleValidationErrorDB = (err, req) => {
   }
 
   // Fallback for unexpected error formats
-  console.error("Unexpected validation error format:", err);
   return new AppError(req.t("validationErrors.unexpectedError"), 500);
 };
 

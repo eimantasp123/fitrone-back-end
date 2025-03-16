@@ -12,6 +12,8 @@ const {
 } = require("../utils/s3helpers");
 const Ingredient = require("../models/Ingredient");
 const { roundTo } = require("../helper/roundeNumber");
+const WeeklyMenu = require("../models/WeeklyMenu");
+const WeeklyPlan = require("../models/WeeklyPlan");
 
 /**
  * Multer middleware for file upload
@@ -250,14 +252,31 @@ exports.updateMeal = catchAsync(async (req, res, next) => {
 
     // Delete the old image if it's not the default image
     if (meal.image && !meal.image.includes(DEFAULT_IMAGE_URL)) {
-      const s3Key = meal.image.replace(
-        `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`,
-        "",
-      );
-      try {
-        await deleteFromS3(s3Key);
-      } catch (error) {
-        return next(new AppError(req.t("meals:error.imageDeleteFailed"), 500));
+      // Check if this image is still referenced in any WeeklyMenu snapshot
+      const isInUse = await WeeklyMenu.findOne({
+        user: req.user._id,
+        "days.meals.meal.image": meal.image,
+      });
+
+      // Check WeeklyPlan
+      const isInUsePlan = await WeeklyPlan.findOne({
+        user: req.user._id,
+        "assignMenu.menuSnapshot.days.meals.meal.image": mealToDelete.image,
+      });
+
+      // If it's not in use anywhere, it's safe to remove from S3
+      if (!isInUse && !isInUsePlan) {
+        const s3Key = meal.image.replace(
+          `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`,
+          "",
+        );
+        try {
+          await deleteFromS3(s3Key);
+        } catch (error) {
+          return next(
+            new AppError(req.t("meals:error.imageDeleteFailed"), 500),
+          );
+        }
       }
     }
 
@@ -279,14 +298,31 @@ exports.updateMeal = catchAsync(async (req, res, next) => {
   } else if (req.body.image === "delete") {
     // If image deletion is requested, delete the old image and set to default
     if (meal.image && !meal.image.includes(DEFAULT_IMAGE_URL)) {
-      const s3Key = meal.image.replace(
-        `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`,
-        "",
-      );
-      try {
-        await deleteFromS3(s3Key);
-      } catch (error) {
-        return next(new AppError(req.t("meals:error.imageDeleteFailed"), 500));
+      // Check if this image is still referenced in any WeeklyMenu snapshot
+      const isInUse = await WeeklyMenu.findOne({
+        user: req.user._id,
+        "days.meals.meal.image": meal.image,
+      });
+
+      // Check WeeklyPlan
+      const isInUsePlan = await WeeklyPlan.findOne({
+        user: req.user._id,
+        "assignMenu.menuSnapshot.days.meals.meal.image": meal.image,
+      });
+
+      // If it's not in use anywhere, it's safe to remove from S3
+      if (!isInUse && !isInUsePlan) {
+        const s3Key = meal.image.replace(
+          `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`,
+          "",
+        );
+        try {
+          await deleteFromS3(s3Key);
+        } catch (error) {
+          return next(
+            new AppError(req.t("meals:error.imageDeleteFailed"), 500),
+          );
+        }
       }
     }
     meal.image = DEFAULT_IMAGE_URL;
@@ -339,14 +375,29 @@ exports.deleteMeal = catchAsync(async (req, res, next) => {
 
   // Delete image from S3 if it exists and is not the default image
   if (mealToDelete.image && !mealToDelete.image.includes(DEFAULT_IMAGE_URL)) {
-    const s3Key = mealToDelete.image.replace(
-      `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`,
-      "",
-    );
-    try {
-      await deleteFromS3(s3Key);
-    } catch (error) {
-      return next(new AppError(req.t("meals:error.imageDeleteFailed"), 500));
+    // Check if this image is still referenced in any WeeklyMenu snapshot
+    const isInUse = await WeeklyMenu.findOne({
+      user: req.user._id,
+      "days.meals.meal.image": mealToDelete.image,
+    });
+
+    // Check WeeklyPlan
+    const isInUsePlan = await WeeklyPlan.findOne({
+      user: req.user._id,
+      "assignMenu.menuSnapshot.days.meals.meal.image": mealToDelete.image,
+    });
+
+    // If it's not in use anywhere, it's safe to remove from S3
+    if (!isInUse && !isInUsePlan) {
+      const s3Key = mealToDelete.image.replace(
+        `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`,
+        "",
+      );
+      try {
+        await deleteFromS3(s3Key);
+      } catch (error) {
+        return next(new AppError(req.t("meals:error.imageDeleteFailed"), 500));
+      }
     }
   }
 

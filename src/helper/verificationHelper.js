@@ -12,8 +12,7 @@ exports.handleSendPasswordResetEmail = async (user, res, req, next) => {
 
   try {
     const messageBody = {
-      // email: user.email,
-      email: "no-reply@fitrone.com",
+      email: user.email || "admin@fitrone.com",
       template: "reset-password-email",
       data: {
         subject: req.t("auth:emailPasswordReset.subject"),
@@ -52,8 +51,7 @@ exports.handleVerificationEmailSending = async (user, res, req, next) => {
 
   try {
     const messageBody = {
-      // email: user.email,
-      email: "no-reply@fitrone.com",
+      email: user.email || "admin@fitrone.com",
       template: "email-verification-code",
       data: {
         subject: req.t("auth:emailVerification.subject"),

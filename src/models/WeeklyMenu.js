@@ -121,6 +121,7 @@ const WeeklyMenuSchema = new mongoose.Schema(
 // Indexes
 WeeklyMenuSchema.index({ title: 1, user: 1 }, { unique: true });
 WeeklyMenuSchema.index({ user: 1, _id: 1, deletedAt: 1 });
+WeeklyMenuSchema.index({ user: 1, "days.meals.meal.image": 1 });
 
 // Automatically exclude __v and user when converting to JSON
 WeeklyMenuSchema.set("toJSON", {

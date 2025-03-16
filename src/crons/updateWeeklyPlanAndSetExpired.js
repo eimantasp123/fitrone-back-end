@@ -174,33 +174,65 @@ const isMondayMidnight = (timezone, date = new Date()) => {
  */
 const processWeeklyPlans = async () => {
   // Fetch all users with a timezone
-  const users = await User.find({
-    timezone: { $ne: null },
-    role: "supplier",
-  }).select("_id timezone");
+  try {
+    const users = await User.find({
+      timezone: { $ne: null },
+      role: "supplier",
+    }).select("_id timezone");
 
-  // Group users by timezone for processing
-  const usersByTimezone = users.reduce((acc, user) => {
-    if (!acc[user.timezone]) {
-      acc[user.timezone] = [];
-    }
-    acc[user.timezone].push(user._id); // Add user ID to the timezone group
-    return acc;
-  }, {});
+    // Group users by timezone for processing
+    const usersByTimezone = users.reduce((acc, user) => {
+      if (!acc[user.timezone]) {
+        acc[user.timezone] = [];
+      }
+      acc[user.timezone].push(user._id); // Add user ID to the timezone group
+      return acc;
+    }, {});
 
-  // Process weekly plans for each timezone group
-  for (const [timezone, userIds] of Object.entries(usersByTimezone)) {
-    // Check if it's Monday midnight in the user's timezone
-    if (isMondayMidnight(timezone)) {
-      // Update weekly plans and set expired for users weekly plans and single day orders
-      await updateWeeklyPlanAndSetExpiredForUsers(userIds);
+    // Process weekly plans for each timezone group
+    for (const [timezone, userIds] of Object.entries(usersByTimezone)) {
+      // Check if it's Monday midnight in the user's timezone
+      if (isMondayMidnight(timezone)) {
+        try {
+          // Update weekly plans and set expired for users weekly plans and single day orders
+          await updateWeeklyPlanAndSetExpiredForUsers(userIds);
+        } catch (error) {
+          console.error(
+            "Error in processing weekly plans for timezone:",
+            error,
+          );
+        }
+      }
     }
+  } catch (error) {
+    console.error("Error in processing weekly plans:", error);
+  }
+};
+
+/**
+ * Function to process confirmation function for weekly plan
+ */
+const processConfirmationFunctionForWeeklyPlan = async () => {
+  // Fetch all users with a timezone
+  try {
+    const users = await User.find({
+      timezone: { $ne: null },
+      role: "supplier",
+    }).select("_id");
+
+    for (const user of users) {
+      try {
+        await updateWeeklyPlanAndSetExpired(user._id);
+      } catch (error) {
+        console.error("Error in processing weekly plans for user:", error);
+      }
+    }
+  } catch (error) {
+    console.error("Error in processing weekly plans:", error);
   }
 };
 
 module.exports = {
-  isMondayMidnight,
   processWeeklyPlans,
-  updateWeeklyPlanAndSetExpired,
-  updateWeeklyPlanAndSetExpiredForUsers,
+  processConfirmationFunctionForWeeklyPlan,
 };

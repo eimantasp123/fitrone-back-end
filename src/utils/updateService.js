@@ -37,53 +37,57 @@ const UpdateService = {
    */
   async updateMealsUsingIngredient(updatedIngredient, req) {
     // Find all meals that use the ingredient
-    const meals = await Meal.find({
-      user: req.user._id,
-      "ingredients.ingredientId": updatedIngredient._id,
-    });
-
-    // Update each meal that uses the ingredient
-    for (const meal of meals) {
-      meal.ingredients = meal.ingredients.map((ingredient) => {
-        if (
-          ingredient.ingredientId.toString() ===
-          updatedIngredient._id.toString()
-        ) {
-          const scalingFactor =
-            ingredient.currentAmount / updatedIngredient.amount;
-
-          return {
-            ...ingredient._doc,
-            title: updatedIngredient.title,
-            unit: updatedIngredient.unit,
-            calories: roundTo(updatedIngredient.calories * scalingFactor, 1),
-            protein: roundTo(updatedIngredient.protein * scalingFactor, 1),
-            fat: roundTo(updatedIngredient.fat * scalingFactor, 1),
-            carbs: roundTo(updatedIngredient.carbs * scalingFactor, 1),
-          };
-        }
-        return ingredient;
+    try {
+      const meals = await Meal.find({
+        user: req.user._id,
+        "ingredients.ingredientId": updatedIngredient._id,
       });
 
-      // Recalculate the nutrition info for the meal
-      meal.nutrition = meal.ingredients.reduce(
-        (acc, curr) => {
-          acc.calories = roundTo(acc.calories + curr.calories, 1);
-          acc.protein = roundTo(acc.protein + curr.protein, 1);
-          acc.fat = roundTo(acc.fat + curr.fat, 1);
-          acc.carbs = roundTo(acc.carbs + curr.carbs, 1);
-          return acc;
-        },
-        { calories: 0, protein: 0, fat: 0, carbs: 0 },
-      );
+      // Update each meal that uses the ingredient
+      for (const meal of meals) {
+        meal.ingredients = meal.ingredients.map((ingredient) => {
+          if (
+            ingredient.ingredientId.toString() ===
+            updatedIngredient._id.toString()
+          ) {
+            const scalingFactor =
+              ingredient.currentAmount / updatedIngredient.amount;
 
-      // Save the updated meal
-      await meal.save();
-    }
+            return {
+              ...ingredient._doc,
+              title: updatedIngredient.title,
+              unit: updatedIngredient.unit,
+              calories: roundTo(updatedIngredient.calories * scalingFactor, 1),
+              protein: roundTo(updatedIngredient.protein * scalingFactor, 1),
+              fat: roundTo(updatedIngredient.fat * scalingFactor, 1),
+              carbs: roundTo(updatedIngredient.carbs * scalingFactor, 1),
+            };
+          }
+          return ingredient;
+        });
 
-    // Send client message if meals were updated
-    if (Array.isArray(meals) && meals.length > 0) {
-      sendMessageToClients(req.user._id, "ingredient_updated_in_meals");
+        // Recalculate the nutrition info for the meal
+        meal.nutrition = meal.ingredients.reduce(
+          (acc, curr) => {
+            acc.calories = roundTo(acc.calories + curr.calories, 1);
+            acc.protein = roundTo(acc.protein + curr.protein, 1);
+            acc.fat = roundTo(acc.fat + curr.fat, 1);
+            acc.carbs = roundTo(acc.carbs + curr.carbs, 1);
+            return acc;
+          },
+          { calories: 0, protein: 0, fat: 0, carbs: 0 },
+        );
+
+        // Save the updated meal
+        await meal.save();
+      }
+
+      // Send client message if meals were updated
+      if (Array.isArray(meals) && meals.length > 0) {
+        sendMessageToClients(req.user._id, "ingredient_updated_in_meals");
+      }
+    } catch (error) {
+      console.error("Error in updateMealsUsingIngredient", error);
     }
   },
 };

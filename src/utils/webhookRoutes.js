@@ -52,30 +52,33 @@ router.post(
 // Handle customer creation
 async function handleCustomerCreation(customer) {
   const { customer: customerId, trial_end, status, items, id, plan } = customer;
+  try {
+    // Find the user based on the customer ID
+    const user = await User.findOne({
+      stripeCustomerId: customerId,
+    }).select("+stripeCustomerId");
 
-  // Find the user based on the customer ID
-  const user = await User.findOne({
-    stripeCustomerId: customerId,
-  }).select("+stripeCustomerId");
+    if (!user) return;
 
-  if (!user) return;
+    if (status === "trialing" && trial_end) {
+      user.trialEnd = new Date(customer.trial_end * 1000);
+    } else {
+      user.trialEnd = null;
+    }
 
-  if (status === "trialing" && trial_end) {
-    user.trialEnd = new Date(customer.trial_end * 1000);
-  } else {
-    user.trialEnd = null;
+    if (["incomplete", "incomplete_expired"].includes(status)) {
+      user.subscriptionStatus = status;
+      user.plan = "base";
+    } else {
+      user.plan = mapPriceIdToPlan(plan.id || items.data[0].price.id);
+      user.subscriptionStatus = status;
+    }
+    user.hasUsedFreeTrial = true;
+    user.stripeSubscriptionId = id;
+    await user.save();
+  } catch (error) {
+    console.error("Error in handleCustomerCreation in webhookRoutes.js", error);
   }
-
-  if (["incomplete", "incomplete_expired"].includes(status)) {
-    user.subscriptionStatus = status;
-    user.plan = "base";
-  } else {
-    user.plan = mapPriceIdToPlan(plan.id || items.data[0].price.id);
-    user.subscriptionStatus = status;
-  }
-  user.hasUsedFreeTrial = true;
-  user.stripeSubscriptionId = id;
-  await user.save();
 }
 
 // Handle subscription updates
@@ -89,105 +92,123 @@ async function handleSubscriptionUpdates(subscriptionUpdates) {
     items,
     id,
   } = subscriptionUpdates;
+  try {
+    // Find the user based on the customer ID
+    let user = await User.findOne({
+      stripeCustomerId: customer,
+    }).select("+stripeCustomerId");
 
-  // Find the user based on the customer ID
-  let user = await User.findOne({
-    stripeCustomerId: customer,
-  }).select("+stripeCustomerId");
+    if (!user) return; // Return if user not found
 
-  if (!user) return; // Return if user not found
+    // Handle plan upgrade or downgrade
+    user = await downgradeOrUpgradePlanHandler(user, items.data[0].price.id);
 
-  // Handle plan upgrade or downgrade
-  user = await downgradeOrUpgradePlanHandler(user, items.data[0].price.id);
+    // Handle trial period
+    if (status === "trialing") {
+      user.trialEnd = trial_end ? new Date(trial_end * 1000) : null;
 
-  // Handle trial period
-  if (status === "trialing") {
-    user.trialEnd = trial_end ? new Date(trial_end * 1000) : null;
+      if (user.subscriptionCancelAtPeriodEnd) {
+        user.subscriptionCancelAtPeriodEnd = false;
+        user.subscriptionCancelAt = null;
+      }
+    } else {
+      user.trialEnd = null;
+    }
 
-    if (user.subscriptionCancelAtPeriodEnd) {
+    // Handle subscription cancellation
+    if (cancel_at_period_end || cancel_at) {
+      user.subscriptionCancelAtPeriodEnd = cancel_at_period_end;
+      user.subscriptionCancelAt = cancel_at ? new Date(cancel_at * 1000) : null;
+    } else {
       user.subscriptionCancelAtPeriodEnd = false;
       user.subscriptionCancelAt = null;
     }
-  } else {
-    user.trialEnd = null;
-  }
+    if (["incomplete", "incomplete_expired"].includes(status)) {
+      user.subscriptionStatus = status;
+      user.plan = "base";
+    } else {
+      user.plan = mapPriceIdToPlan(items.data[0].price.id);
+      user.subscriptionStatus = status;
+    }
 
-  // Handle subscription cancellation
-  if (cancel_at_period_end || cancel_at) {
-    user.subscriptionCancelAtPeriodEnd = cancel_at_period_end;
-    user.subscriptionCancelAt = cancel_at ? new Date(cancel_at * 1000) : null;
-  } else {
-    user.subscriptionCancelAtPeriodEnd = false;
-    user.subscriptionCancelAt = null;
+    user.stripeSubscriptionId = id;
+    user.hasUsedFreeTrial = true;
+    await user.save();
+  } catch (error) {
+    console.error(
+      "Error in handleSubscriptionUpdates in webhookRoutes.js",
+      error,
+    );
   }
-  if (["incomplete", "incomplete_expired"].includes(status)) {
-    user.subscriptionStatus = status;
-    user.plan = "base";
-  } else {
-    user.plan = mapPriceIdToPlan(items.data[0].price.id);
-    user.subscriptionStatus = status;
-  }
-
-  user.stripeSubscriptionId = id;
-  user.hasUsedFreeTrial = true;
-  await user.save();
 }
 
 // Handle subscription deletion
 async function handleSubscriptionDeletion(subscription) {
-  // Find the user based on the subscription ID
-  const user = await User.findOne({
-    stripeCustomerId: subscription.customer,
-  }).select("+stripeCustomerId");
+  try {
+    // Find the user based on the subscription ID
+    const user = await User.findOne({
+      stripeCustomerId: subscription.customer,
+    }).select("+stripeCustomerId");
 
-  if (!user) {
-    return;
+    if (!user) {
+      return;
+    }
+
+    // Archive all the user ingredients
+    await Ingredient.updateMany(
+      { user: user._id, deletedAt: null },
+      { $set: { archived: true } },
+    );
+
+    // Archive all the user meals
+    await Meal.updateMany(
+      { user: user._id, deletedAt: null },
+      { $set: { archived: true } },
+    );
+
+    // Archive all the user weekly menus
+    await WeeklyMenu.updateMany(
+      { user: user._id, deletedAt: null },
+      { $set: { archived: true } },
+    );
+
+    // Update the user subscription status
+    user.archivedData = null;
+    user.plan = "base";
+    user.subscriptionStatus = "canceled";
+    user.trialEnd = null;
+    user.subscriptionCancelAtPeriodEnd = false;
+    user.subscriptionCancelAt = null;
+    await user.save();
+  } catch (error) {
+    console.error(
+      "Error in handleSubscriptionDeletion in webhookRoutes.js",
+      error,
+    );
   }
-
-  // Archive all the user ingredients
-  await Ingredient.updateMany(
-    { user: user._id, deletedAt: null },
-    { $set: { archived: true } },
-  );
-
-  // Archive all the user meals
-  await Meal.updateMany(
-    { user: user._id, deletedAt: null },
-    { $set: { archived: true } },
-  );
-
-  // Archive all the user weekly menus
-  await WeeklyMenu.updateMany(
-    { user: user._id, deletedAt: null },
-    { $set: { archived: true } },
-  );
-
-  // Update the user subscription status
-  user.archivedData = null;
-  user.plan = "base";
-  user.subscriptionStatus = "canceled";
-  user.trialEnd = null;
-  user.subscriptionCancelAtPeriodEnd = false;
-  user.subscriptionCancelAt = null;
-  await user.save();
 }
 
 // Handle charge failed
 async function handleChargeFailed(charge) {
   const { customer, status } = charge;
-  const user = await User.findOne({
-    stripeCustomerId: customer,
-  }).select("+stripeCustomerId");
 
-  if (!user) return;
+  try {
+    const user = await User.findOne({
+      stripeCustomerId: customer,
+    }).select("+stripeCustomerId");
 
-  // Update the user subscription status
-  if (
-    (status === "failed" && user.subscriptionStatus === "active") ||
-    user.subscriptionStatus === "trialing"
-  ) {
-    user.subscriptionStatus = "past_due";
-    await user.save();
+    if (!user) return;
+
+    // Update the user subscription status
+    if (
+      (status === "failed" && user.subscriptionStatus === "active") ||
+      user.subscriptionStatus === "trialing"
+    ) {
+      user.subscriptionStatus = "past_due";
+      await user.save();
+    }
+  } catch (error) {
+    console.error("Error in handleChargeFailed in webhookRoutes.js", error);
   }
 }
 

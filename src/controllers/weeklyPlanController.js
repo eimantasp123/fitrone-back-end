@@ -135,8 +135,6 @@ exports.assignMenu = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const { menus } = req.body;
 
-  console.log("req.body", req.body.menus);
-
   // Check if id is valid
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return next(
@@ -232,16 +230,13 @@ exports.assignMenu = catchAsync(async (req, res, next) => {
     message: req.t("weeklyPlan:messages.weeklyPlanUpdated"),
   };
 
-  console.log("req", req.warning);
   // Add warning if any warning is set
   if (req.warning) {
-    console.log("req.warning", req.warning);
     responseBody.warning = req.warning;
   }
 
   // Add warning if any warning is set for multiple menus
   if (req.warning_multiple) {
-    console.log("req.warning_multiple", req.warning_multiple);
     responseBody.warning_multiple = req.warning_multiple;
   }
 

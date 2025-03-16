@@ -15,6 +15,7 @@ const Backend = require("i18next-fs-backend");
 const middleware = require("i18next-http-middleware");
 const path = require("path");
 const http = require("http");
+const compression = require("compression");
 
 // Require custom modules
 const connectDB = require("./config/dbConfig");
@@ -36,7 +37,15 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const { initWebSocketServer } = require("./utils/websocket");
 const cron = require("node-cron");
 const cleanupDatabase = require("./crons/cleanupDatabase");
-const { processWeeklyPlans } = require("./crons/updateWeeklyPlanAndSetExpired");
+const {
+  processWeeklyPlans,
+  processConfirmationFunctionForWeeklyPlan,
+} = require("./crons/updateWeeklyPlanAndSetExpired");
+
+// Initialize express app
+const app = express(); // Create express app
+const server = http.createServer(app); // Create HTTP server
+initWebSocketServer(server); // Initialize WebSocket server
 
 // Initialize i18next for localization
 i18next
@@ -69,77 +78,57 @@ i18next
     },
   });
 
-// Initialize express app
-const app = express();
-const server = http.createServer(app);
-
-// Initialize WebSocket server
-initWebSocketServer(server);
-
-// Use the i18next middleware to attach `req.t` function to requests
-app.use(middleware.handle(i18next));
-
-// Connect to database
-connectDB();
+app.use(middleware.handle(i18next)); // Use the i18next middleware to attach `req.t` function to requests
+connectDB(); // Connect to database
 
 // Development logging
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
+} else {
+  app.use(morgan("combined")); // Logs full request details in production
 }
 
-// Rate limiting
-const limiter = rateLimit({
-  max: 500,
-  windowMs: 60 * 60 * 1000,
-  message: "Too many requests from this IP, please try again in an hour!",
+// Auth Routes Limiter (Stricter)
+const authLimiter = rateLimit({
+  max: 100, // Allow 20 requests per 5 minutes
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  message: "Too many login/signup requests, please try again later.",
+});
+
+// General API Limiter (More Requests Allowed)
+const generalLimiter = rateLimit({
+  max: 600, // 600 requests per 10 minutes
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  message: "Too many requests, please slow down.",
 });
 
 // CORS options
 const corsOptions = {
-  // origin: process.env.FRONTEND_URL,
   origin: process.env.FRONTEND_URL,
   methods: "GET, POST, PUT, DELETE, PATCH",
   credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
 };
 
-// Set security HTTP headers
-app.use(helmet());
-
-// Limit requests from same API (100 requests per hour)
-app.use(limiter);
-
-// Enable CORS for frontend access
-app.use(cors(corsOptions));
-
-// Stripe webhook
-app.use("/api/v1/webhook", webhookRoutes);
-
-// Body parser, reading data from body into req.body
-app.use(express.json());
-
-// Data sanitization against NoSQL query injection
-app.use(mongoSanitize());
-
-// Data sanaization against XSS
-app.use(xss());
-
-// Prevent parameter pollution
-app.use(
-  hpp({
-    // Allow listed parameters for sorting
-    whitelist: [""],
-  }),
-);
-
-// Cookie parser middleware
-app.use(cookieParser());
+app.use(helmet()); // Set security HTTP headers
+app.use(cors(corsOptions)); // Enable CORS for frontend access
+app.use("/api/v1/webhook", webhookRoutes); // Stripe webhook
+app.use(express.json()); // Body parser, reading data from body into req.body
+app.use(compression()); // Compress all responses
+app.use(mongoSanitize()); // Data sanitization against NoSQL query injection
+app.use(xss()); // Data sanaization against XSS
+app.use(hpp()); // Prevent parameter pollution
+app.use(cookieParser()); // Cookie parser middleware
 
 if (process.env.NODE_ENV === "development") {
-  app.use("/pdf", express.static(path.join(__dirname, "../pdf")));
+  app.use("/pdf", express.static(path.join(__dirname, "../pdf"))); // Serve PDF files in development
 }
 
-// Routes
-app.use("/api/v1/auth", authRoutes);
+// Apply auth limiter to auth routes
+app.use("/api/v1/auth", authLimiter, authRoutes);
+
+// Apply general limiter to all routes
+app.use(generalLimiter);
 app.use("/api/v1/profile", profileRoutes);
 app.use("/api/v1/weekly-plan", weekPlanRoutes);
 app.use("/api/v1/weekly-menu", weeklyMenuRoutes);
@@ -153,10 +142,34 @@ app.use("/api/v1/support", supportRoutes);
 app.use("/api/v1/feedback", feedbackRoutes);
 
 // Run every day at midnight (00:15) to clean up the database
-cron.schedule("0 15 0 * * *", () => cleanupDatabase());
+cron.schedule("15 0 * * *", async () => {
+  try {
+    await cleanupDatabase();
+    console.log("✅ Database cleanup completed successfully.");
+  } catch (error) {
+    console.error("❌ Error in database cleanup:", error);
+  }
+});
 
 // Run every Sunday and Monday at 15 minutes past each hour (e.g., 10:15, 11:15, etc.)
-cron.schedule("0 15 * * * 0,1", () => processWeeklyPlans());
+cron.schedule("15 * * * 0,1", async () => {
+  try {
+    await processWeeklyPlans();
+    console.log("✅ Weekly plans processed successfully.");
+  } catch (error) {
+    console.error("❌ Error in processing weekly plans:", error);
+  }
+});
+
+// Run every monday at 2:00 AM in UTC time to update weekly plans if was not updated
+cron.schedule("0 2 * * 1", async () => {
+  try {
+    await processConfirmationFunctionForWeeklyPlan();
+    console.log("✅ Weekly plans processed successfully.");
+  } catch (error) {
+    console.error("❌ Error in processing weekly plans:", error);
+  }
+});
 
 // Error handling for invalid routes
 app.all("*", (req, res, next) => {
@@ -175,9 +188,24 @@ app.use(globalErrorHandler);
 
 // Start server
 const PORT = process.env.PORT || 5000;
+
 // app.listen(process.env.PORT);
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server is running on http://0.0.0.0:${PORT}`);
+const serverInstance = server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
 
-module.exports = app;
+// Error handling for uncaught exceptions (unexpected errors in the app)
+process.on("uncaughtException", (err) => {
+  console.error("🔥 Uncaught Exception:", err.message, err.stack);
+  serverInstance.close(() => {
+    process.exit(1); // Exit the process (prevents unexpected behavior)
+  });
+});
+
+// Error handling for unhandled promise rejections
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("⚠️ Unhandled Rejection:", reason);
+  serverInstance.close(() => {
+    process.exit(1); // Exit the process (prevents unexpected behavior)
+  });
+});

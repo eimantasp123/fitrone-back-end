@@ -184,7 +184,7 @@ const unpublishOrders = async (
  * @param {Number} year - Year of the weekly plan
  * @param {Number} weekNumber - Week number of the weekly plan
  */
-const cleanupIngredientsStock = catchAsync(async (userId, year, weekNumber) => {
+const cleanupIngredientsStock = async (userId, year, weekNumber) => {
   // Find all active orders for this week
   const activeOrders = await SingleDayOrder.find({
     user: userId,
@@ -284,6 +284,6 @@ const cleanupIngredientsStock = catchAsync(async (userId, year, weekNumber) => {
       await stockDoc.save();
     }
   }
-});
+};
 
 module.exports = { publishOrders, unpublishOrders };

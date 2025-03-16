@@ -13,6 +13,7 @@ const {
   removeMealFromWeeklyMenu,
   archiveWeeklyMenu,
   unarchiveWeeklyMenu,
+  createWeeklyMenuCopy,
 } = require("../controllers/weeklyMenuController");
 
 // Apply authentication middleware to all routes below this line
@@ -31,6 +32,13 @@ router.post(
   "/",
   checkPlanFeatures("weeklyMenus", "weekly_menus_limit"),
   createWeeklyMenu,
+);
+
+// Create a copy of a weekly menu
+router.post(
+  "/copy/:id",
+  checkPlanFeatures("weeklyMenus", "weekly_menus_limit"),
+  createWeeklyMenuCopy,
 );
 
 // Get all weekly menus

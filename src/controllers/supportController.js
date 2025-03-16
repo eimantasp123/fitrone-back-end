@@ -1,6 +1,7 @@
 const Support = require("../models/Support");
 const SystemProblem = require("../models/SystemProblem");
 const AppError = require("../utils/appError");
+const { sendMessageToQueue } = require("../utils/awsHelper");
 const catchAsync = require("../utils/catchAsync");
 
 /**
@@ -22,7 +23,26 @@ exports.support = catchAsync(async (req, res, next) => {
     subject,
     user: req.user._id,
   });
+
   support.save();
+
+  const messageBody = {
+    template: "template-email-support",
+    data: {
+      emailSubject: "Support Message",
+      emailTitle: `Message from ${name}`,
+      subject,
+      message,
+      problem: "None",
+      customerEmail: req.user.email,
+    },
+  };
+
+  // Send message to the queue
+  await sendMessageToQueue(
+    messageBody,
+    process.env.EMAIL_SQS_SEND_TO_SUPPORT_QUEUE_URL,
+  );
 
   // Send response
   return res.status(200).json({
@@ -54,6 +74,24 @@ exports.systemSupport = catchAsync(async (req, res, next) => {
   });
 
   problemObj.save();
+
+  const messageBody = {
+    template: "template-email-support",
+    data: {
+      emailSubject: "System Problem Message",
+      emailTitle: `Message from ${req.user.firstName}`,
+      subject: "System Problem",
+      message,
+      problem: problem,
+      customerEmail: req.user.email,
+    },
+  };
+
+  // Send message to the queue
+  await sendMessageToQueue(
+    messageBody,
+    process.env.EMAIL_SQS_SEND_TO_SUPPORT_QUEUE_URL,
+  );
 
   // Send response
   return res.status(200).json({

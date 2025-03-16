@@ -39,6 +39,61 @@ exports.createWeeklyMenu = catchAsync(async (req, res, next) => {
 });
 
 /**
+ * Create  a copy of a weekly menu.
+ */
+exports.createWeeklyMenuCopy = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+
+  // Find the weekly menu by ID
+  const weeklyMenu = await WeeklyMenu.findOne({
+    user: req.user._id,
+    _id: id,
+    deletedAt: null,
+  });
+
+  // If the weekly menu does not exist, return an error
+  if (!weeklyMenu) {
+    return next(
+      new AppError(req.t("weeklyMenu:errors.weeklyMenuNotFound"), 404),
+    );
+  }
+
+  // If menu exists, create a copy of it
+  // Convert the found document to a plain JS object
+  const weeklyMenuObj = weeklyMenu.toObject();
+
+  // Remove the _id, createdAt, and updatedAt fields
+  delete weeklyMenuObj._id;
+  delete weeklyMenuObj.createdAt;
+  delete weeklyMenuObj.updatedAt;
+
+  // Add a random suffix to the title
+  const randomSuffix = Math.random().toString(36).substring(2, 8); // e.g. 'ds12fw'
+
+  // Overwrite the title with the original title and add "Copy" to it
+  weeklyMenuObj.title = `${weeklyMenu.title} (${req.t("weeklyMenu:copy")}-${randomSuffix})`;
+  weeklyMenuObj.archived = false;
+  weeklyMenuObj.status = "inactive";
+  weeklyMenuObj.activeWeeks = [];
+
+  // Create a new weekly menu
+  const newWeeklyMenu = await WeeklyMenu.create(weeklyMenuObj);
+
+  const responseData = {
+    status: "success",
+    message: req.t("weeklyMenu:messages.createdCopy"),
+    data: newWeeklyMenu,
+  };
+
+  if (req.warning) {
+    responseData.warning = req.warning;
+  }
+
+  // Send the response
+  res.status(200).json(responseData);
+});
+
+/**
  * Update a weekly menu.
  */
 exports.updateWeeklyMenuBio = catchAsync(async (req, res, next) => {

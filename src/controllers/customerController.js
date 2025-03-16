@@ -167,7 +167,7 @@ exports.sendFormToCustomer = catchAsync(async (req, res, next) => {
   await customer.save();
 
   const messageBody = {
-    email: "no-reply@fitrone.com",
+    email: email || process.env.ADMIN_EMAIL,
     template: "template-email-requests-to-customers-regarding-form-completion",
     data: {
       emailSubject: req.t("customers:customerConfirmationEmail.subject"),
@@ -179,7 +179,7 @@ exports.sendFormToCustomer = catchAsync(async (req, res, next) => {
       }),
       paragraph2: req.t("customers:customerConfirmationEmail.paragraph2"),
       buttonText: req.t("customers:customerConfirmationEmail.buttonText"),
-      formUrlWithToken: `http://localhost:3000/customer-form/${token}`,
+      formUrlWithToken: `${process.env.FRONTEND_URL}/customer-form/${token}?lang=${req.language}`,
     },
   };
 
@@ -244,7 +244,7 @@ exports.resendFormToCustomer = catchAsync(async (req, res, next) => {
   await customer.save();
 
   const messageBody = {
-    email: "no-reply@fitrone.com",
+    email: customer.email || process.env.ADMIN_EMAIL,
     template: "template-email-requests-to-customers-regarding-form-completion",
     data: {
       emailSubject: req.t("customers:customerConfirmationEmail.subject"),
@@ -256,7 +256,7 @@ exports.resendFormToCustomer = catchAsync(async (req, res, next) => {
       }),
       paragraph2: req.t("customers:customerConfirmationEmail.paragraph2"),
       buttonText: req.t("customers:customerConfirmationEmail.buttonText"),
-      formUrlWithToken: `http://localhost:3000/customer-form/${token}`,
+      formUrlWithToken: `${process.env.FRONTEND_URL}/customer-form/${token}?lang=${req.language}`,
     },
   };
 
@@ -277,7 +277,6 @@ exports.resendFormToCustomer = catchAsync(async (req, res, next) => {
  * Function to confirm form completion
  */
 exports.confirmCustomerForm = catchAsync(async (req, res, next) => {
-  console.log("confirmCustomerForm");
   const { token } = req.params;
   const { recaptchaToken } = req.query;
 
@@ -322,7 +321,6 @@ exports.confirmCustomerForm = catchAsync(async (req, res, next) => {
   customer.confirmFormTokenExpires = undefined;
 
   Object.assign(customer, validateDate);
-
   await customer.save();
 
   // Send a message to the client

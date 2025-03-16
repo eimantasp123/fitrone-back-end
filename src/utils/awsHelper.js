@@ -1,8 +1,16 @@
 require("dotenv").config(); // Load environment variables
-const AWS = require("aws-sdk");
-const sqs = new AWS.SQS();
-const sns = new AWS.SNS();
+const { SQSClient, SendMessageCommand } = require("@aws-sdk/client-sqs");
+const { SNSClient, PublishCommand } = require("@aws-sdk/client-sns");
 
+// Initialize AWS SDK clients
+const sqsClient = new SQSClient({ region: process.env.AWS_REGION });
+const snsClient = new SNSClient({ region: process.env.AWS_REGION });
+
+/**
+ * Function to send an SMS using AWS SNS
+ * @param {string} phone - The recipient phone number
+ * @param {string} message - The message content
+ */
 const sendSMS = async (phone, message) => {
   const params = {
     Message: message,
@@ -21,20 +29,26 @@ const sendSMS = async (phone, message) => {
 
   try {
     // Send SMS to user phone number
-    await sns.publish(params).promise();
+    const command = new PublishCommand(params);
+    await snsClient.send(command);
   } catch (error) {
     console.error("Error sending SMS:", error);
   }
 };
 
-// Helper function to send message to SQS queue
+/**
+ * Function to send a message to an AWS SQS queue
+ * @param {Object} messageBody - The message body (object)
+ * @param {string} queueUrl - The SQS queue URL
+ */
 const sendMessageToQueue = async (messageBody, queueUrl) => {
   const params = {
     QueueUrl: queueUrl,
     MessageBody: JSON.stringify(messageBody),
   };
   try {
-    await sqs.sendMessage(params).promise();
+    const command = new SendMessageCommand(params);
+    await sqsClient.send(command);
   } catch (error) {
     console.error("Error processing SQS messages:", error);
   }

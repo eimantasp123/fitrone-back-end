@@ -1,4 +1,6 @@
 {
+  "copy": "Kopija",
+
   "messages": {
     "created": "Savaitinis meniu sukurtas sėkmingai.",
     "updated": "Savaitinis meniu atnaujintas sėkmingai.",
@@ -7,7 +9,8 @@
     "unarchived": "Savaitinis meniu išarchyvuotas sėkmingai.",
     "mealAdded": "Patiekalas pridėtas sėkmingai.",
     "mealsAdded": "Patiekalai pridėti sėkmingai.",
-    "mealRemoved": "Patiekalas pašalintas sėkmingai."
+    "mealRemoved": "Patiekalas pašalintas sėkmingai.",
+    "createdCopy": "Savaitinio meniu kopija sukurtas sėkmingai."
   },
 
   "errors": {
