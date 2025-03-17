@@ -42,6 +42,8 @@ const ingredientsStockSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+ingredientsStockSchema.index({ user: 1, year: 1, weekNumber: 1 });
+
 const IngredientsStock = mongoose.model(
   "IngredientsStock",
   ingredientsStockSchema,

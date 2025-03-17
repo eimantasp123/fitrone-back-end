@@ -716,7 +716,6 @@ exports.checkWeeklyPlanAndMenuAssigned = catchAsync(async (req, res, next) => {
   );
 
   if (!menuNotExists) {
-    console.log("menuNotExists", menuNotExists);
     return next(
       new AppError(req.t("weeklyPlan:validationErrors.menuNotAssigned"), 400),
     );

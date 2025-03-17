@@ -8,7 +8,7 @@ const generateTokens = (userId) => {
     { id: userId },
     process.env.JWT_REFRESH_SECRET,
     {
-      expiresIn: "7d",
+      expiresIn: "14d",
     },
   );
   return { token, refreshToken };

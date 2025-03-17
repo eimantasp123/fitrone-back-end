@@ -51,10 +51,14 @@ const weeklyPlanSchema = new mongoose.Schema(
 );
 
 // Indexes
-weeklyPlanSchema.index({ user: 1, _id: 1 });
 weeklyPlanSchema.index({
   user: 1,
   "assignMenu.menuSnapshot.days.meals.meal.image": 1,
+});
+weeklyPlanSchema.index({
+  user: 1,
+  status: 1,
+  _id: 1,
 });
 
 const WeeklyPlan = mongoose.model("WeeklyPlan", weeklyPlanSchema);

@@ -83,5 +83,11 @@ const singleDayOrderSchema = new mongoose.Schema(
   },
 );
 
+singleDayOrderSchema.index({
+  user: 1,
+  year: 1,
+  weekNumber: 1,
+});
+
 const SingleDayOrder = mongoose.model("SingleDayOrder", singleDayOrderSchema);
 module.exports = SingleDayOrder;

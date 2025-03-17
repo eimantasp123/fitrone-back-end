@@ -128,16 +128,29 @@ const mealSchema = new mongoose.Schema(
   },
 );
 
-// Indexes
-mealSchema.index({
-  user: 1,
-  deletedAt: 1,
-  archived: 1,
-  createdAt: -1,
-});
-mealSchema.index({ category: 1 });
-mealSchema.index({ restrictions: 1 });
-mealSchema.index({ preferences: 1 });
+mealSchema.index(
+  {
+    user: 1,
+    title: 1,
+  },
+  { partialFilterExpression: { deletedAt: null } },
+);
+mealSchema.index(
+  {
+    user: 1,
+    archived: 1,
+    createdAt: -1,
+  },
+  { partialFilterExpression: { deletedAt: null } },
+);
+mealSchema.index(
+  { user: 1, archived: 1, title: 1, createdAt: -1 },
+  { partialFilterExpression: { deletedAt: null } },
+);
+mealSchema.index(
+  { user: 1, "ingredients.ingredientId": 1 },
+  { partialFilterExpression: { deletedAt: null } },
+);
 
 const Meal = mongoose.model("Meal", mealSchema);
 

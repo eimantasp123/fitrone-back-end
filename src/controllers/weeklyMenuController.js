@@ -323,9 +323,9 @@ exports.getAllWeeklyMenus = catchAsync(async (req, res, next) => {
     }),
     WeeklyMenu.countDocuments(dbQuery),
     WeeklyMenu.find(dbQuery)
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit))
-      .sort({ createdAt: -1 })
       .select(
         "title description preferences restrictions archived status nutrition createdAt updatedAt",
       )

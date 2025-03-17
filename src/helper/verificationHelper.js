@@ -84,7 +84,6 @@ exports.send2FACode = async (user, req, next) => {
   // Create message to send to user
   const message = req.t("auth:verificationCodeIs", { code });
   try {
-    console.log("sending sms", user.phone, message);
     await sendSMS(user.phone, message);
   } catch (error) {
     return next(new AppError(req.t("auth:error.sending2FA"), 500));

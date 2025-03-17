@@ -4,6 +4,7 @@ const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const User = require("../models/User");
 const verificationHelper = require("./../helper/verificationHelper");
+const { sendMessageToClients } = require("../utils/websocket");
 
 /**
  * Register a new user by email and send a verification email.

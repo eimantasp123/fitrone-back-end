@@ -13,8 +13,8 @@ const UpdateService = {
    * @param {Function} next - The `next` function for error forwarding.
    */
   async updateIngredient(ingredientId, updates, req, next) {
-    const ingredient = await Ingredient.findByIdAndUpdate(
-      ingredientId,
+    const ingredient = await Ingredient.findOneAndUpdate(
+      { _id: ingredientId, user: req.user._id },
       updates,
       {
         new: true,
@@ -40,6 +40,7 @@ const UpdateService = {
     try {
       const meals = await Meal.find({
         user: req.user._id,
+        deletedAt: null,
         "ingredients.ingredientId": updatedIngredient._id,
       });
 

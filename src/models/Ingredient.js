@@ -50,8 +50,28 @@ const ingredientSchema = new mongoose.Schema(
 );
 
 // Indexes
-ingredientSchema.index({ user: 1, _id: 1, deletedAt: 1 });
-ingredientSchema.index({ user: 1, deletedAt: 1 });
+ingredientSchema.index(
+  { user: 1, title: 1 },
+  { partialFilterExpression: { deletedAt: null } },
+);
+
+ingredientSchema.index(
+  {
+    user: 1,
+    archived: 1,
+    title: 1,
+  },
+  { partialFilterExpression: { deletedAt: null } },
+);
+
+ingredientSchema.index(
+  {
+    user: 1,
+    archived: 1,
+    createdAt: -1,
+  },
+  { partialFilterExpression: { deletedAt: null } },
+);
 
 const Ingredient = mongoose.model("Ingredient", ingredientSchema);
 

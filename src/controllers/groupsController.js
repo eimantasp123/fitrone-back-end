@@ -257,8 +257,6 @@ exports.attachMembersToGroup = catchAsync(async (req, res, next) => {
               menu.assignedClients.map(async (client) => {
                 // Check if client is included in the customers array
                 if (customers.includes(client.toString())) {
-                  console.log("client included", client);
-
                   // Fetch customer details
                   const customer = await Customer.findOne({ _id: client });
                   if (!customer) return;

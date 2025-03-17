@@ -120,9 +120,10 @@ customerSchema.statics.findByToken = async function (token) {
 };
 
 // Indexes
-customerSchema.index({ supplier: 1, deletedAt: 1 });
-customerSchema.index({ _id: 1, supplier: 1, deletedAt: 1 });
-customerSchema.index({ supplier: 1, email: 1, deletedAt: 1 });
+customerSchema.index(
+  { supplier: 1, email: 1 },
+  { partialFilterExpression: { deletedAt: null } },
+);
 
 const Customer = mongoose.model("Customer", customerSchema);
 module.exports = Customer;

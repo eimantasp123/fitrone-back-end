@@ -114,11 +114,17 @@ exports.addIngredient = catchAsync(async (req, res, next) => {
   }
 
   // Check if the ingredient already exists in the user ingredient document
-  const ingredients = await Ingredient.find({
-    user: req.user._id,
-    title: title.toLowerCase(),
-    deletedAt: null,
-  });
+  const ingredients = await Ingredient.find(
+    {
+      user: req.user._id,
+      title: title.toLowerCase(),
+      deletedAt: null,
+    },
+    {
+      _id: 1,
+      title: 1,
+    },
+  );
 
   const ingredientMatches = ingredients.filter(
     (ingredient) => ingredient.title === title.toLowerCase(),
@@ -192,13 +198,13 @@ exports.getIngredients = catchAsync(async (req, res, next) => {
   // Define the query object
   const dbQuery = {
     user: req.user._id,
-    archived: { $ne: true },
+    archived: false,
     deletedAt: null,
   };
 
   // Check if the query parameter is provided
   if (query && query.length > 0) {
-    dbQuery.title = { $regex: query.toLowerCase() };
+    dbQuery.title = new RegExp("^" + query.toLowerCase(), "i");
   }
 
   // page and limit
@@ -206,11 +212,20 @@ exports.getIngredients = catchAsync(async (req, res, next) => {
   const limit = parseInt(req.query.limit, 10) || 10;
   const skip = (page - 1) * limit;
 
-  // Query the `Ingredient` collection for the user's ingredients
-  const ingredients = await Ingredient.find(dbQuery)
-    .skip(skip)
-    .limit(parseInt(limit))
-    .sort({ createdAt: -1 });
+  // Get the ingredients and the total count
+  const [ingredients, total] = await Promise.all([
+    Ingredient.find(dbQuery)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean(),
+
+    Ingredient.countDocuments({
+      user: req.user._id,
+      archived: false,
+      deletedAt: null,
+    }),
+  ]);
 
   const response = ingredients.map((ingredient) => ({
     ingredientId: ingredient._id,
@@ -222,13 +237,6 @@ exports.getIngredients = catchAsync(async (req, res, next) => {
     fat: ingredient.fat,
     carbs: ingredient.carbs,
   }));
-
-  // Get the total number of ingredients
-  const total = await Ingredient.countDocuments({
-    user: req.user._id,
-    archived: { $ne: true },
-    deletedAt: null,
-  });
 
   // Send the response
   res.status(200).json({
@@ -248,13 +256,8 @@ exports.deleteIngredient = catchAsync(async (req, res, next) => {
   const { ingredientId } = req.params;
 
   // Check if the ingredient ID is valid
-  if (!mongoose.isValidObjectId(ingredientId)) {
+  if (!ingredientId || !mongoose.isValidObjectId(ingredientId)) {
     return next(new AppError(req.t("meals:error.invalidIngredientId"), 400));
-  }
-
-  // Check if the id parameter is provided
-  if (!ingredientId) {
-    return next(new AppError(req.t("meals:error.ingredientIdRequired"), 400));
   }
 
   // Find and delete the ingredient
@@ -285,30 +288,28 @@ exports.updateIngredient = catchAsync(async (req, res, next) => {
   const { title, unit, calories, protein, carbs, amount, fat } = req.body;
 
   // Check if the id parameter is provided
-  if (!ingredientId) {
+  if (!ingredientId || !mongoose.isValidObjectId(ingredientId)) {
     return next(new AppError(req.t("meals:error.ingredientIdRequired"), 400));
   }
 
-  // Check if the ingredient title already exists in the user ingredient document on other ingredient
-  const ingredients = await Ingredient.find({
+  // Standardize the title
+  const standardizedTitle = title.trim().toLowerCase();
+
+  // Check if the ingredient exists
+  const titleExists = await Ingredient.exists({
     user: req.user._id,
-    title: title.toLowerCase(),
+    title: standardizedTitle,
     _id: { $ne: ingredientId },
     deletedAt: null,
   });
 
-  // Check if the ingredient title already exists in the user ingredient document
-  const ingredientMatches = ingredients.filter(
-    (ingredient) => ingredient.title === title.toLowerCase(),
-  );
-
-  if (ingredientMatches.length > 0) {
+  if (titleExists) {
     return next(new AppError(req.t("meals:error.ingredientExists"), 400));
   }
 
   // Define updates
   const updates = {
-    title, // Assuming bilingual titles
+    title: standardizedTitle, // Assuming bilingual titles
     unit,
     calories: roundTo(calories, 1),
     protein: roundTo(protein, 1),
@@ -337,11 +338,15 @@ exports.getIngredientSearch = catchAsync(async (req, res, next) => {
   if (!query) {
     return next(new AppError(req.t("meals:error.queryRequired"), 400));
   }
+
+  // Create a regex search query
+  const searchQuery = new RegExp("^" + query.trim().toLowerCase(), "i");
+
   // Query the `Ingredient` collection for matching titles
   const ingredients = await Ingredient.find({
     user: req.user._id,
-    title: { $regex: query.toLowerCase() },
-    archived: { $ne: true },
+    title: searchQuery,
+    archived: false,
     deletedAt: null,
   });
 

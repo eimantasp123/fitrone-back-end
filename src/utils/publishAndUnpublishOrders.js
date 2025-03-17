@@ -29,8 +29,6 @@ const publishOrders = async (
         // Map for each meal in the day
         for (const meal of assignedWeeklyMenu.menu.days[singleDayOrder.day]
           .meals) {
-          console.log(meal);
-
           const category = meal.category; // Get category of meal
 
           // Create category if it doesn't exist

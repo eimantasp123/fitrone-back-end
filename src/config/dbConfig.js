@@ -5,28 +5,27 @@ const Meal = require("../models/Meal");
 const Ingredient = require("../models/Ingredient");
 const Customer = require("../models/Customer");
 const WeekPlan = require("../models/WeeklyPlan");
+const IngredientsStock = require("../models/IngredientsStock");
+const SingleDayOrder = require("../models/SingleDayOrder");
 
 const connectDB = async () => {
   try {
-    console.log("Connecting to MongoDB...");
     await mongoose.connect(process.env.MONGO_DB_CONNECTION_STRING);
     console.log("MongoDB connected");
 
-    // Rebuild indexes for WeeklyMenu
-    await WeeklyMenu.syncIndexes(); // Ensure indexes are in sync
-
-    // Rebuild indexes for Meal
-    await Meal.syncIndexes(); // Ensure indexes are in sync
-
-    // Rebuild indexes for Ingredient
-    await Ingredient.syncIndexes(); // Ensure indexes are in sync
-
-    // Create indexes for Customer
-    await Customer.createIndexes(); // Ensure indexes are in sync
-
-    // Create indexes for WeekPlan
-    await WeekPlan.createIndexes(); // Ensure indexes are in sync
-    console.log("Indexes created successfully.");
+    // Create indexes if REBUILD_INDEXES is set to true
+    if (process.env.REBUILD_INDEXES === "true") {
+      await Promise.all([
+        Ingredient.createIndexes(),
+        Meal.createIndexes(),
+        WeeklyMenu.createIndexes(),
+        WeekPlan.createIndexes(),
+        IngredientsStock.createIndexes(),
+        SingleDayOrder.createIndexes(),
+        Customer.createIndexes(),
+      ]);
+      console.log("✅ Indexes created successfully!");
+    }
   } catch (err) {
     console.error("MongoDB connection error:", err);
     process.exit(1);

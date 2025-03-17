@@ -90,7 +90,7 @@ exports.addMeal = catchAsync(async (req, res, next) => {
   );
 
   // Check if a meal with the same title already exists for this user
-  const existingMeal = await Meal.findOne({
+  const existingMeal = await Meal.exists({
     user: req.user._id,
     title: title,
     deletedAt: null,
@@ -183,9 +183,9 @@ exports.updateMeal = catchAsync(async (req, res, next) => {
   }
 
   // Check if a meal with the same title already exists for this user
-  const existingMeal = await Meal.findOne({
+  const existingMeal = await Meal.exists({
     user: req.user._id,
-    title: title,
+    title: title.trim().toLowerCase(),
     _id: { $ne: id },
     deletedAt: null,
   });
@@ -437,7 +437,7 @@ exports.getMeals = catchAsync(async (req, res, next) => {
   if (preference) dbQuery.preferences = preference;
   if (restriction) dbQuery.restrictions = restriction;
   if (query && query.length > 0)
-    dbQuery.title = { $regex: query.toLowerCase() };
+    dbQuery.title = new RegExp("^" + query.toLowerCase(), "i");
 
   // Count the total number of meals and fetch the meals with pagination
   const [total, totalForFetch, meals] = await Promise.all([
@@ -448,9 +448,9 @@ exports.getMeals = catchAsync(async (req, res, next) => {
     }),
     Meal.countDocuments(dbQuery),
     Meal.find(dbQuery)
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit))
-      .sort({ createdAt: -1 })
       .select("-user -__v -updatedAt")
       .lean(),
   ]);
