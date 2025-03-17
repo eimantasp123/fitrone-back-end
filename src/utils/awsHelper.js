@@ -1,4 +1,3 @@
-require("dotenv").config(); // Load environment variables
 const { SQSClient, SendMessageCommand } = require("@aws-sdk/client-sqs");
 const { SNSClient, PublishCommand } = require("@aws-sdk/client-sns");
 
@@ -26,7 +25,6 @@ const sendSMS = async (phone, message) => {
       },
     },
   };
-
   try {
     // Send SMS to user phone number
     const command = new PublishCommand(params);
