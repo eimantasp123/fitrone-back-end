@@ -46,7 +46,6 @@ const {
 const app = express(); // Create express app
 const server = http.createServer(app); // Create HTTP server
 initWebSocketServer(server); // Initialize WebSocket server
-//test
 
 // Initialize i18next for localization
 i18next
@@ -80,7 +79,9 @@ i18next
   });
 
 app.use(middleware.handle(i18next)); // Use the i18next middleware to attach `req.t` function to requests
-connectDB(); // Connect to database
+
+// Connect to database
+connectDB();
 
 // Development logging
 if (process.env.NODE_ENV === "development") {
