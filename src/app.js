@@ -79,9 +79,7 @@ i18next
   });
 
 app.use(middleware.handle(i18next)); // Use the i18next middleware to attach `req.t` function to requests
-
-// Connect to database
-connectDB();
+connectDB(); // Connect to database
 
 // Development logging
 if (process.env.NODE_ENV === "development") {
