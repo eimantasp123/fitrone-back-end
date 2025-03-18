@@ -45,10 +45,8 @@ const {
 // Initialize express app
 const app = express(); // Create express app
 const server = http.createServer(app); // Create HTTP server
-
-// Initialize WebSocket server
-initWebSocketServer(server);
-
+initWebSocketServer(server); // Initialize WebSocket server
+//test
 // Initialize i18next for localization
 i18next
   .use(Backend)
