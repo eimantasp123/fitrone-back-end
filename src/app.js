@@ -4,7 +4,6 @@ require("dotenv").config(); // Load environment variables
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const helmet = require("helmet");
 const mongoSanitize = require("express-mongo-sanitize");
@@ -41,6 +40,7 @@ const {
   processWeeklyPlans,
   processConfirmationFunctionForWeeklyPlan,
 } = require("./crons/updateWeeklyPlanAndSetExpired");
+const { logger, responseTimeMiddleware } = require("./logger");
 
 // Initialize express app
 const app = express(); // Create express app
@@ -81,12 +81,9 @@ i18next
 app.use(middleware.handle(i18next)); // Use the i18next middleware to attach `req.t` function to requests
 connectDB(); // Connect to database
 
-// Development logging
-if (process.env.NODE_ENV === "development") {
-  app.use(morgan("dev"));
-} else {
-  app.use(morgan("combined")); // Logs full request details in production
-}
+// Use middleware functions for logging
+app.use(responseTimeMiddleware);
+app.use(logger);
 
 // Auth Routes Limiter (Stricter)
 const authLimiter = rateLimit({

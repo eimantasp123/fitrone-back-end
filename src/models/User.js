@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
+const encrypt = require("mongoose-encryption");
 
 const userSchema = new mongoose.Schema({
   email: {
@@ -10,6 +11,11 @@ const userSchema = new mongoose.Schema({
     required: [true, "Email is required"],
     lowercase: true,
     validate: [validator.isEmail, "Please provide a valid email"],
+  },
+  emailHash: {
+    type: String,
+    unique: true,
+    select: false,
   },
   password: {
     type: String,
@@ -112,24 +118,57 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-// Document middleware to hash the password before saving
+// **Pre-save hook to hash email before saving**
+userSchema.pre("save", function (next) {
+  if (this.isModified("email")) {
+    this.emailHash = crypto
+      .createHash("sha256")
+      .update(this.email)
+      .digest("hex");
+  }
+  next();
+});
+
+// Apply encryption plugin
+userSchema.plugin(encrypt, {
+  encryptionKey: process.env.MONGODB_USER_ENCRYPTION_KEY,
+  signingKey: process.env.MONGODB_USER_SIGNING_KEY,
+  encryptedFields: [
+    "email",
+    "phone",
+    "lastName",
+    "googleId",
+    "facebookId",
+    "stripeCustomerId",
+    "stripeSubscriptionId",
+    "emailVerificationCode",
+    "twoFactorCode",
+  ],
+  additionalAuthenticatedFields: ["email"],
+});
+
+// Hash password before saving
 userSchema.pre("save", async function (next) {
-  // Only run this function if password was actually modified
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 12);
   this.passwordConfirm = undefined;
   next();
 });
 
-// Document middleware to update passwordChangedAt property for the user
+// Set passwordChangedAt timestamp
 userSchema.pre("save", function (next) {
-  // Only run this function if password was actually modified
   if (!this.isModified("password") || this.isNew) return next();
   this.passwordChangedAt = Date.now() - 1000;
   next();
 });
 
-// Instance method to compare the entered password with the hashed password
+// Use email hash for searching
+userSchema.statics.findByEmail = async function (email, fields = "") {
+  const emailHash = crypto.createHash("sha256").update(email).digest("hex");
+  return await this.findOne({ emailHash }).select(fields);
+};
+
+// Password comparison
 userSchema.methods.correctPassword = async function (
   candidatePassword,
   userPassword,
@@ -137,7 +176,7 @@ userSchema.methods.correctPassword = async function (
   return await bcrypt.compare(candidatePassword, userPassword);
 };
 
-// Instance method to check if the user changed the password after the token was issued
+// Check if password changed after token issue
 userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   if (this.passwordChangedAt) {
     const changedTimestamp = parseInt(
@@ -149,7 +188,7 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   return false;
 };
 
-// Instance method to verify the email verification token
+// Password reset token creation
 userSchema.methods.createPasswordResetToken = function () {
   const resetToken = crypto.randomBytes(32).toString("hex");
   this.resetPasswordToken = crypto
@@ -160,7 +199,7 @@ userSchema.methods.createPasswordResetToken = function () {
   return resetToken;
 };
 
-// Static method to find a user by email and check if the email is verified
+// Find user by reset token
 userSchema.statics.findByResetToken = async function (token) {
   const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
   const user = await this.findOne({
@@ -170,7 +209,7 @@ userSchema.statics.findByResetToken = async function (token) {
   return user;
 };
 
-// Method to verify the reset token and reset the password
+// Reset password
 userSchema.methods.resetPassword = async function (
   newPassword,
   newPasswordConfirm,

@@ -4,7 +4,6 @@ const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const User = require("../models/User");
 const verificationHelper = require("./../helper/verificationHelper");
-const { sendMessageToClients } = require("../utils/websocket");
 
 /**
  * Register a new user by email and send a verification email.
@@ -13,7 +12,8 @@ exports.registerEmail = catchAsync(async (req, res, next) => {
   const { email } = req.body;
 
   // Check if email is provided
-  let user = await User.findOne({ email }).select(
+  let user = await User.findByEmail(
+    email,
     "+isVerified +registrationCompleted",
   );
 
@@ -64,13 +64,13 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
   const { email, code } = req.body;
 
   //  Find user with email and verification code
-  const user = await User.findOne({
-    email,
-    emailVerificationCode: code,
-    emailVerificationExpires: { $gt: Date.now() },
-  });
+  const user = await User.findByEmail(email, "+isVerified");
 
-  if (!user) {
+  if (
+    !user ||
+    user.emailVerificationCode !== code ||
+    user.emailVerificationExpires < Date.now()
+  ) {
     return next(new AppError(req.t("auth:invalidOrExpiredToken"), 400));
   }
 
@@ -92,14 +92,13 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
  * Resend verification email to user.
  */
 exports.resendVerificationEmailCode = catchAsync(async (req, res, next) => {
+  const email = req.body.email;
+
   // Find user with email and is not verified
-  const user = await User.findOne({
-    email: req.body.email,
-    isVerified: false,
-  });
+  const user = await User.findByEmail(email, "+isVerified");
 
   // Check if user exists
-  if (!user) {
+  if (!user || user.isVerified) {
     return next(new AppError(req.t("auth:userNotFoundOrAlreadyVerified"), 404));
   }
 
@@ -119,13 +118,12 @@ exports.completeRegistration = catchAsync(async (req, res, next) => {
   const { email, password, passwordConfirm, firstName, lastName } = req.body;
 
   // Find user with email and is verified and registration not completed
-  const user = await User.findOne({
+  const user = await User.findByEmail(
     email,
-    isVerified: true,
-    registrationCompleted: false,
-  });
+    "+isVerified +registrationCompleted",
+  );
 
-  if (!user) {
+  if (!user || (user.isVerified && user.registrationCompleted)) {
     return next(
       new AppError(req.t("auth:userNotFoundOrAlreadyRegistered"), 404),
     );
@@ -158,7 +156,7 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError(req.t("auth:missingEmailOrPassword"), 400));
   }
 
-  const user = await User.findOne({ email }).select("+password +isVerified");
+  const user = await User.findByEmail(email, "+password +isVerified ");
 
   // Check if user exists
   if (!user) {
@@ -281,9 +279,11 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   const { email } = req.body;
 
   // Find user with email
-  const user = await User.findOne({ email }).select(
+  const user = await User.findByEmail(
+    email,
     "+isVerified +registrationCompleted",
   );
+
   if (!user) return next(new AppError(req.t("auth:userNotFound"), 404));
 
   // Check if user login method is different
@@ -353,8 +353,9 @@ exports.facebookAuth = catchAsync(async (req, res, next) => {
   const { id, email, picture, first_name, last_name } = response.data;
 
   // Check if user exists
-  let user = await User.findOne({ email }).select(
-    "+isVerified +registrationCompleted",
+  let user = await User.findByEmail(
+    email,
+    "+registrationCompleted +isVerified",
   );
 
   // Check if user exists and registration not completed
@@ -432,8 +433,9 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
   const highResPicture = picture ? picture.replace("s96-c", "s400-c") : "";
 
   // Check if user exists
-  let user = await User.findOne({ email }).select(
-    "+isVerified +registrationCompleted",
+  let user = await User.findByEmail(
+    email,
+    "+registrationCompleted +isVerified",
   );
 
   // Check if user exists and registration not completed

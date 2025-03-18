@@ -94,7 +94,7 @@ exports.getOrderById = catchAsync(async (req, res, next) => {
       },
       {
         path: "categories.meals.customers",
-        select: "firstName lastName",
+        select: "+firstName +lastName",
       },
     ])
     .select("-__v -user");

@@ -492,7 +492,7 @@ exports.getWeeklyPlanAssignedMenuDetails = catchAsync(
       { "assignMenu.$": 1, status: 1 },
     ).populate({
       path: "assignMenu.assignedClients",
-      select: "firstName lastName email",
+      select: "+firstName +lastName +email",
     });
 
     if (!weeklyPlan) {
@@ -686,7 +686,10 @@ exports.checkWeeklyPlanAndMenuAssigned = catchAsync(async (req, res, next) => {
     status: "active",
   }).populate([
     { path: "assignMenu.menu", select: "title" },
-    { path: "assignMenu.assignedClients", select: "firstName lastName email" },
+    {
+      path: "assignMenu.assignedClients",
+      select: "+firstName +lastName +email",
+    },
   ]);
 
   if (!weeklyPlan) {

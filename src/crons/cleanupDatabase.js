@@ -3,7 +3,6 @@ const User = require("../models/User");
 
 module.exports = async () => {
   try {
-    console.log("Running cleanup for user token cleanup");
     // Remove two-factor codes and expires for users with expired codes
     await User.updateMany(
       { twoFactorExpires: { $lt: new Date() } },
@@ -19,16 +18,18 @@ module.exports = async () => {
         },
       },
     );
+
     // Remove email verification codes and expires for users with expired codes
-    await User.updateMany(
-      { emailVerificationExpires: { $lt: new Date() } },
-      {
-        $unset: {
-          emailVerificationCode: null,
-          emailVerificationExpires: null,
-        },
-      },
-    );
+    const users = await User.find({
+      emailVerificationExpires: { $lt: new Date() },
+    });
+
+    for (const user of users) {
+      user.emailVerificationCode = undefined; // Remove the encrypted field
+      user.emailVerificationExpires = undefined;
+      await user.save(); // This ensures encryption is applied
+    }
+
     // Remove token from customers
     await Customer.updateMany(
       { confirmFormTokenExpires: { $lt: new Date() } },

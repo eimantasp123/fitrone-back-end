@@ -26,11 +26,10 @@ exports.createCustomerManually = catchAsync(async (req, res, next) => {
   }
 
   // Check if customer with this email already exists
-  const customer = await Customer.findOne({
-    supplier: req.user._id,
-    email: req.body.email,
-    deletedAt: null,
-  });
+  const customer = await Customer.findByEmailAndSupplierId(
+    req.user._id,
+    req.body.email,
+  );
 
   if (customer) {
     return next(
@@ -92,19 +91,11 @@ exports.updateCustomer = catchAsync(async (req, res, next) => {
   }
 
   // Find customer and update provided details
-  const customer = await Customer.findOneAndUpdate(
-    {
-      _id: customerId,
-      supplier: req.user._id,
-      deletedAt: null,
-    },
-    {
-      $set: validateDate,
-    },
-    {
-      runValidators: true,
-    },
-  );
+  const customer = await Customer.findOne({
+    _id: customerId,
+    supplier: req.user._id,
+    deletedAt: null,
+  });
 
   // If customer does not exist, return an error
   if (!customer) {
@@ -113,7 +104,13 @@ exports.updateCustomer = catchAsync(async (req, res, next) => {
     );
   }
 
+  // 🔄 Update each field manually to ensure encryption is applied
+  Object.keys(validateDate).forEach((key) => {
+    customer[key] = validateDate[key]; // This ensures encrypted fields are properly updated
+  });
+
   customer.status = customer.status === "pending" ? "active" : customer.status;
+
   await customer.save();
 
   res.status(200).json({
@@ -139,11 +136,10 @@ exports.sendFormToCustomer = catchAsync(async (req, res, next) => {
   }
 
   // Check if customer with this email already exists
-  const customerAlreadyValid = await Customer.findOne({
-    supplier: req.user._id,
+  const customerAlreadyValid = await Customer.findByEmailAndSupplierId(
+    req.user._id,
     email,
-    deletedAt: null,
-  });
+  );
 
   // If customer already exists, return an error
   if (customerAlreadyValid) {
@@ -405,10 +401,7 @@ exports.getAllCustomers = catchAsync(async (req, res, next) => {
   if (status && status.length > 0) dbQuery.status = status;
   if (gender && gender.length > 0) dbQuery.gender = gender;
   if (query && query.length > 0) {
-    dbQuery.$or = [
-      { firstName: { $regex: query, $options: "i" } },
-      { lastName: { $regex: query, $options: "i" } },
-    ];
+    dbQuery.$or = [{ firstName: { $regex: query, $options: "i" } }];
   }
 
   // Get the total number of documents and the documents for the current page
@@ -419,8 +412,7 @@ exports.getAllCustomers = catchAsync(async (req, res, next) => {
       .skip(skip)
       .limit(parseInt(limit))
       .sort({ createdAt: -1 })
-      .select(" -__v -createdAt -updatedAt")
-      .lean(),
+      .select(" -__v -createdAt -updatedAt"),
   ]);
 
   // Send the response
@@ -580,7 +572,11 @@ exports.calculateRecommendedNutrition = catchAsync(async (req, res, next) => {
   }
 
   // Find the customer by ID
-  const customer = await Customer.findById(customerId);
+  const customer = await Customer.findOne({
+    _id: customerId,
+    supplier: req.user._id,
+    deletedAt: null,
+  });
 
   // If customer does not exist, return an error
   if (!customer) {

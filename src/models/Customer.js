@@ -1,5 +1,6 @@
-const mongoose = require("mongoose");
 const crypto = require("crypto");
+const mongoose = require("mongoose");
+const encrypt = require("mongoose-encryption");
 
 const customerSchema = new mongoose.Schema(
   {
@@ -9,6 +10,11 @@ const customerSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
+    },
+    emailHash: {
+      type: String,
+      unique: true,
+      select: false,
     },
     status: {
       type: String,
@@ -98,6 +104,46 @@ const customerSchema = new mongoose.Schema(
   },
 );
 
+// **Pre-save hook to hash email before saving**
+customerSchema.pre("save", function (next) {
+  if (this.isModified("email")) {
+    this.emailHash = crypto
+      .createHash("sha256")
+      .update(this.email)
+      .digest("hex");
+  }
+  next();
+});
+
+// Apply encryption to sensitive fields
+customerSchema.plugin(encrypt, {
+  encryptionKey: process.env.MONGODB_CUSTOMER_ENCRYPTION_KEY,
+  signingKey: process.env.MONGODB_CUSTOMER_SIGNING_KEY,
+  encryptedFields: [
+    "email",
+    "phone",
+    "address",
+    "lastName",
+    "age",
+    "foodAllergies",
+    "latitude",
+    "longitude",
+    "fitnessGoal",
+  ],
+});
+
+// Static method to find a user by email and supplier ID
+customerSchema.statics.findByEmailAndSupplierId = async function (
+  supplier,
+  email,
+  fields = "",
+) {
+  const emailHash = crypto.createHash("sha256").update(email).digest("hex");
+  return await this.findOne({ emailHash, supplier, deletedAt: null }).select(
+    fields,
+  );
+};
+
 // Instance method to create token for confirming the form
 customerSchema.methods.createConfirmFormToken = function () {
   const confirmFormToken = crypto.randomBytes(32).toString("hex");
@@ -121,7 +167,7 @@ customerSchema.statics.findByToken = async function (token) {
 
 // Indexes
 customerSchema.index(
-  { supplier: 1, email: 1 },
+  { supplier: 1, emailHash: 1 },
   { partialFilterExpression: { deletedAt: null } },
 );
 
