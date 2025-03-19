@@ -15,6 +15,7 @@ const middleware = require("i18next-http-middleware");
 const path = require("path");
 const http = require("http");
 const compression = require("compression");
+const { doubleCsrf } = require("csrf-csrf");
 
 // Require custom modules
 const connectDB = require("./config/dbConfig");
@@ -78,6 +79,25 @@ i18next
     },
   });
 
+// CSRF protection middleware
+const { doubleCsrfProtection, generateToken } = doubleCsrf({
+  getSecret: () => process.env.CSRF_SECRET || "fallback-token", // Secret key for CSRF token
+  cookieName:
+    process.env.NODE_ENV === "production"
+      ? "__Host-psifi.x-csrf-token"
+      : "csrf-token",
+  cookieOptions: {
+    httpOnly: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+    path: "/",
+    maxAge: 1000 * 15, // 15 seconds
+  },
+  size: 64, // The size of the generated tokens in bits
+  ignoredMethods: ["GET", "HEAD", "OPTIONS"], // A list of request methods that will not be protected.
+  getTokenFromRequest: (req) => req.headers["x-csrf-token"], // A function that returns the token from the request
+});
+
 app.use(middleware.handle(i18next)); // Use the i18next middleware to attach `req.t` function to requests
 connectDB(); // Connect to database
 
@@ -87,7 +107,7 @@ app.use(logger);
 
 // Auth Routes Limiter (Stricter)
 const authLimiter = rateLimit({
-  max: 100, // Allow 20 requests per 5 minutes
+  max: 50, // Allow 20 requests per 5 minutes
   windowMs: 5 * 60 * 1000, // 5 minutes
   message: "Too many login/signup requests, please try again later.",
 });
@@ -104,10 +124,21 @@ const corsOptions = {
   origin: process.env.FRONTEND_URL,
   methods: "GET, POST, PUT, DELETE, PATCH",
   credentials: true,
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token"],
 };
 
-app.use(helmet()); // Set security HTTP headers
+// Set security HTTP headers
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"], // Blocks inline scripts
+        objectSrc: ["'none'"], // Blocks Flash/ActiveX
+      },
+    },
+  }),
+);
 app.use(cors(corsOptions)); // Enable CORS for frontend access
 app.use("/api/v1/webhook", webhookRoutes); // Stripe webhook
 app.use(express.json()); // Body parser, reading data from body into req.body
@@ -116,10 +147,22 @@ app.use(mongoSanitize()); // Data sanitization against NoSQL query injection
 app.use(xss()); // Data sanaization against XSS
 app.use(hpp()); // Prevent parameter pollution
 app.use(cookieParser()); // Cookie parser middleware
+app.use(doubleCsrfProtection); //Apply CSRF protection middleware to all routes
 
 if (process.env.NODE_ENV === "development") {
   app.use("/pdf", express.static(path.join(__dirname, "../pdf"))); // Serve PDF files in development
 }
+
+// CSRF token generation route
+app.get("/api/v1/csrf-token", authLimiter, (req, res) => {
+  try {
+    const csrfToken = generateToken(req, res, false, false);
+    res.json({ csrfToken });
+  } catch (error) {
+    console.error("🔴 Error in CSRF token generation:", error);
+    res.status(500).json({ error: "Failed to generate CSRF token" });
+  }
+});
 
 // Apply auth limiter to auth routes
 app.use("/api/v1/auth", authLimiter, authRoutes);
