@@ -34,7 +34,7 @@ exports.uploadImage = catchAsync(async (req, res, next) => {
   }
   // Validate file type and size
   if (!validateFile(req.file, allowedFileTypes, maxFileSize)) {
-    return next(new AppError("Invalid file type or size exceeds limit", 400));
+    return next(new AppError(req.t("invalidFileType"), 400));
   }
 
   // Find user by ID

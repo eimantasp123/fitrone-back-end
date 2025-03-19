@@ -21,6 +21,7 @@
   "noFileUploaded": "No file uploaded.",
   "pleaseLoginAgain": "Please log in to get access.",
   "plan_not_found": "User plan not found.",
+  "invalidFileType": "Invalid file type or size exceeds limit of 5MB",
 
   "featuresMessages": {
     "ingredients_limit": "You have reached your ingredients limit of {{userLimit}} for your '{{userPlanName}}' plan. Upgrade to add more!",

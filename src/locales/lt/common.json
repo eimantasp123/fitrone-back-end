@@ -21,6 +21,7 @@
   "noFileUploaded": "Nepasirinktas joks failas",
   "pleaseLoginAgain": "Prašome prisijungti, kad gautumėte prieigą",
   "plan_not_found": "Vartotojo planas nerasta.",
+  "invalidFileType": "Netinkamas failo tipas arba dydis viršija 5MB limitą",
 
   "featuresMessages": {
     "ingredients_limit": "Jūs pasiekėte savo ingredientų limitą {{userLimit}} jūsų '{{userPlanName}}' plane. Atnaujinkite planą, kad galėtumėte pridėti daugiau ingredientų!",
