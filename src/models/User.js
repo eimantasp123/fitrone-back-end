@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
     unique: true,
     required: [true, "Email is required"],
     lowercase: true,
+    sparse: true,
     validate: [validator.isEmail, "Please provide a valid email"],
   },
   emailHash: {
@@ -144,7 +145,6 @@ userSchema.plugin(encrypt, {
     "emailVerificationCode",
     "twoFactorCode",
   ],
-  additionalAuthenticatedFields: ["email"],
 });
 
 // Hash password before saving

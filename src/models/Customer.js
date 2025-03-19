@@ -128,7 +128,6 @@ customerSchema.plugin(encrypt, {
     "foodAllergies",
     "latitude",
     "longitude",
-    "fitnessGoal",
   ],
 });
 

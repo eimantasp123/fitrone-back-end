@@ -46,6 +46,7 @@ exports.registerEmail = catchAsync(async (req, res, next) => {
 
   // Create a new user if user does not exist
   user = new User({ email });
+
   await user.save({ validateBeforeSave: false });
 
   // Send verification email
