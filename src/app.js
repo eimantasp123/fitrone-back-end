@@ -45,6 +45,7 @@ const { logger, responseTimeMiddleware } = require("./logger");
 
 // Initialize express app
 const app = express(); // Create express app
+app.set("trust proxy", 1); // Enable proxy trust
 const server = http.createServer(app); // Create HTTP server
 initWebSocketServer(server); // Initialize WebSocket server
 
@@ -89,9 +90,9 @@ const { doubleCsrfProtection, generateToken } = doubleCsrf({
   cookieOptions: {
     httpOnly: process.env.NODE_ENV === "production",
     secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+    sameSite: "strict",
     path: "/",
-    maxAge: 1000 * 15, // 15 seconds
+    maxAge: 1000 * 5, // 15 seconds
   },
   size: 64, // The size of the generated tokens in bits
   ignoredMethods: ["GET", "HEAD", "OPTIONS"], // A list of request methods that will not be protected.
@@ -122,7 +123,7 @@ const generalLimiter = rateLimit({
 // CORS options
 const corsOptions = {
   origin: process.env.FRONTEND_URL,
-  methods: "GET, POST, PUT, DELETE, PATCH",
+  methods: "GET, POST, PUT, DELETE, PATCH ,OPTIONS",
   credentials: true,
   allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token"],
 };
@@ -147,7 +148,21 @@ app.use(mongoSanitize()); // Data sanitization against NoSQL query injection
 app.use(xss()); // Data sanaization against XSS
 app.use(hpp()); // Prevent parameter pollution
 app.use(cookieParser()); // Cookie parser middleware
-app.use(doubleCsrfProtection); //Apply CSRF protection middleware to all routes
+
+// CSRF protection middleware
+app.use((req, res, next) => {
+  doubleCsrfProtection(req, res, (err) => {
+    if (err && err.code === "EBADCSRFTOKEN") {
+      // Suppress CSRF error logging
+      return res.status(403).json({
+        success: false,
+        message: "Invalid CSRF token. Please refresh the page or try again.",
+        code: "EBADCSRFTOKEN",
+      });
+    }
+    next(err);
+  });
+});
 
 if (process.env.NODE_ENV === "development") {
   app.use("/pdf", express.static(path.join(__dirname, "../pdf"))); // Serve PDF files in development
