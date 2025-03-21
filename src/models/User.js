@@ -140,8 +140,6 @@ userSchema.plugin(encrypt, {
     "lastName",
     "googleId",
     "facebookId",
-    "stripeCustomerId",
-    "stripeSubscriptionId",
     "emailVerificationCode",
     "twoFactorCode",
   ],

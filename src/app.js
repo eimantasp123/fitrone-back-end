@@ -127,8 +127,8 @@ const corsOptions = {
       process.env.FRONTEND_URL,
       "https://hooks.stripe.com",
     ];
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true); // Allowed stripe webhook
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
     } else {
       callback(null, false);
     }
@@ -161,7 +161,6 @@ app.use(cookieParser()); // Cookie parser middleware
 
 // CSRF protection middleware
 app.use((req, res, next) => {
-  if (req.path === "/api/v1/webhook") return next(); // Skip CSRF for webhooks
   doubleCsrfProtection(req, res, (err) => {
     if (err && err.code === "EBADCSRFTOKEN") {
       // Suppress CSRF error logging

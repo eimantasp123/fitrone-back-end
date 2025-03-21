@@ -36,6 +36,8 @@ function initWebSocketServer(server) {
     // Get the user's WebSocket connections
     const userSockets = userConnections.get(userId);
 
+    // console.log("userSockets", userSockets);
+
     // Set a flag for checking if the client is alive
     ws.isAlive = true;
 

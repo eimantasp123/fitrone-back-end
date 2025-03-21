@@ -7,6 +7,7 @@ const { mapPriceIdToPlan } = require("./generalHelpers");
 const Meal = require("../models/Meal");
 const Ingredient = require("../models/Ingredient");
 const WeeklyMenu = require("../models/WeeklyMenu");
+const { sendMessageToClients } = require("./websocket");
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 const router = express.Router();
 
@@ -76,6 +77,8 @@ async function handleCustomerCreation(customer) {
     user.hasUsedFreeTrial = true;
     user.stripeSubscriptionId = id;
     await user.save();
+
+    sendMessageToClients(user._id, "subscription_updated");
   } catch (error) {
     console.error("Error in handleCustomerCreation in webhookRoutes.js", error);
   }
@@ -134,6 +137,7 @@ async function handleSubscriptionUpdates(subscriptionUpdates) {
     user.stripeSubscriptionId = id;
     user.hasUsedFreeTrial = true;
     await user.save();
+    sendMessageToClients(user._id, "subscription_updated");
   } catch (error) {
     console.error(
       "Error in handleSubscriptionUpdates in webhookRoutes.js",
@@ -180,6 +184,7 @@ async function handleSubscriptionDeletion(subscription) {
     user.subscriptionCancelAtPeriodEnd = false;
     user.subscriptionCancelAt = null;
     await user.save();
+    sendMessageToClients(user._id, "subscription_updated");
   } catch (error) {
     console.error(
       "Error in handleSubscriptionDeletion in webhookRoutes.js",
@@ -207,6 +212,7 @@ async function handleChargeFailed(charge) {
       user.subscriptionStatus = "past_due";
       await user.save();
     }
+    sendMessageToClients(user._id, "subscription_updated");
   } catch (error) {
     console.error("Error in handleChargeFailed in webhookRoutes.js", error);
   }
