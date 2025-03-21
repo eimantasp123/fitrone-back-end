@@ -9,10 +9,6 @@ const systemProblemSchema = new mongoose.Schema(
       trim: true,
       maxlength: [100, "Name must be less than 100 characters long"],
     },
-    email: {
-      type: String,
-      required: true,
-    },
     problem: {
       type: String,
       required: true,

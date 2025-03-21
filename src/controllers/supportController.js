@@ -8,7 +8,7 @@ const catchAsync = require("../utils/catchAsync");
  * Send a support message.
  */
 exports.support = catchAsync(async (req, res, next) => {
-  const { message, subject, email, name } = req.body;
+  const { message, subject, name } = req.body;
 
   // Check if the required fields are provided
   if (!message || !subject) {
@@ -18,7 +18,6 @@ exports.support = catchAsync(async (req, res, next) => {
   // Create message and save it
   const support = await Support.create({
     name,
-    email,
     message,
     subject,
     user: req.user._id,
@@ -67,7 +66,6 @@ exports.systemSupport = catchAsync(async (req, res, next) => {
   // Create message and save it
   const problemObj = await SystemProblem.create({
     name: req.user.firstName,
-    email: req.user.email,
     message,
     problem,
     user: req.user._id,

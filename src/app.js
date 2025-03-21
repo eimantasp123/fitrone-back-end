@@ -92,7 +92,7 @@ const { doubleCsrfProtection, generateToken } = doubleCsrf({
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
     path: "/",
-    maxAge: 1000 * 5, // 15 seconds
+    maxAge: 60 * 60 * 1000, // 1 hour
   },
   size: 64, // The size of the generated tokens in bits
   ignoredMethods: ["GET", "HEAD", "OPTIONS"], // A list of request methods that will not be protected.
@@ -122,12 +122,23 @@ const generalLimiter = rateLimit({
 
 // CORS options
 const corsOptions = {
-  origin: process.env.FRONTEND_URL,
-  methods: "GET, POST, PUT, DELETE, PATCH ,OPTIONS",
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      process.env.FRONTEND_URL,
+      "https://hooks.stripe.com",
+    ];
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true); // Allowed stripe webhook
+    } else {
+      callback(null, false);
+    }
+  },
+  methods: "GET, POST, PUT, DELETE, PATCH, OPTIONS",
   credentials: true,
   allowedHeaders: ["Content-Type", "Authorization", "x-csrf-token"],
 };
 
+app.use(cors(corsOptions)); // Enable CORS for frontend access
 // Set security HTTP headers
 app.use(
   helmet({
@@ -140,7 +151,6 @@ app.use(
     },
   }),
 );
-app.use(cors(corsOptions)); // Enable CORS for frontend access
 app.use("/api/v1/webhook", webhookRoutes); // Stripe webhook
 app.use(express.json()); // Body parser, reading data from body into req.body
 app.use(compression()); // Compress all responses
@@ -151,6 +161,7 @@ app.use(cookieParser()); // Cookie parser middleware
 
 // CSRF protection middleware
 app.use((req, res, next) => {
+  if (req.path === "/api/v1/webhook") return next(); // Skip CSRF for webhooks
   doubleCsrfProtection(req, res, (err) => {
     if (err && err.code === "EBADCSRFTOKEN") {
       // Suppress CSRF error logging
