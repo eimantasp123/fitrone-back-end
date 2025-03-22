@@ -15,6 +15,20 @@ exports.createWeeklyMenu = catchAsync(async (req, res, next) => {
     meals: [],
   }));
 
+  // Find does active weekly menu with same title exist
+  const activeWeeklyMenu = await WeeklyMenu.findOne({
+    user: req.user._id,
+    title,
+    deletedAt: null,
+  });
+
+  // If the active weekly menu exists, return an error
+  if (activeWeeklyMenu) {
+    return next(
+      new AppError(req.t("weeklyMenu:errors.titleAlreadyExists"), 400),
+    );
+  }
+
   // If the weekly menu does not exist, create a new one
   await WeeklyMenu.create({
     user: req.user._id,
