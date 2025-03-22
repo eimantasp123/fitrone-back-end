@@ -125,6 +125,7 @@ const corsOptions = {
   origin: (origin, callback) => {
     const allowedOrigins = [
       process.env.FRONTEND_URL,
+      process.env.BACKEND_URL,
       "https://hooks.stripe.com",
     ];
     if (allowedOrigins.includes(origin)) {
