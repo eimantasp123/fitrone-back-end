@@ -62,6 +62,7 @@ exports.uploadImage = catchAsync(async (req, res, next) => {
 
   // Compress and resize image
   const compressedImageBuffer = await sharp(req.file.buffer)
+    .rotate()
     .resize({ width: 800 })
     .jpeg({ quality: 80 })
     .toBuffer();
