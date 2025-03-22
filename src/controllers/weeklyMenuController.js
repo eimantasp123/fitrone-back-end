@@ -18,7 +18,7 @@ exports.createWeeklyMenu = catchAsync(async (req, res, next) => {
   // Find does active weekly menu with same title exist
   const activeWeeklyMenu = await WeeklyMenu.findOne({
     user: req.user._id,
-    title,
+    title: title.toLowerCase(),
     deletedAt: null,
   });
 
