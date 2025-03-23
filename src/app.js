@@ -227,8 +227,8 @@ cron.schedule("15 * * * 0,1", async () => {
   }
 });
 
-// Run every monday at 2:00 AM in UTC time to update weekly plans if was not updated
-cron.schedule("0 2 * * 1", async () => {
+// Run every monday at 3:00 AM in UTC time to update weekly plans if was not updated
+cron.schedule("0 3 * * 1", async () => {
   try {
     await processConfirmationFunctionForWeeklyPlan();
     console.log("✅ Weekly plans processed successfully.");

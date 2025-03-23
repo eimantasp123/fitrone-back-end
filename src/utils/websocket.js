@@ -23,42 +23,48 @@ function initWebSocketServer(server) {
     // Extract userId and deviceId from the query parameters
     const urlParams = new URLSearchParams(req.url.split("?")[1]);
     const userId = urlParams.get("userId");
+    const deviceId = urlParams.get("deviceId");
 
-    if (!userId) {
+    if (!userId || !deviceId) {
       ws.close();
       return;
     }
 
     if (!userConnections.has(userId)) {
-      userConnections.set(userId, new Set());
+      userConnections.set(userId, new Map());
     }
 
-    // Get the user's WebSocket connections
-    const userSockets = userConnections.get(userId);
+    const deviceMap = userConnections.get(userId);
 
-    // console.log("userSockets", userSockets);
+    // Close existing device connection if exists
+    const existingWs = deviceMap.get(deviceId);
+    if (existingWs && typeof existingWs.terminate === "function") {
+      console.log(`⚠️ Terminating duplicate for ${userId} | ${deviceId}`);
+      existingWs.terminate();
+    }
 
     // Set a flag for checking if the client is alive
     ws.isAlive = true;
 
-    // Handle WebSocket errors to prevent crashes
-    ws.on("error", (error) => {
-      console.error(`❌ WebSocket error for user ${userId}:`, error);
-    });
+    // Store the new connection
+    deviceMap.set(deviceId, ws);
 
     // Handle incoming pong responses (client should send 'pong' back)
     ws.on("pong", () => {
       ws.isAlive = true; // Mark client as alive when pong received
     });
 
-    // Add the WebSocket to the user's Set
-    userSockets.add(ws);
-
+    // Close the WebSocket connection
     ws.on("close", () => {
-      userSockets.delete(ws);
-      if (userSockets.size === 0) {
+      deviceMap.delete(deviceId);
+      if (deviceMap.size === 0) {
         userConnections.delete(userId);
       }
+    });
+
+    // Handle WebSocket errors to prevent crashes
+    ws.on("error", (err) => {
+      console.error(`💥 WebSocket error for ${userId}-${deviceId}:`, err);
     });
   });
 
@@ -68,43 +74,43 @@ function initWebSocketServer(server) {
 /**
  * Function to check for inactive clients and remove them
  */
-setInterval(
-  () => {
-    userConnections.forEach((connections, userId) => {
-      connections.forEach((ws) => {
-        if (!ws.isAlive) {
-          ws.terminate(); // Terminate the connection
-          connections.delete(ws); // Remove the connection from the Set
-        } else {
-          ws.isAlive = false; // Mark as inactive until pong is received
-          ws.ping(); // Send ping to client
-        }
-      });
-
-      if (connections.size === 0) {
-        userConnections.delete(userId);
+setInterval(() => {
+  userConnections.forEach((deviceMap, userId) => {
+    deviceMap.forEach((ws, deviceId) => {
+      if (!ws || typeof ws.terminate !== "function") {
+        deviceMap.delete(deviceId);
+        return;
+      }
+      if (!ws.isAlive) {
+        ws.terminate();
+        deviceMap.delete(deviceId);
+      } else {
+        ws.isAlive = false;
+        ws.ping();
       }
     });
-  },
-  1000 * 30, // 30 seconds,
-);
+
+    if (deviceMap.size === 0) {
+      userConnections.delete(userId);
+    }
+  });
+}, 30000); // Check every 30 seconds
 
 /**
  * Function to send a message to all connections for a specific userId
  */
 function sendMessageToClients(userId, type, payload = {}) {
   const user = userId.toString();
-  const userSockets = userConnections.get(user);
+  const message = JSON.stringify({ type, ...payload });
 
-  if (userSockets) {
-    // Create a message object
-    const message = JSON.stringify({ type, ...payload });
-    userSockets.forEach((ws) => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(message); // Send the message to the client
-      }
-    });
-  }
+  const deviceMap = userConnections.get(user);
+  if (!deviceMap) return;
+
+  deviceMap.forEach((ws) => {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(message);
+    }
+  });
 }
 
 module.exports = { initWebSocketServer, sendMessageToClients };

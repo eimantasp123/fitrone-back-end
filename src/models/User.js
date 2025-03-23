@@ -77,8 +77,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
-  stripeCustomerId: { type: String, select: false },
-  stripeSubscriptionId: { type: String, select: false },
+  stripeCustomerId: { type: String, default: null, select: false },
+  stripeSubscriptionId: { type: String, default: null, select: false },
   hasUsedFreeTrial: { type: Boolean, default: false },
   subscriptionStatus: {
     type: String,
