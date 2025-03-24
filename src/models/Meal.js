@@ -12,12 +12,12 @@ const mealSchema = new mongoose.Schema(
       required: true,
       lowercase: true,
       trim: true,
-      maxLength: 70,
+      maxLength: 100,
     },
     description: {
       type: String,
       trim: true,
-      maxLength: 500,
+      maxLength: 2500,
     },
     image: {
       type: String,

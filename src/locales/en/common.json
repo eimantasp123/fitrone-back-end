@@ -77,6 +77,7 @@
     "invalidPreference": "Invalid value '{{value}}' for dietary preference.",
     "invalidRestriction": "Invalid value '{{value}}' for dietary restriction.",
     "invalidCategory": "Invalid value '{{value}}' for category.",
-    "invalidCombinedDaysArray": "Invalid combined days array. Must be at least 2 days."
+    "invalidCombinedDaysArray": "Invalid combined days array. Must be at least 2 days.",
+    "duplicateEmail": "This email already exists. Please use the email address you received the form with."
   }
 }

@@ -119,6 +119,22 @@ exports.updateWeeklyMenuBio = catchAsync(async (req, res, next) => {
   if (req.body.restrictions) updates.restrictions = req.body.restrictions;
   if (req.body.preferences) updates.preferences = req.body.preferences;
 
+  if (req.body.title) {
+    // Find does active weekly menu with same title exist
+    const duplicate = await WeeklyMenu.findOne({
+      user: req.user._id,
+      title: req.body.title.toLowerCase(),
+      deletedAt: null,
+      _id: { $ne: req.params.id }, // Exclude current one
+    });
+
+    if (duplicate) {
+      return next(
+        new AppError(req.t("weeklyMenu:errors.titleAlreadyExists"), 400),
+      );
+    }
+  }
+
   // Find the weekly menu by ID
   const updatedMenu = await WeeklyMenu.findOneAndUpdate(
     {

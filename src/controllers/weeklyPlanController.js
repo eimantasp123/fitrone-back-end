@@ -2,7 +2,14 @@ const WeeklyPlan = require("../models/WeeklyPlan");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const { default: mongoose } = require("mongoose");
-const { setYear, isBefore, startOfISOWeek, setISOWeek } = require("date-fns");
+const {
+  setYear,
+  isBefore,
+  startOfISOWeek,
+  setISOWeek,
+  startOfISOWeekYear,
+  addWeeks,
+} = require("date-fns");
 const { toZonedTime } = require("date-fns-tz");
 const WeeklyMenu = require("../models/WeeklyMenu");
 const Customer = require("../models/Customer");
@@ -12,6 +19,7 @@ const {
   unpublishOrders,
 } = require("../utils/publishAndUnpublishOrders");
 const SingleDayOrder = require("../models/SingleDayOrder");
+const { isWeekExpired } = require("../helper/dataHelpers");
 /**
  * Set user timezone
  */
@@ -68,29 +76,22 @@ exports.getWeeklyPlanByDateAndCreate = catchAsync(async (req, res, next) => {
 
   // If weekly plan is not found and timezone is set, create a new weekly plan
   if (!weeklyPlan && req.user.timezone) {
-    // Get user's current time
-    const serverDate = toZonedTime(new Date(), req.user.timezone);
+    // Check if week is expired
+    const isExpired = isWeekExpired(year, week, req.user.timezone);
 
-    // Start of current ISO week in user's timezone
-    const startOfCurrentWeek = startOfISOWeek(serverDate);
+    if (isExpired) {
+      return res.status(200).json({
+        status: "expired_week",
+        message: req.t("weeklyPlan:weekInPast"),
+      });
+    }
 
-    // Set year and week
-    let clientDate = setYear(new Date(), parseInt(year));
-    clientDate = setISOWeek(clientDate, parseInt(week));
-
-    // Start of requested week in user's timezone
-    const startOfRequestedWeek = startOfISOWeek(
-      toZonedTime(clientDate, req.user.timezone),
-    );
-
-    // Check if requested week is in the past
-    const isExpired = isBefore(startOfRequestedWeek, startOfCurrentWeek);
-
+    // Create a new weekly plan
     weeklyPlan = await WeeklyPlan.create({
       user: req.user._id,
       year: parseInt(year),
-      status: isExpired ? "expired" : "active", // If week is in the past, set status to expired
       weekNumber: parseInt(week),
+      status: "active",
     });
 
     // If weekly plan is not found and timezone is not set, return not found with empty data

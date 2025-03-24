@@ -76,6 +76,7 @@
     "invalidPreference": "Netinkama reikšmė '{{value}}' dietiniui pasirinkimui.",
     "invalidRestriction": "Netinkama reikšmė '{{value}}' dietiniui apribojimui.",
     "invalidCategory": "Netinkama reikšmė '{{value}}' kategorijai.",
-    "invalidCombinedDaysArray": "Netinkamas kombinuotų dienų masyvas. Masyvas turi turėti bent 2 dienas."
+    "invalidCombinedDaysArray": "Netinkamas kombinuotų dienų masyvas. Masyvas turi turėti bent 2 dienas.",
+    "duplicateEmail": "Toks el. paštas jau egzistuoja. Prašome naudoti el. pašto adresą kuriuo gavote formą."
   }
 }

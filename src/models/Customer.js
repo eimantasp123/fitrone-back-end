@@ -13,7 +13,6 @@ const customerSchema = new mongoose.Schema(
     },
     emailHash: {
       type: String,
-      unique: true,
       select: false,
     },
     status: {
@@ -150,7 +149,7 @@ customerSchema.methods.createConfirmFormToken = function () {
     .createHash("sha256")
     .update(confirmFormToken)
     .digest("hex");
-  this.confirmFormTokenExpires = Date.now() + 1000 * 60 * 60 * 36; // 24 hours
+  this.confirmFormTokenExpires = Date.now() + 1000 * 60 * 60 * 36; // 36 hours
   return confirmFormToken;
 };
 
@@ -167,7 +166,10 @@ customerSchema.statics.findByToken = async function (token) {
 // Indexes
 customerSchema.index(
   { supplier: 1, emailHash: 1 },
-  { partialFilterExpression: { deletedAt: null } },
+  {
+    unique: true,
+    partialFilterExpression: { deletedAt: null },
+  },
 );
 
 const Customer = mongoose.model("Customer", customerSchema);

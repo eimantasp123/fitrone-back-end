@@ -1,4 +1,6 @@
 {
+  "weekInPast": "Savaitė yra praeityje.",
+
   "messages": {
     "timezoneSetSuccess": "Laiko juosta sėkmingai nustatyta.",
     "weeklyPlanUpdated": "Savaitės planas sėkmingai atnaujintas.",

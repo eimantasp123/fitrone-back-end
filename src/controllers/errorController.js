@@ -15,6 +15,11 @@ const handleCastErrorDB = (err, req) => {
  * Handle duplicate fields error
  */
 const handleDuplicateFieldsDB = (err, req) => {
+  // Check email duplication
+  if (err.keyPattern.emailHash) {
+    const message = req.t("validationErrors.duplicateEmail");
+    return new AppError(message, 400);
+  }
   // Check if keyValue exists and has at least one field
   if (err.keyValue && Object.keys(err.keyValue).length > 0) {
     const field = Object.keys(err.keyValue)[0]; // Extract the first field causing the duplication

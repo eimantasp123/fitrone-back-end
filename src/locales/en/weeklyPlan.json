@@ -1,4 +1,6 @@
 {
+  "weekInPast": "Week is in the past.",
+
   "messages": {
     "timezoneSetSuccess": "Timezone set successfully.",
     "weeklyPlanUpdated": "Weekly plan updated successfully.",
