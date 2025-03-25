@@ -68,7 +68,10 @@
     "dev": "nodemon src/app.js",
     "start:prod": "NODE_ENV=production nodemon src/app.js",
     "debug": "ndb node src/app.js",
-    "count-lines": "sloc src/"
+    "count-lines": "sloc src/",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "proxy": "http://192.168.8.11:5000"
 }

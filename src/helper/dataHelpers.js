@@ -1,33 +1,53 @@
-const { addWeeks } = require("date-fns/addWeeks");
-const { startOfISOWeek } = require("date-fns/startOfISOWeek");
-const { startOfISOWeekYear } = require("date-fns/startOfISOWeekYear");
 const { toZonedTime } = require("date-fns-tz");
-const { isBefore } = require("date-fns/isBefore");
+const { getISOWeek } = require("date-fns/getISOWeek");
+const { getISOWeekYear } = require("date-fns/getISOWeekYear");
 
 /**
- * Determines if a given ISO week in a specific year is expired
- * relative to the current moment in the user's timezone.
+ * Check if a timezone string is valid.
+ * @param {string} timezone - User's IANA timezone string
+ * @returns {boolean} - True if the timezone is valid, false otherwise
+ */
+function isValidTimezone(timezone) {
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone: timezone });
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+/**
+ * Get a safe timezone string for date-fns-tz functions.
+ * If the timezone is invalid, return "UTC" as a fallback.
+ * @param {string} tz - User's IANA timezone string
+ * @returns {string} - Safe timezone string
+ */
+function getSafeTimezone(tz) {
+  return isValidTimezone(tz) ? tz : "UTC";
+}
+
+/**
+ * Checks if a requested ISO week/year is expired based on user's local timezone.
  *
- * @param {number} year - The ISO year (e.g., 2025)
- * @param {number} week - The ISO week number (1–53)
- * @param {string} timezone - An IANA timezone string (e.g., "Europe/Vilnius")
+ * A week is considered expired only if it is *before* the user's current ISO week.
+ * Even if it's Sunday night, the current week is still valid.
+ *
+ * @param {number} year - ISO year of the requested week
+ * @param {number} week - ISO week number (1–53)
+ * @param {string} timezone - User's IANA timezone string
+ * @param {Date} [mockDate] - Optional override for "now"
  * @returns {boolean} - True if the week is expired, false otherwise
  */
-function isWeekExpired(year, week, timezone) {
-  const dateNow = toZonedTime(new Date(), timezone);
+function isWeekExpired(year, week, timezone, mockDate) {
+  const now = toZonedTime(mockDate || new Date(), getSafeTimezone(timezone));
+  const currentWeek = getISOWeek(now);
+  const currentYear = getISOWeekYear(now);
 
-  // Start of current ISO week in user's timezone
-  const startOfCurrentWeek = startOfISOWeek(dateNow);
+  if (year < currentYear) return true;
+  if (year > currentYear) return false;
 
-  // Set year and week
-  const baseDate = new Date(`${year}-01-04`);
-  const requestDate = addWeeks(startOfISOWeekYear(baseDate), week - 1);
-
-  // Start of requested week in user's timezone
-  const startOfRequestedWeek = startOfISOWeek(
-    toZonedTime(requestDate, timezone),
-  );
-
-  return isBefore(startOfRequestedWeek, startOfCurrentWeek);
+  // same year, compare weeks
+  return week < currentWeek;
 }
-module.exports = { isWeekExpired };
+
+module.exports = { isWeekExpired, isValidTimezone };

@@ -15,6 +15,10 @@ const weeklyPlanSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    timezone: {
+      type: String,
+      required: true,
+    },
     assignMenu: [
       {
         menu: {

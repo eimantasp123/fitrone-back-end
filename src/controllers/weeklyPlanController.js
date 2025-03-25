@@ -91,6 +91,7 @@ exports.getWeeklyPlanByDateAndCreate = catchAsync(async (req, res, next) => {
       user: req.user._id,
       year: parseInt(year),
       weekNumber: parseInt(week),
+      timezone: req.user.timezone,
       status: "active",
     });
 
