@@ -457,7 +457,7 @@ exports.managePublishMenu = catchAsync(async (req, res, next) => {
   // Perform publish or unpublish action
   if (publish) {
     // Perfom publish action
-    await publishOrders(
+    publishOrders(
       req,
       singleDayOrders,
       assignedWeeklyMenu,
@@ -466,7 +466,7 @@ exports.managePublishMenu = catchAsync(async (req, res, next) => {
     );
   } else {
     // Perform unpublish action
-    await unpublishOrders(
+    unpublishOrders(
       req,
       singleDayOrders,
       assignedWeeklyMenu,

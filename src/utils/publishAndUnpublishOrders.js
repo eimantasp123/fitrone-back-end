@@ -118,6 +118,9 @@ const publishOrders = async (
       // Insert new single day orders
       await SingleDayOrder.insertMany(newOrders);
     }
+
+    // After publishing orders, send message to clients
+    sendMessageToClients(req.user._id, "orders", { year, weekNumber });
   } catch (error) {
     console.error("Error publishing orders:", error.message);
   }
@@ -171,6 +174,9 @@ const unpublishOrders = async (
 
     // After removing meals from orders, clean up ingredient stock
     await cleanupIngredientsStock(req.user._id, year, weekNumber);
+
+    // After unpublishing orders, send message to clients
+    sendMessageToClients(req.user._id, "orders", { year, weekNumber });
   } catch (error) {
     console.error("Error unpublishing orders:", error.message);
   }

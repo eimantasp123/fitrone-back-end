@@ -98,6 +98,9 @@ setInterval(() => {
 
 /**
  * Function to send a message to all connections for a specific userId
+ * @param {String} userId - User ID
+ * @param {String} type - Message type
+ * @param {Object} payload - Message payload
  */
 function sendMessageToClients(userId, type, payload = {}) {
   const user = userId.toString();
