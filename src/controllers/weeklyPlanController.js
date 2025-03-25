@@ -2,15 +2,6 @@ const WeeklyPlan = require("../models/WeeklyPlan");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const { default: mongoose } = require("mongoose");
-const {
-  setYear,
-  isBefore,
-  startOfISOWeek,
-  setISOWeek,
-  startOfISOWeekYear,
-  addWeeks,
-} = require("date-fns");
-const { toZonedTime } = require("date-fns-tz");
 const WeeklyMenu = require("../models/WeeklyMenu");
 const Customer = require("../models/Customer");
 const { transformToUppercaseFirstLetter } = require("../utils/generalHelpers");
@@ -20,6 +11,10 @@ const {
 } = require("../utils/publishAndUnpublishOrders");
 const SingleDayOrder = require("../models/SingleDayOrder");
 const { isWeekExpired } = require("../helper/dataHelpers");
+const { getISOWeek } = require("date-fns/getISOWeek");
+const { getYear } = require("date-fns/getYear");
+const { toZonedTime } = require("date-fns-tz");
+const { sendMessageToClients } = require("../utils/websocket");
 /**
  * Set user timezone
  */
@@ -747,4 +742,146 @@ exports.checkWeeklyPlanAndMenuAssigned = catchAsync(async (req, res, next) => {
   req.weeklyPlan = weeklyPlan;
   req.weeklyMenu = weeklyMenu;
   next();
+});
+
+/**
+ * Expire a single Weekly Plan manually
+ */
+exports.expireWeeklyPlan = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+
+  // Find the weekly plan with populated menus
+  const weeklyPlan = await WeeklyPlan.findOne({
+    _id: id,
+    user: req.user._id,
+    status: "active", // Only active plans can be expired
+  }).populate({
+    path: "assignMenu.menu",
+  });
+
+  if (!weeklyPlan) {
+    return next(
+      new AppError(
+        req.t("weeklyPlan:validationErrors.weeklyPlanNotFound"),
+        404,
+      ),
+    );
+  }
+  // Check does weekly plan have asigned menus or some asigned menu is not published
+  if (
+    weeklyPlan.assignMenu.length === 0 ||
+    weeklyPlan.assignMenu.some((menu) => !menu.published)
+  ) {
+    sendMessageToClients(req.user._id, "weeklyPlanExpired");
+    return res.status(200).json({
+      status: "warning",
+      message: req.t("weeklyPlan:validationErrors.menuNotPublished"),
+    });
+  }
+
+  // Get the current date and user's timezone
+  const now = new Date();
+  const userTimezone = req.user.timezone || "UTC"; // fallback just in case
+
+  // Convert to user's local time
+  const userNow = toZonedTime(now, userTimezone);
+  const userCurrentWeek = getISOWeek(userNow);
+  const userCurrentYear = getYear(userNow);
+
+  // Optional: disallow expiring if plan is not current week
+  if (
+    weeklyPlan.year !== userCurrentYear ||
+    weeklyPlan.weekNumber !== userCurrentWeek
+  ) {
+    sendMessageToClients(req.user._id, "weeklyPlanExpired");
+    return next(
+      new AppError(
+        req.t("weeklyPlan:validationErrors.cannotExpireThisWeek"),
+        400,
+      ),
+    );
+  }
+
+  // Snapshot each assigned menu
+  weeklyPlan.assignMenu.forEach((menuItem) => {
+    if (menuItem.menu) {
+      menuItem.menuSnapshot = JSON.parse(JSON.stringify(menuItem.menu)); // Deep Copy
+    }
+  });
+
+  weeklyPlan.status = "expired";
+  weeklyPlan.isSnapshot = true;
+  await weeklyPlan.save({ validateBeforeSave: true }); // Save updated snapshot
+
+  // Find all single day orders for the expired
+  const singleDayOrders = await SingleDayOrder.find({
+    user: req.user._id,
+    weekNumber: weeklyPlan.weekNumber,
+    year: weeklyPlan.year,
+    expired: false,
+  });
+
+  // Update single day orders
+  for (const singleDayOrder of singleDayOrders) {
+    singleDayOrder.categories = singleDayOrder.categories.map((category) => {
+      return {
+        ...category,
+        meals: category.meals.map((meal) => {
+          return {
+            ...meal,
+            status: "done",
+            weeklyMenuTitle: meal.weeklyMenu.title,
+          };
+        }),
+      };
+    });
+
+    singleDayOrder.expired = true;
+    singleDayOrder.status = "done";
+
+    // Save the updated single day order
+    await singleDayOrder.save({ validateBeforeSave: true });
+  }
+
+  // Clean up activeWeeks in WeeklyMenus
+  await WeeklyMenu.updateMany(
+    {
+      user: req.user._id,
+      "activeWeeks.year": weeklyPlan.year,
+      "activeWeeks.weekNumber": weeklyPlan.weekNumber,
+    },
+    {
+      $pull: {
+        activeWeeks: {
+          year: weeklyPlan.year,
+          weekNumber: weeklyPlan.weekNumber,
+        },
+      },
+    },
+  );
+
+  // Mark any WeeklyMenus with empty activeWeeks as inactive
+  await WeeklyMenu.updateMany(
+    {
+      user: req.user._id,
+      activeWeeks: { $size: 0 },
+    },
+    { $set: { status: "inactive" } },
+  );
+
+  // Format single day orders ids for response
+  const singleDayOrderIds = singleDayOrders.map((order) => order._id);
+
+  // Send message to client
+  sendMessageToClients(req.user._id, "weeklyPlanExpired");
+
+  // Send response
+  return res.status(200).json({
+    status: "success",
+    message: req.t("weeklyPlan:messages.weeklyPlanExpired"),
+    data: {
+      weeklyPlanId: weeklyPlan._id,
+      singleDayOrderIds,
+    },
+  });
 });

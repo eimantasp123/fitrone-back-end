@@ -12,6 +12,7 @@ const {
   checkWeeklyPlanAndMenuAssigned,
   removeClient,
   getWeeklyPlanAssignedMenuDetails,
+  expireWeeklyPlan,
 } = require("../controllers/weeklyPlanController");
 const checkWeeklyPlanMenu = require("../middlewares/checkWeeklyPlanMenu");
 
@@ -57,5 +58,8 @@ router.patch("/manage-publish-menu", managePublishMenu);
 
 // Get weekly plan menu details
 router.get("/:id/menu-details/:menuId", getWeeklyPlanAssignedMenuDetails);
+
+// Expire weekly plan
+router.patch("/:id/expire-now", expireWeeklyPlan);
 
 module.exports = router;

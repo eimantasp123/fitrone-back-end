@@ -171,7 +171,9 @@ exports.sendFormToCustomer = catchAsync(async (req, res, next) => {
         customerName: transformToUppercaseFirstLetter(firstName),
       }),
       paragraph1: req.t("customers:customerConfirmationEmail.paragraph1", {
-        supplierName: transformToUppercaseFirstLetter(req.user.firstName),
+        supplierName:
+          req.user.businessName ||
+          transformToUppercaseFirstLetter(req.user.firstName),
       }),
       paragraph2: req.t("customers:customerConfirmationEmail.paragraph2"),
       buttonText: req.t("customers:customerConfirmationEmail.buttonText"),
@@ -248,7 +250,9 @@ exports.resendFormToCustomer = catchAsync(async (req, res, next) => {
         customerName: transformToUppercaseFirstLetter(customer.firstName),
       }),
       paragraph1: req.t("customers:customerConfirmationEmail.paragraph1", {
-        supplierName: transformToUppercaseFirstLetter(req.user.firstName),
+        supplierName:
+          req.user.businessName ||
+          transformToUppercaseFirstLetter(req.user.firstName),
       }),
       paragraph2: req.t("customers:customerConfirmationEmail.paragraph2"),
       buttonText: req.t("customers:customerConfirmationEmail.buttonText"),
@@ -530,22 +534,6 @@ exports.changeCustomerMenuQuantity = catchAsync(async (req, res, next) => {
     return next(
       new AppError(req.t("customers:validationErrors.customerNotFound"), 404),
     );
-  }
-
-  // Check if customer is attached to any active week plan if yes than throw error and inform supplier that customer is attached to active week plan
-  const activeWeeklyPlan = await WeeklyPlan.findOne({
-    user: req.user._id,
-    status: "active",
-    "assignMenu.assignedClients": customerId,
-  });
-
-  if (activeWeeklyPlan) {
-    return res.status(200).json({
-      status: "warning",
-      message: req.t(
-        "customers:validationErrors.customerAttachedToActiveWeeklyPlan",
-      ),
-    });
   }
 
   // if customer is not attached to any active week plan than change the menu quantity

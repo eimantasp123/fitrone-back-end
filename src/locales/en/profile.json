@@ -3,6 +3,7 @@
   "imageUpdatedSuccessfully": "Profile image updated successfully",
   "imageDeleteSuccessfully": "Profile image deleted successfully",
   "passwordChangedSuccessfully": "Password changed successfully",
+  "businessNameUpdatedSuccessfully": "Business name updated successfully",
   "verifyCodeSendSuccessfully": "Verification code sent successfully",
   "accountDeletedSuccessfully": "Account deleted successfully",
   "twoFactorAuth": {

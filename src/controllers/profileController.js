@@ -257,6 +257,28 @@ exports.verify2FACode = catchAsync(async (req, res, next) => {
 });
 
 /**
+ * Update business name
+ */
+exports.updateBusinessName = catchAsync(async (req, res, next) => {
+  const user = await User.findById(req.user.id);
+
+  // Check if user exists
+  if (!user) {
+    return next(new AppError(req.t("userNotFound"), 404));
+  }
+
+  // Update business name
+  user.businessName = req.body.businessName;
+  await user.save({ validateBeforeSave: false });
+
+  // Send response
+  return res.status(200).json({
+    message: req.t("profile:businessNameUpdatedSuccessfully"),
+    businessName: user.businessName,
+  });
+});
+
+/**
  * Delete user account from the database
  */
 exports.deleteAccount = catchAsync(async (req, res, next) => {

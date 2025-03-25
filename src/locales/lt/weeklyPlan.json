@@ -11,10 +11,12 @@
     "clientsAssigned": "Klientai sėkmingai priskirti.",
     "groupAssigned": "Grupė sėkmingai priskirta.",
     "clientRemoved": "Klientas sėkmingai pašalintas.",
-    "groupRemoved": "Grupė sėkmingai pašalinta."
+    "groupRemoved": "Grupė sėkmingai pašalinta.",
+    "weeklyPlanExpired": "Savaitės planas sėkmingai baigtas."
   },
 
   "validationErrors": {
+    "cannotExpireThisWeek": "Šis savaitės planas negali būti pažymėtas kaip baigtas.",
     "yearAndWeekNumberIsNotProvided": "Nenurodyti tinkami metai ir savaitės numeris. Prašome patikrinti įvestus duomenis.",
     "timezoneNotYetSet": "Laiko juosta dar nėra nustatyta. Prašome pirmiausia nustatyti laiko juostą.",
     "timezoneRequired": "Laiko juosta yra privaloma.",
@@ -32,6 +34,7 @@
     "invalidClients": "Netinkami klientai.",
     "invalidClient": "Netinkamas klientas.",
     "invalidGroup": "Netinkama grupė.",
+    "menuNotPublished": "Savaitės planas yra tuščias arba bent vienas meniu nėra publikuotas. Norėdami užbaigti savaitės planą, visi meniu turi būti publikuoti.",
     "clientsAlreadyAssigned": "Klientai jau priskirti. {{clients}} ",
     "clientAssigned": "{{client}} jau yra priskirtas prie atitinkamų savaitės meniu maksimalų skaičių ({{menuQuantity}}).",
     "clientAssignedToGroup": "{{client}} jau yra priskirtas su grupe '{{group}}'.",

@@ -3,6 +3,7 @@
   "imageUpdatedSuccessfully": "Profilio nuotrauka sėkmingai atnaujinta",
   "imageDeleteSuccessfully": "Profilio nuotrauka ištrinta sėkmingai",
   "passwordChangedSuccessfully": "Slaptažodis pakeistas sėkmingai",
+  "businessNameUpdatedSuccessfully": "Verslo pavadinimas sėkmingai atnaujintas",
   "verifyCodeSendSuccessfully": "Patvirtinimo kodas išsiųstas sėkmingai",
   "accountDeletedSuccessfully": "Paskyra ištrinta sėkmingai",
   "twoFactorAuth": {

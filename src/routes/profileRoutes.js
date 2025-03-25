@@ -10,6 +10,7 @@ const {
   request2FACode,
   verify2FACode,
   deleteAccount,
+  updateBusinessName,
 } = require("../controllers/profileController");
 
 const router = express.Router();
@@ -50,6 +51,9 @@ router.put("/2fa/request", request2FACode);
 
 // Route to verify a 2FA code
 router.put("/2fa/verify", verify2FACode);
+
+// Update business name
+router.patch("/business-name", updateBusinessName);
 
 // Route to delete the user account
 router.delete("/account", deleteAccount);

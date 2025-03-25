@@ -11,7 +11,7 @@
   "customerConfirmationEmail": {
     "subject": "Užpildykite savo maitinimo plano formą",
     "emailTitle": "Sveiki, {{customerName}}!",
-    "paragraph1": "Šis el. laiškas Jums atsiųstas {{supplierName}} vardu. Žemiau rasite mygtuką, kurį paspaudus būsite nukreipti į specialų puslapį, kuriame turėsite užpildyti svarbią informaciją apie save.",
+    "paragraph1": "Šis el. laiškas Jums atsiųstas '{{supplierName}}' vardu. Žemiau rasite mygtuką, kurį paspaudus būsite nukreipti į specialų puslapį, kuriame turėsite užpildyti svarbią informaciją apie save.",
     "paragraph2": "Ši informacija reikalinga gamintojui, kad jis galėtų tiksliai parinkti Jums tinkamiausią mitybos planą, atlikti individualizuotą analizę bei pateikti Jums geriausius sprendimus, siekiant užsibrėžtų rezultatų.",
     "buttonText": "Užpildyti formą"
   },
