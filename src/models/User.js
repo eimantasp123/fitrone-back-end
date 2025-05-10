@@ -68,6 +68,10 @@ const userSchema = new mongoose.Schema({
     enum: ["supplier", "admin"],
     default: "supplier",
   },
+  testMode: {
+    type: Boolean,
+    default: false,
+  },
   plan: {
     type: String,
     enum: ["base", "basic", "pro", "premium"],
