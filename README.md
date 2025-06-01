@@ -1,75 +1,128 @@
-Nutrition Planning and Order Management Platform – System Overview
+# 🥗 Nutrition Planning and Order Management System
 
-This system is a custom-built web platform designed for nutrition-focused meal producers to streamline the planning, creation, and delivery of personalized meal plans. It serves as an internal operational tool that automates and connects the full workflow — from ingredient management to final order fulfillment for end customers.
+## Overview
 
-🧩 Purpose of the System
-The platform helps small to medium-scale food producers, dietitians, and subscription-based meal services manage complex weekly meal planning and customer personalization at scale. It replaces manual spreadsheets or fragmented tools with a structured, API-driven backend and real-time frontend sync.
+This platform is a full-featured nutrition planning and order management system designed for food producers, meal prep businesses, and dietitians. It allows users to create ingredients, assemble meals, organize them into weekly menus, assign customers, and automatically generate orders for weekly delivery. The system combines structured data flow, subscription-based feature access, and real-time updates to support scalable, personalized meal services.
 
-⚙️ How the System Works
-The system is structured around several core modules, each representing a key step in the meal planning lifecycle:
+## 🧭 Use Case & Purpose
 
-Ingredient Management
+The primary use case is to enable producers to efficiently manage recurring meal plans and personalize them for individual customers. This includes:
 
-Producers can manually add ingredients or use AI (OpenAI API) to generate them.
+- Automating weekly menu generation
+- Customizing meals based on nutritional needs
+- Managing customer preferences and subscriptions
+- Generating accurate ingredient lists for production
+- Monitoring order status and fulfillment
 
-Nutritional values are stored and dynamically recalculated when updated.
+The system is especially beneficial for teams dealing with recurring nutritional planning (e.g., families, athletes, medical diets) and looking to reduce manual tasks and increase consistency.
 
-All meals using an updated ingredient are automatically recalculated via backend operations.
+---
 
-WebSocket notifications are used to trigger frontend refreshes in real time.
+## 🔧 Core Functional Modules
 
-Meal Creation
+### 1. **Ingredients Management**
+- Producers can create ingredients manually or via AI-assisted input (OpenAI API).
+- Ingredients include nutritional values, units, and names (duplicates are restricted).
+- Any update to an ingredient triggers backend operations to **recalculate nutritional values** in all related meals.
+- Ingredient changes broadcast a WebSocket event (`ingredient_updated_in_meals`) to ensure the frontend reflects updated meal data.
+- Supports search, nutritional previews, and soft deletion.
 
-Meals are composed of ingredients and include nutritional metadata and images.
+### 2. **Meals**
+- Meals are composed of selected ingredients, each contributing to the total nutritional value.
+- Producers can add custom images and descriptions.
+- Meals can only be created with unique names.
+- Meals can be edited or soft-deleted.
+- Ingredient modifications automatically propagate recalculations to meals.
+- Supports AI-powered ingredient search and meal creation assistance.
 
-Duplicate names are not allowed, and meals can be edited or soft-deleted.
+### 3. **Weekly Menus**
+- A weekly menu is a template that maps meals to days of the week.
+- Menus can be created, updated, archived, unarchived, or deleted.
+- Each menu is version-controlled; changes do not affect meals in previously active menus.
+- Once a menu is assigned to an active plan, it becomes immutable.
+- Menus can only be archived if not active, freeing up slot limits.
+- Frontend fetches refreshed data after any modification.
 
-AI can assist in searching and generating ingredients during meal creation.
+### 4. **Weekly Plans**
+- Weekly plans are generated based on the producer's timezone and calendar week.
+- A weekly plan serves as the live schedule to which menus and customers are assigned.
+- Producers can:
+  - Assign menus to the week
+  - Assign customers to menus
+  - Publish plans (which triggers order generation)
+- Only one menu can be assigned per week per customer (unless custom plan allows more).
+- Plans use validation middleware to check user limits (`checkPlanFeatures`, `checkWeeklyPlanMenu`).
+- Published menus cannot be edited; unpublishing is restricted if orders have already started.
+- All state changes are synced to the frontend.
 
-Weekly Menu Builder
+### 5. **Customers**
+- Customers can be added manually or invited via a secure form sent by email.
+- Upon submission, a WebSocket message (`customer_form_confirmed`) informs the producer.
+- Producers can:
+  - Change a customer's status (active/inactive)
+  - Assign menu quantities (e.g., multiple menus per week)
+  - Delete or update customer data
+- Inactive customers do not count toward plan limits.
+- A built-in nutrition calculator estimates recommended intake values for each customer.
 
-Weekly menus are built by assigning meals to specific days.
+### 6. **Order Management**
+- When a plan is published, orders are generated per customer and per day.
+- Orders determine which ingredients are needed and trigger backend inventory logic.
+- Producers can track orders, mark days as completed, and generate prep lists.
+- Ingredient stock is managed when publishing/unpublishing a plan (stock checks are done automatically).
 
-Each menu is versioned, can be archived, and is linked to future weekly plans.
+---
 
-Once a menu is made “active” (assigned to a weekly plan), it becomes immutable.
+## 🧩 Subscription & Access Control
 
-Weekly Plans
+The platform includes tier-based access:
 
-Automatically generated weekly timelines that assign menus and customers.
+- Middleware such as `checkPlanFeatures()` is used throughout to verify if a producer has reached limits for:
+  - Ingredients
+  - Meals
+  - Menus
+  - Weekly plans
+  - Customers
 
-Producers must set their time zone first; plan creation then happens dynamically.
+- When downgrading from a higher-tier plan:
+  - Excess data (e.g., meals, ingredients) is archived.
+  - Archived **weekly menus** remain visible.
+  - Archived **ingredients** and **meals** become inaccessible.
 
-Includes logic for publishing/unpublishing menus, with strict validation (e.g., already completed orders block unpublishing).
+---
 
-Menus and customers are linked with validation via middleware that checks plan limits.
+## 🔁 Data Flow & Architecture
 
-Customer Management
+- **API-first** architecture using RESTful endpoints (`/api/v1`).
+- **Soft delete** principle is applied everywhere to preserve data integrity.
+- Most calculations (e.g., nutrition, calories) are done **at request time** and not stored permanently.
+- Real-time changes (e.g., updated meals, confirmed forms) are communicated using **WebSocket events** to keep client-side data in sync.
+- AI integration is used to assist producers with ingredient creation and meal planning (via OpenAI).
 
-Customers can be added manually or via an emailed form (with a secure token link).
+---
 
-Status management (active/inactive), soft deletion, and menu preferences are supported.
+## 🛠️ Technologies (Optional if Needed)
+- Node.js / Express-based backend
+- MongoDB with soft delete schema logic
+- OpenAI API for AI-enhanced features
+- WebSocket (e.g., Socket.IO) for real-time updates
+- Middleware logic for subscription validation and plan control
+- RESTful API design for frontend integration (possibly React, mobile app, etc.)
 
-Nutrition recommendations are auto-calculated based on input parameters.
+---
 
-Middleware controls customer limits based on the producer’s subscription tier.
+## ✅ Key Features Summary
 
-Order Management
+- ✅ AI-powered ingredient search and meal suggestions  
+- ✅ Dynamic nutritional calculations (ingredient-level updates)  
+- ✅ Weekly menu versioning and archiving  
+- ✅ Automated weekly plan generation per time zone  
+- ✅ Customer self-onboarding via email form  
+- ✅ Real-time frontend updates via WebSocket  
+- ✅ Order generation and ingredient list compilation  
+- ✅ Subscription-tier validation and data archiving  
 
-Once a weekly plan is published, orders are generated based on menu and customer assignments.
+---
 
-Ingredient lists per day are generated for kitchen preparation.
+This system is optimized for operational efficiency and scalable nutrition service delivery.
 
-Orders can be marked as completed, and stock is adjusted accordingly.
-
-🔐 Access Control and Middleware
-The system uses middleware like checkPlanFeatures() to enforce plan limits (e.g., max number of customers or meals).
-
-Downgrading a subscription plan triggers data archiving and restricts access to certain features.
-
-🔁 Data Flow & Architecture
-API endpoints (under /api/v1) are RESTful and use soft-deletion to preserve data consistency.
-
-Most calculations (e.g., calories, nutritional values) are performed dynamically before data is returned to the frontend.
-
-WebSocket events ensure frontend state is always in sync with backend changes.
